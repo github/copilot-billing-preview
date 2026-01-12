@@ -9,13 +9,21 @@ export type ModelDailyTokenData = {
   totalCacheReadTokens: number
 }
 
+export type ModelCostTotals = {
+  grossAmount: number
+  discountAmount: number
+  netAmount: number
+}
+
 export type ModelTokenResult = {
   models: string[]
   byModel: Record<string, ModelDailyTokenData[]>
+  totalsByModel: Record<string, ModelCostTotals>
 }
 
 type ModelInternal = {
   byDate: Map<string, ModelDailyTokenData>
+  totals: ModelCostTotals
 }
 
 function ensureDay(model: ModelInternal, date: string): ModelDailyTokenData {
@@ -47,7 +55,14 @@ export class ModelTokenAggregator implements Aggregator<TokenUsageRecord, ModelT
 
     let model = this.byModel.get(modelName)
     if (!model) {
-      model = { byDate: new Map() }
+      model = {
+        byDate: new Map(),
+        totals: {
+          grossAmount: 0,
+          discountAmount: 0,
+          netAmount: 0,
+        },
+      }
       this.byModel.set(modelName, model)
     }
 
@@ -56,18 +71,24 @@ export class ModelTokenAggregator implements Aggregator<TokenUsageRecord, ModelT
     day.totalOutputTokens += record.total_output_tokens || 0
     day.totalCacheCreationTokens += record.total_cache_creation_tokens || 0
     day.totalCacheReadTokens += record.total_cache_read_tokens || 0
+
+    model.totals.grossAmount += record.gross_amount || 0
+    model.totals.discountAmount += record.discount_amount || 0
+    model.totals.netAmount += record.net_amount || 0
   }
 
   result(): ModelTokenResult {
     const models = Array.from(this.byModel.keys()).sort((a, b) => a.localeCompare(b))
     const byModel: Record<string, ModelDailyTokenData[]> = {}
+    const totalsByModel: Record<string, ModelCostTotals> = {}
 
     for (const modelName of models) {
       const internal = this.byModel.get(modelName)!
       const dates = Array.from(internal.byDate.keys()).sort()
       byModel[modelName] = dates.map((d) => internal.byDate.get(d)!)
+      totalsByModel[modelName] = internal.totals
     }
 
-    return { models, byModel }
+    return { models, byModel, totalsByModel }
   }
 }

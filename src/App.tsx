@@ -108,6 +108,10 @@ function App() {
 
   const perModelDailyData = selectedModel && modelTokens ? (modelTokens.byModel[selectedModel] ?? []) : []
 
+  const formatUsd = (n: number): string => {
+    return `$ ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
   const fillTokenDataForRange = <T extends {
     date: string
     totalInputTokens: number
@@ -155,6 +159,11 @@ function App() {
 
   const filledTotalDailyTokenData = fillTokenDataForRange(dailyTokenData, rangeStart, rangeEnd)
   const filledPerModelDailyData = fillTokenDataForRange(perModelDailyData, rangeStart, rangeEnd)
+
+  const selectedModelTotals = selectedModel && modelTokens ? modelTokens.totalsByModel[selectedModel] : null
+  const selectedGross = selectedModelTotals?.grossAmount ?? 0
+  const selectedNet = selectedModelTotals?.netAmount ?? 0
+  const selectedIncluded = selectedGross - selectedNet
 
   return (
     <div className={`app ${hasReport ? 'app--review' : ''}`}>
@@ -303,9 +312,30 @@ function App() {
                           ))}
                         </select>
                       </label>
+
+                      {selectedModelTotals && (
+                        <div className="per-model__summary">
+                          <div className="per-model__summary-row">
+                            <span className="per-model__summary-label">Gross Cost</span>
+                            <span className="per-model__summary-value">{formatUsd(selectedGross)}</span>
+                          </div>
+                          <div className="per-model__summary-row">
+                            <span className="per-model__summary-label">Included</span>
+                            <span className="per-model__summary-value per-model__summary-value--muted">
+                              {formatUsd(selectedIncluded)}
+                            </span>
+                          </div>
+                          <div className="per-model__summary-row per-model__summary-row--highlight">
+                            <span className="per-model__summary-label">Net Cost</span>
+                            <span className="per-model__summary-value per-model__summary-value--bold">
+                              {formatUsd(selectedNet)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {selectedModel && perModelDailyData.length > 0 && (
+                    {selectedModel && filledPerModelDailyData.length > 0 && (
                       <div className="per-model__charts charts-grid">
                         <DailyStackedBarChart
                           title={`Daily Input/Output Tokens (${selectedModel})`}
