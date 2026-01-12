@@ -82,7 +82,7 @@ function App() {
   const hasReport = fileName !== null || status === 'processing'
 
   return (
-    <main className="page">
+    <div className={`app ${hasReport ? 'app--review' : ''}`}>
       <input
         ref={fileInputRef}
         id="file-input"
@@ -93,88 +93,85 @@ function App() {
         style={{ display: 'none' }}
       />
 
-      <header className="page-header">
-        <p className="eyebrow">Static SPA</p>
-        <h1>GitHub Copilot Token Based Billing Report Viewer</h1>
-        <p className="lede">
-          Upload or drop a Copilot token billing CSV report to stream it and get a quick line count without loading the
-          entire file into memory.
-        </p>
+      {/* Primary header - black bar */}
+      <header className="primary-header">
+        <h1 className="primary-header__title">GitHub Copilot Token Based Billing Report Viewer</h1>
       </header>
 
-      {!hasReport ? (
-        <section
-          className={`panel dropzone ${dragActive ? 'dropzone--active' : ''}`}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          onClick={triggerFileDialog}
-          role="button"
-          tabIndex={0}
-          onKeyDown={onKeyDown}
-        >
-          <div className="dropzone__content">
-            <div className="dropzone__icon" aria-hidden>
-              📄
+      {hasReport ? (
+        <>
+          {/* Secondary header - white bar with report info */}
+          <nav className="secondary-header">
+            <div className="secondary-header__info">
+              <span className="secondary-header__label">File:</span>
+              <span className="secondary-header__value">{fileName ?? 'Processing…'}</span>
+              {reportRange && (reportRange.startDate || reportRange.endDate) && (
+                <>
+                  <span className="secondary-header__separator">|</span>
+                  <span className="secondary-header__label">Report window:</span>
+                  <span className="secondary-header__value">
+                    {reportRange.startDate ?? '—'} to {reportRange.endDate ?? '—'}
+                  </span>
+                </>
+              )}
+              {status === 'processing' && (
+                <>
+                  <span className="secondary-header__separator">|</span>
+                  <span className="secondary-header__status">Processing…</span>
+                </>
+              )}
             </div>
-            <p className="dropzone__title">Drag &amp; drop your CSV here</p>
-            <p className="dropzone__hint">or click to browse</p>
-            <p className="dropzone__note">Streams 50k+ rows without blocking the UI.</p>
-          </div>
-        </section>
-      ) : (
-        <section className="panel viewer">
-          <div className="viewer__header">
-            <div>
-              <p className="eyebrow">Report viewer</p>
-              <h2 className="viewer__title">{fileName ?? 'Processing report…'}</h2>
-              <p className="viewer__subtitle">
-                {status === 'processing'
-                  ? 'Streaming and parsing your CSV…'
-                  : 'Parsed with streaming pipeline (header + data rows).'}
-              </p>
-            </div>
-            <button className="ghost-button" onClick={triggerFileDialog}>
+            <button className="secondary-header__button" onClick={triggerFileDialog}>
               Upload another report
             </button>
-          </div>
+          </nav>
 
-          <section className="results" aria-live="polite">
-            <div className="result-row">
-              <span className="label">Status</span>
-              <span className="value">
-                {status === 'processing' ? 'Processing…' : status === 'done' ? 'Done' : 'Waiting for a file'}
-              </span>
-            </div>
-            {fileName && (
-              <div className="result-row">
-                <span className="label">File</span>
-                <span className="value">{fileName}</span>
+          {/* Main content area for charts and data */}
+          <main className="report-content">
+            <section className="report-summary" aria-live="polite">
+              {lineCount !== null && (
+                <div className="summary-card">
+                  <span className="summary-card__label">Total rows</span>
+                  <span className="summary-card__value">{lineCount.toLocaleString()}</span>
+                </div>
+              )}
+              {error && (
+                <div className="error" role="status">
+                  <span>⚠️ {error}</span>
+                </div>
+              )}
+            </section>
+          </main>
+        </>
+      ) : (
+        <main className="upload-page">
+          <div className="upload-content">
+            <h2 className="upload-content__title">Upload a Report</h2>
+            <p className="upload-content__description">
+              Drop a Copilot token billing CSV report to stream it and analyze usage data.
+            </p>
+            <section
+              className={`dropzone ${dragActive ? 'dropzone--active' : ''}`}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              onClick={triggerFileDialog}
+              role="button"
+              tabIndex={0}
+              onKeyDown={onKeyDown}
+            >
+              <div className="dropzone__content">
+                <div className="dropzone__icon" aria-hidden>
+                  📄
+                </div>
+                <p className="dropzone__title">Drag &amp; drop your CSV here</p>
+                <p className="dropzone__hint">or click to browse</p>
               </div>
-            )}
-            {lineCount !== null && (
-              <div className="result-row">
-                <span className="label">Total rows (excluding header)</span>
-                <span className="value strong">{lineCount.toLocaleString()}</span>
-              </div>
-            )}
-            {reportRange && (reportRange.startDate || reportRange.endDate) && (
-              <div className="result-row">
-                <span className="label">Report window</span>
-                <span className="value">
-                  {reportRange.startDate ?? '—'} to {reportRange.endDate ?? '—'}
-                </span>
-              </div>
-            )}
-            {error && (
-              <div className="error" role="status">
-                <span>⚠️ {error}</span>
-              </div>
-            )}
-          </section>
-        </section>
+            </section>
+          </div>
+        </main>
       )}
-    </main>
+    </div>
   )
 }
 
