@@ -1,6 +1,6 @@
 import type { DragEvent, KeyboardEvent, MouseEvent } from 'react'
 
-interface UploadPageProps {
+export interface UploadPageProps {
   dragActive: boolean
   onDrop: (event: DragEvent<HTMLDivElement>) => void
   onDragOver: (event: DragEvent<HTMLDivElement>) => void
