@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import './App.css'
 import { DailyStackedBarChart } from './components'
-import { LineCountAggregator } from './pipeline/aggregators/lineCountAggregator'
+import { QuickStatsAggregator, type QuickStatsResult } from './pipeline/aggregators/quickStatsAggregator'
 import { ReportContextAggregator } from './pipeline/aggregators/reportContextAggregator'
 import { DailyTokenAggregator, type DailyTokenData } from './pipeline/aggregators/dailyTokenAggregator'
 import { runPipeline } from './pipeline/runPipeline'
@@ -11,7 +11,7 @@ type Status = 'idle' | 'processing' | 'done'
 
 function App() {
   const [status, setStatus] = useState<Status>('idle')
-  const [lineCount, setLineCount] = useState<number | null>(null)
+  const [quickStats, setQuickStats] = useState<QuickStatsResult | null>(null)
   const [reportRange, setReportRange] = useState<{ startDate: string | null; endDate: string | null } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
@@ -22,17 +22,17 @@ function App() {
   const handleProcess = useCallback(async (file: File) => {
     setStatus('processing')
     setError(null)
-    setLineCount(null)
+    setQuickStats(null)
     setReportRange(null)
     setDailyTokenData([])
     setFileName(file.name)
 
     try {
-      const countAggregator = new LineCountAggregator()
+      const statsAggregator = new QuickStatsAggregator()
       const contextAggregator = new ReportContextAggregator()
       const tokenAggregator = new DailyTokenAggregator()
-      await runPipeline(file, [countAggregator, contextAggregator, tokenAggregator])
-      setLineCount(countAggregator.result().lineCount)
+      await runPipeline(file, [statsAggregator, contextAggregator, tokenAggregator])
+      setQuickStats(statsAggregator.result())
       setReportRange(contextAggregator.result())
       setDailyTokenData(tokenAggregator.result().dailyData)
       setStatus('done')
@@ -135,11 +135,25 @@ function App() {
           {/* Main content area for charts and data */}
           <main className="report-content">
             <section className="report-summary" aria-live="polite">
-              {lineCount !== null && (
-                <div className="summary-card">
-                  <span className="summary-card__label">Total rows</span>
-                  <span className="summary-card__value">{lineCount.toLocaleString()}</span>
-                </div>
+              {quickStats && (
+                <>
+                  <div className="summary-card">
+                    <span className="summary-card__label">Total rows</span>
+                    <span className="summary-card__value">{quickStats.lineCount.toLocaleString()}</span>
+                  </div>
+                  <div className="summary-card">
+                    <span className="summary-card__label">Users</span>
+                    <span className="summary-card__value">{quickStats.userCount.toLocaleString()}</span>
+                  </div>
+                  <div className="summary-card">
+                    <span className="summary-card__label">Organizations</span>
+                    <span className="summary-card__value">{quickStats.orgCount.toLocaleString()}</span>
+                  </div>
+                  <div className="summary-card">
+                    <span className="summary-card__label">Cost Centers</span>
+                    <span className="summary-card__value">{quickStats.costCenterCount.toLocaleString()}</span>
+                  </div>
+                </>
               )}
               {error && (
                 <div className="error" role="status">
