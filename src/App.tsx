@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import './App.css'
-import { DailyStackedBarChart, UploadPage } from './components'
+import { DailyStackedBarChart, SummaryCard, UploadPage } from './components'
 import { UsersView } from './views/UsersView'
 import { QuickStatsAggregator, type QuickStatsResult } from './pipeline/aggregators/quickStatsAggregator'
 import { ReportContextAggregator } from './pipeline/aggregators/reportContextAggregator'
@@ -224,34 +224,18 @@ function App() {
                 <section className="report-summary" aria-live="polite">
                   {quickStats && (
                     <>
-                      <div className="summary-card">
-                        <span className="summary-card__label">Total rows</span>
-                        <span className="summary-card__value">{quickStats.lineCount.toLocaleString()}</span>
-                      </div>
-                      <button
-                        type="button"
-                        className="summary-card summary-card--clickable"
+                      <SummaryCard label="Total rows" value={quickStats.lineCount.toLocaleString()} />
+                      <SummaryCard
+                        label="Users"
+                        value={quickStats.userCount.toLocaleString()}
+                        clickable
                         disabled={!userUsage}
                         onClick={() => {
                           if (userUsage) setActiveView('users')
                         }}
-                      >
-                        <div className="summary-card__header">
-                          <span className="summary-card__label">Users</span>
-                          <span className="summary-card__chevron" aria-hidden>
-                            &gt;
-                          </span>
-                        </div>
-                        <span className="summary-card__value">{quickStats.userCount.toLocaleString()}</span>
-                      </button>
-                      <div className="summary-card">
-                        <span className="summary-card__label">Organizations</span>
-                        <span className="summary-card__value">{quickStats.orgCount.toLocaleString()}</span>
-                      </div>
-                      <div className="summary-card">
-                        <span className="summary-card__label">Cost Centers</span>
-                        <span className="summary-card__value">{quickStats.costCenterCount.toLocaleString()}</span>
-                      </div>
+                      />
+                      <SummaryCard label="Organizations" value={quickStats.orgCount.toLocaleString()} />
+                      <SummaryCard label="Cost Centers" value={quickStats.costCenterCount.toLocaleString()} />
                     </>
                   )}
                   {error && (

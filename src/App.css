@@ -126,6 +126,9 @@
   cursor: pointer;
   text-align: left;
   appearance: none;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .summary-card--clickable:hover {
@@ -143,16 +146,18 @@
   outline-offset: 2px;
 }
 
-.summary-card__header {
+.summary-card__content {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
 }
 
 .summary-card__chevron {
   color: #94a3b8;
   font-weight: 700;
+  font-size: 20px;
+  line-height: 1;
 }
 
 .summary-card__label {
