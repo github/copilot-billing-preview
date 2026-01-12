@@ -1,11 +1,12 @@
 import { useCallback, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import './App.css'
-import { DailyStackedBarChart } from './components'
+import { DailyStackedBarChart, UploadPage } from './components'
 import { UsersView } from './views/UsersView'
 import { QuickStatsAggregator, type QuickStatsResult } from './pipeline/aggregators/quickStatsAggregator'
 import { ReportContextAggregator } from './pipeline/aggregators/reportContextAggregator'
 import { DailyTokenAggregator, type DailyTokenData } from './pipeline/aggregators/dailyTokenAggregator'
+import { ModelTokenAggregator, type ModelTokenResult } from './pipeline/aggregators/modelTokenAggregator'
 import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregators/userUsageAggregator'
 import { runPipeline } from './pipeline/runPipeline'
 
@@ -21,6 +22,8 @@ function App() {
   const [dailyTokenData, setDailyTokenData] = useState<DailyTokenData[]>([])
   const [activeView, setActiveView] = useState<'overview' | 'users'>('overview')
   const [userUsage, setUserUsage] = useState<UserUsageResult | null>(null)
+  const [modelTokens, setModelTokens] = useState<ModelTokenResult | null>(null)
+  const [selectedModel, setSelectedModel] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleProcess = useCallback(async (file: File) => {
@@ -30,6 +33,8 @@ function App() {
     setReportRange(null)
     setDailyTokenData([])
     setUserUsage(null)
+    setModelTokens(null)
+    setSelectedModel('')
     setActiveView('overview')
     setFileName(file.name)
 
@@ -37,11 +42,17 @@ function App() {
       const statsAggregator = new QuickStatsAggregator()
       const contextAggregator = new ReportContextAggregator()
       const tokenAggregator = new DailyTokenAggregator()
+      const modelAggregator = new ModelTokenAggregator()
       const userAggregator = new UserUsageAggregator()
-      await runPipeline(file, [statsAggregator, contextAggregator, tokenAggregator, userAggregator])
+      await runPipeline(file, [statsAggregator, contextAggregator, tokenAggregator, modelAggregator, userAggregator])
       setQuickStats(statsAggregator.result())
       setReportRange(contextAggregator.result())
       setDailyTokenData(tokenAggregator.result().dailyData)
+
+      const modelResult = modelAggregator.result()
+      setModelTokens(modelResult)
+      setSelectedModel(modelResult.models[0] ?? '')
+
       setUserUsage(userAggregator.result())
       setStatus('done')
     } catch (err) {
@@ -94,6 +105,56 @@ function App() {
   }
 
   const hasReport = fileName !== null || status === 'processing'
+
+  const perModelDailyData = selectedModel && modelTokens ? (modelTokens.byModel[selectedModel] ?? []) : []
+
+  const fillTokenDataForRange = <T extends {
+    date: string
+    totalInputTokens: number
+    totalOutputTokens: number
+    totalCacheCreationTokens: number
+    totalCacheReadTokens: number
+  }>(
+    data: T[],
+    startDate: string | null,
+    endDate: string | null,
+  ): T[] => {
+    if (!startDate || !endDate) return data
+
+    const start = new Date(`${startDate}T00:00:00Z`)
+    const end = new Date(`${endDate}T00:00:00Z`)
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return data
+
+    const byDate = new Map<string, T>()
+    for (const d of data) {
+      byDate.set(d.date, d)
+    }
+
+    const out: T[] = []
+    for (let cur = start; cur <= end; cur = new Date(cur.getTime() + 24 * 60 * 60 * 1000)) {
+      const iso = cur.toISOString().slice(0, 10)
+      const existing = byDate.get(iso)
+      if (existing) {
+        out.push(existing)
+      } else {
+        out.push({
+          date: iso,
+          totalInputTokens: 0,
+          totalOutputTokens: 0,
+          totalCacheCreationTokens: 0,
+          totalCacheReadTokens: 0,
+        } as T)
+      }
+    }
+
+    return out
+  }
+
+  const rangeStart = reportRange?.startDate ?? null
+  const rangeEnd = reportRange?.endDate ?? null
+
+  const filledTotalDailyTokenData = fillTokenDataForRange(dailyTokenData, rangeStart, rangeEnd)
+  const filledPerModelDailyData = fillTokenDataForRange(perModelDailyData, rangeStart, rangeEnd)
 
   return (
     <div className={`app ${hasReport ? 'app--review' : ''}`}>
@@ -195,7 +256,7 @@ function App() {
                   <section className="charts-grid">
                     <DailyStackedBarChart
                       title="Daily Input/Output Tokens"
-                      data={dailyTokenData.map((d) => ({
+                      data={filledTotalDailyTokenData.map((d) => ({
                         date: d.date,
                         primaryValue: d.totalInputTokens,
                         secondaryValue: d.totalOutputTokens,
@@ -208,7 +269,7 @@ function App() {
                     />
                     <DailyStackedBarChart
                       title="Daily Cache Tokens"
-                      data={dailyTokenData.map((d) => ({
+                      data={filledTotalDailyTokenData.map((d) => ({
                         date: d.date,
                         primaryValue: d.totalCacheCreationTokens,
                         secondaryValue: d.totalCacheReadTokens,
@@ -221,6 +282,61 @@ function App() {
                     />
                   </section>
                 )}
+
+                {modelTokens && modelTokens.models.length > 0 && (
+                  <section className="per-model" aria-label="Per-Model Breakdown">
+                    <div className="per-model__header">
+                      <h3 className="per-model__title">Per-Model Breakdown</h3>
+                    </div>
+                    <div className="per-model__controls">
+                      <label className="per-model__label">
+                        Model
+                        <select
+                          className="per-model__select"
+                          value={selectedModel}
+                          onChange={(e) => setSelectedModel(e.target.value)}
+                        >
+                          {modelTokens.models.map((m) => (
+                            <option key={m} value={m}>
+                              {m}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+
+                    {selectedModel && perModelDailyData.length > 0 && (
+                      <div className="per-model__charts charts-grid">
+                        <DailyStackedBarChart
+                          title={`Daily Input/Output Tokens (${selectedModel})`}
+                          data={filledPerModelDailyData.map((d) => ({
+                            date: d.date,
+                            primaryValue: d.totalInputTokens,
+                            secondaryValue: d.totalOutputTokens,
+                          }))}
+                          primaryLabel="Input Tokens"
+                          secondaryLabel="Output Tokens"
+                          primaryColor="#6366f1"
+                          secondaryColor="#22c55e"
+                          height={320}
+                        />
+                        <DailyStackedBarChart
+                          title={`Daily Cache Tokens (${selectedModel})`}
+                          data={filledPerModelDailyData.map((d) => ({
+                            date: d.date,
+                            primaryValue: d.totalCacheCreationTokens,
+                            secondaryValue: d.totalCacheReadTokens,
+                          }))}
+                          primaryLabel="Cache Creation"
+                          secondaryLabel="Cache Read"
+                          primaryColor="#f59e0b"
+                          secondaryColor="#06b6d4"
+                          height={320}
+                        />
+                      </div>
+                    )}
+                  </section>
+                )}
               </>
             ) : (
               <UsersView users={userUsage?.users ?? []} />
@@ -228,32 +344,14 @@ function App() {
           </main>
         </>
       ) : (
-        <main className="upload-page">
-          <div className="upload-content">
-            <h2 className="upload-content__title">Upload a Report</h2>
-            <p className="upload-content__description">
-              Drop a Copilot token billing CSV report to stream it and analyze usage data.
-            </p>
-            <section
-              className={`dropzone ${dragActive ? 'dropzone--active' : ''}`}
-              onDrop={onDrop}
-              onDragOver={onDragOver}
-              onDragLeave={onDragLeave}
-              onClick={triggerFileDialog}
-              role="button"
-              tabIndex={0}
-              onKeyDown={onKeyDown}
-            >
-              <div className="dropzone__content">
-                <div className="dropzone__icon" aria-hidden>
-                  📄
-                </div>
-                <p className="dropzone__title">Drag &amp; drop your CSV here</p>
-                <p className="dropzone__hint">or click to browse</p>
-              </div>
-            </section>
-          </div>
-        </main>
+        <UploadPage
+          dragActive={dragActive}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onClickDropzone={triggerFileDialog}
+          onKeyDown={onKeyDown}
+        />
       )}
     </div>
   )

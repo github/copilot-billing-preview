@@ -38,19 +38,17 @@ export function UsersView({ users }: { users: UserUsage[] }) {
 
   return (
     <section className="users-view">
-      <div className="users-view__toolbar">
-        <div className="users-view__title">
-          <h2 className="users-view__heading">Users</h2>
-          <span className="users-view__count">{filteredUsers.length.toLocaleString()} shown</span>
-        </div>
-        <input
-          className="users-view__search"
-          placeholder="Search users (prefix)…"
-          value={query}
-          onChange={onChange}
-          aria-label="Search users"
-        />
+      <div className="users-view__title">
+        <h2 className="users-view__heading">Users</h2>
+        <span className="users-view__count">{filteredUsers.length.toLocaleString()} shown</span>
       </div>
+      <input
+        className="users-view__search"
+        placeholder="Search users (prefix)…"
+        value={query}
+        onChange={onChange}
+        aria-label="Search users"
+      />
 
       <div className="users-view__tableWrap">
         <table className="users-view__table">
