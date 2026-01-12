@@ -278,19 +278,17 @@
   color: #64748b;
 }
 
-.cost-centers-view__toolbar {
+.cost-centers-view__header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 .cost-centers-view__title {
   display: flex;
   align-items: baseline;
   gap: 12px;
-  margin-bottom: 4px;
 }
 
 .cost-centers-view__heading {
@@ -306,23 +304,12 @@
   color: #64748b;
 }
 
-.cost-centers-view__label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 .cost-centers-view__select {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 14px;
-  min-width: 360px;
+  max-width: 500px;
   color: #0f172a;
   background: #ffffff;
 }
@@ -332,46 +319,54 @@
   outline-offset: 2px;
 }
 
-.cost-centers-view__totals {
-  background: #ffffff;
+/* Cost Breakdown Card - reusable component */
+.cost-breakdown-card {
+  background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 20px 24px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.cost-centers-view__totalsRow {
-  display: flex;
-  gap: 32px;
-  flex-wrap: wrap;
-  font-size: 14px;
-}
-
-.cost-centers-view__totalsRow span {
-  display: inline-flex;
-  align-items: center;
   gap: 8px;
+  min-width: 220px;
+  max-width: 300px;
 }
 
-.cost-centers-view__totalsRow span::before {
-  content: '';
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #6366f1;
+.cost-breakdown-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
 }
 
-.cost-centers-view__totalsRow:first-child span {
+.cost-breakdown-card__row--highlight {
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.cost-breakdown-card__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cost-breakdown-card__value {
+  font-size: 14px;
   font-weight: 600;
   color: #0f172a;
   font-variant-numeric: tabular-nums;
 }
 
-.cost-centers-view__totalsRow:last-child span {
-  font-weight: 500;
+.cost-breakdown-card__value--muted {
   color: #64748b;
+}
+
+.cost-breakdown-card__value--bold {
+  font-size: 15px;
+  font-weight: 700;
+  color: #6366f1;
 }
 
 .cost-centers-view__tables {

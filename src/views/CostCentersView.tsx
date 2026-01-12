@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { CostCenterResult, CostTotals } from '../pipeline/aggregators/costCenterAggregator'
+import { CostBreakdownCard } from '../components'
 
 function formatUsd(n: number): string {
   return `$ ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -41,35 +42,39 @@ export function CostCentersView({ data }: { data: CostCenterResult }) {
 
   return (
     <section className="cost-centers-view">
-      <div className="cost-centers-view__toolbar">
+      <div className="cost-centers-view__header">
         <div className="cost-centers-view__title">
           <h2 className="cost-centers-view__heading">Cost Centers</h2>
           <span className="cost-centers-view__count">{data.costCenters.length.toLocaleString()} total</span>
         </div>
-        <label className="cost-centers-view__label">
-          Cost center
-          <select className="cost-centers-view__select" value={selected} onChange={(e) => setSelected(e.target.value)}>
-            {data.costCenters.map((c) => (
-              <option key={c.costCenterName} value={c.costCenterName}>
-                {c.costCenterName}
-              </option>
-            ))}
-          </select>
-        </label>
+        <select className="cost-centers-view__select" value={selected} onChange={(e) => setSelected(e.target.value)}>
+          {data.costCenters.map((c) => (
+            <option key={c.costCenterName} value={c.costCenterName}>
+              {c.costCenterName}
+            </option>
+          ))}
+        </select>
       </div>
 
       {selectedCostCenter && (
-        <div className="cost-centers-view__totals">
-          <div className="cost-centers-view__totalsRow">
-            <span>Gross Cost: {formatUsd(selectedCostCenter.totals.grossAmount)}</span>
-            <span>Included: {formatUsd(includedFrom(selectedCostCenter.totals))}</span>
-            <span>Net Cost: {formatUsd(selectedCostCenter.totals.netAmount)}</span>
-          </div>
-          <div className="cost-centers-view__totalsRow">
-            <span>Users: {selectedCostCenter.userCount.toLocaleString()}</span>
-            <span>Net Cost / User: {formatUsd(selectedCostCenter.netCostPerUser)}</span>
-          </div>
-        </div>
+        <CostBreakdownCard
+          items={[
+            {
+              label: 'Gross Cost',
+              value: formatUsd(selectedCostCenter.totals.grossAmount),
+            },
+            {
+              label: 'Included',
+              value: formatUsd(includedFrom(selectedCostCenter.totals)),
+              variant: 'muted',
+            },
+            {
+              label: 'Net Cost',
+              value: formatUsd(selectedCostCenter.totals.netAmount),
+              variant: 'highlight',
+            },
+          ]}
+        />
       )}
 
       <div className="cost-centers-view__tables">
