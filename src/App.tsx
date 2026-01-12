@@ -2,9 +2,11 @@ import { useCallback, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import './App.css'
 import { DailyStackedBarChart } from './components'
+import { UsersView } from './views/UsersView'
 import { QuickStatsAggregator, type QuickStatsResult } from './pipeline/aggregators/quickStatsAggregator'
 import { ReportContextAggregator } from './pipeline/aggregators/reportContextAggregator'
 import { DailyTokenAggregator, type DailyTokenData } from './pipeline/aggregators/dailyTokenAggregator'
+import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregators/userUsageAggregator'
 import { runPipeline } from './pipeline/runPipeline'
 
 type Status = 'idle' | 'processing' | 'done'
@@ -17,6 +19,8 @@ function App() {
   const [fileName, setFileName] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [dailyTokenData, setDailyTokenData] = useState<DailyTokenData[]>([])
+  const [activeView, setActiveView] = useState<'overview' | 'users'>('overview')
+  const [userUsage, setUserUsage] = useState<UserUsageResult | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleProcess = useCallback(async (file: File) => {
@@ -25,16 +29,20 @@ function App() {
     setQuickStats(null)
     setReportRange(null)
     setDailyTokenData([])
+    setUserUsage(null)
+    setActiveView('overview')
     setFileName(file.name)
 
     try {
       const statsAggregator = new QuickStatsAggregator()
       const contextAggregator = new ReportContextAggregator()
       const tokenAggregator = new DailyTokenAggregator()
-      await runPipeline(file, [statsAggregator, contextAggregator, tokenAggregator])
+      const userAggregator = new UserUsageAggregator()
+      await runPipeline(file, [statsAggregator, contextAggregator, tokenAggregator, userAggregator])
       setQuickStats(statsAggregator.result())
       setReportRange(contextAggregator.result())
       setDailyTokenData(tokenAggregator.result().dailyData)
+      setUserUsage(userAggregator.result())
       setStatus('done')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process the report.')
@@ -127,70 +135,95 @@ function App() {
                 </>
               )}
             </div>
-            <button className="secondary-header__button" onClick={triggerFileDialog}>
-              Upload another report
-            </button>
+            <div className="secondary-header__actions">
+              {activeView === 'users' && (
+                <button className="secondary-header__button" onClick={() => setActiveView('overview')}>
+                  Back
+                </button>
+              )}
+              <button className="secondary-header__button" onClick={triggerFileDialog}>
+                Upload another report
+              </button>
+            </div>
           </nav>
 
           {/* Main content area for charts and data */}
           <main className="report-content">
-            <section className="report-summary" aria-live="polite">
-              {quickStats && (
-                <>
-                  <div className="summary-card">
-                    <span className="summary-card__label">Total rows</span>
-                    <span className="summary-card__value">{quickStats.lineCount.toLocaleString()}</span>
-                  </div>
-                  <div className="summary-card">
-                    <span className="summary-card__label">Users</span>
-                    <span className="summary-card__value">{quickStats.userCount.toLocaleString()}</span>
-                  </div>
-                  <div className="summary-card">
-                    <span className="summary-card__label">Organizations</span>
-                    <span className="summary-card__value">{quickStats.orgCount.toLocaleString()}</span>
-                  </div>
-                  <div className="summary-card">
-                    <span className="summary-card__label">Cost Centers</span>
-                    <span className="summary-card__value">{quickStats.costCenterCount.toLocaleString()}</span>
-                  </div>
-                </>
-              )}
-              {error && (
-                <div className="error" role="status">
-                  <span>⚠️ {error}</span>
-                </div>
-              )}
-            </section>
+            {activeView === 'overview' ? (
+              <>
+                <section className="report-summary" aria-live="polite">
+                  {quickStats && (
+                    <>
+                      <div className="summary-card">
+                        <span className="summary-card__label">Total rows</span>
+                        <span className="summary-card__value">{quickStats.lineCount.toLocaleString()}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="summary-card summary-card--clickable"
+                        disabled={!userUsage}
+                        onClick={() => {
+                          if (userUsage) setActiveView('users')
+                        }}
+                      >
+                        <div className="summary-card__header">
+                          <span className="summary-card__label">Users</span>
+                          <span className="summary-card__chevron" aria-hidden>
+                            &gt;
+                          </span>
+                        </div>
+                        <span className="summary-card__value">{quickStats.userCount.toLocaleString()}</span>
+                      </button>
+                      <div className="summary-card">
+                        <span className="summary-card__label">Organizations</span>
+                        <span className="summary-card__value">{quickStats.orgCount.toLocaleString()}</span>
+                      </div>
+                      <div className="summary-card">
+                        <span className="summary-card__label">Cost Centers</span>
+                        <span className="summary-card__value">{quickStats.costCenterCount.toLocaleString()}</span>
+                      </div>
+                    </>
+                  )}
+                  {error && (
+                    <div className="error" role="status">
+                      <span>⚠️ {error}</span>
+                    </div>
+                  )}
+                </section>
 
-            {dailyTokenData.length > 0 && (
-              <section className="charts-grid">
-                <DailyStackedBarChart
-                  title="Daily Input/Output Tokens"
-                  data={dailyTokenData.map((d) => ({
-                    date: d.date,
-                    primaryValue: d.totalInputTokens,
-                    secondaryValue: d.totalOutputTokens,
-                  }))}
-                  primaryLabel="Input Tokens"
-                  secondaryLabel="Output Tokens"
-                  primaryColor="#6366f1"
-                  secondaryColor="#22c55e"
-                  height={320}
-                />
-                <DailyStackedBarChart
-                  title="Daily Cache Tokens"
-                  data={dailyTokenData.map((d) => ({
-                    date: d.date,
-                    primaryValue: d.totalCacheCreationTokens,
-                    secondaryValue: d.totalCacheReadTokens,
-                  }))}
-                  primaryLabel="Cache Creation"
-                  secondaryLabel="Cache Read"
-                  primaryColor="#f59e0b"
-                  secondaryColor="#06b6d4"
-                  height={320}
-                />
-              </section>
+                {dailyTokenData.length > 0 && (
+                  <section className="charts-grid">
+                    <DailyStackedBarChart
+                      title="Daily Input/Output Tokens"
+                      data={dailyTokenData.map((d) => ({
+                        date: d.date,
+                        primaryValue: d.totalInputTokens,
+                        secondaryValue: d.totalOutputTokens,
+                      }))}
+                      primaryLabel="Input Tokens"
+                      secondaryLabel="Output Tokens"
+                      primaryColor="#6366f1"
+                      secondaryColor="#22c55e"
+                      height={320}
+                    />
+                    <DailyStackedBarChart
+                      title="Daily Cache Tokens"
+                      data={dailyTokenData.map((d) => ({
+                        date: d.date,
+                        primaryValue: d.totalCacheCreationTokens,
+                        secondaryValue: d.totalCacheReadTokens,
+                      }))}
+                      primaryLabel="Cache Creation"
+                      secondaryLabel="Cache Read"
+                      primaryColor="#f59e0b"
+                      secondaryColor="#06b6d4"
+                      height={320}
+                    />
+                  </section>
+                )}
+              </>
+            ) : (
+              <UsersView users={userUsage?.users ?? []} />
             )}
           </main>
         </>

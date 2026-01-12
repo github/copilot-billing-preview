@@ -1,4 +1,5 @@
 import type { Aggregator } from './base'
+import type { TokenUsageRecord } from '../parser'
 
 export interface DailyTokenData {
   date: string
@@ -12,21 +13,19 @@ export interface DailyTokenResult {
   dailyData: DailyTokenData[]
 }
 
-type CsvRow = Record<string, string>
-
-export class DailyTokenAggregator implements Aggregator<CsvRow, DailyTokenResult> {
+export class DailyTokenAggregator implements Aggregator<TokenUsageRecord, DailyTokenResult> {
   private dataByDate = new Map<string, DailyTokenData>()
 
-  accumulate(record: CsvRow): void {
-    const date = record['date'] ?? ''
+  accumulate(record: TokenUsageRecord): void {
+    const date = record.date ?? ''
     if (!date) return
 
     const existing = this.dataByDate.get(date)
 
-    const inputTokens = parseInt(record['total_input_tokens'] ?? '0', 10) || 0
-    const outputTokens = parseInt(record['total_output_tokens'] ?? '0', 10) || 0
-    const cacheCreationTokens = parseInt(record['total_cache_creation_tokens'] ?? '0', 10) || 0
-    const cacheReadTokens = parseInt(record['total_cache_read_tokens'] ?? '0', 10) || 0
+    const inputTokens = record.total_input_tokens || 0
+    const outputTokens = record.total_output_tokens || 0
+    const cacheCreationTokens = record.total_cache_creation_tokens || 0
+    const cacheReadTokens = record.total_cache_read_tokens || 0
 
     if (existing) {
       existing.totalInputTokens += inputTokens
