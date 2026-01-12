@@ -1,73 +1,118 @@
-# React + TypeScript + Vite
+# GitHub Copilot Token-Based Billing Report Viewer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A web application for analyzing and visualizing GitHub Copilot token-based billing reports. Upload your CSV billing reports and get insights into token usage, costs, and trends across users, organizations, models, and cost centers.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Overview Dashboard
+- **Quick Statistics**: Total rows, users, organizations, and cost centers at a glance
+- **Daily Token Charts**: Visualize input/output tokens and cache usage over time
+- **Per-Model Breakdown**: Analyze token usage and costs by AI model (Claude, GPT, Gemini, etc.)
+- **Cost Analysis**: View gross costs, included amounts, and net costs per model
 
-## React Compiler
+### Detailed Views
+- **Users View**: Breakdown of usage by individual GitHub users
+- **Organizations View**: Aggregate usage across your organizations
+- **Cost Centers View**: Track usage by cost center for internal billing/allocation
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Performance
+- **Streaming CSV Parser**: Efficiently processes large reports without loading entire files into memory
+- **Real-time Aggregation**: Multiple aggregators run in parallel during file processing
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Installation
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
 ```
+
+Open your browser to the URL shown (typically `http://localhost:5173`)
+
+### Build
+
+```bash
+npm run build
+```
+
+The production build will be created in the `dist/` directory.
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+## Usage
+
+1. Launch the application
+2. Upload a GitHub Copilot token billing CSV report (drag-and-drop or click to browse)
+3. The app will parse and analyze the report
+4. Explore the visualizations and data views
+
+Sample reports are available in the `examples/` directory.
+
+## CSV Report Format
+
+The application expects CSV files with the following columns:
+
+- `date` - ISO date (YYYY-MM-DD)
+- `username` - GitHub username
+- `product` - Product name (e.g., "copilot")
+- `sku` - SKU identifier
+- `model` - AI model name (e.g., "Claude Sonnet 4.5", "GPT-5.2")
+- `quantity` - Number of billable units
+- `unit_type` - Unit basis for billing
+- `applied_cost_per_quantity` - Unit price
+- `gross_amount` - Gross charge before discounts
+- `discount_amount` - Discount applied
+- `net_amount` - Net charge after discounts
+- `exceeds_quota` - Whether usage exceeded quota
+- `total_monthly_quota` - Monthly quota amount
+- `organization` - Organization slug
+- `cost_center_name` - Optional cost center identifier
+- `total_input_tokens` - Input token count
+- `total_output_tokens` - Output token count
+- `total_cache_creation_tokens` - Cache creation token count
+- `total_cache_read_tokens` - Cache read token count
+
+See [docs/report-format.md](docs/report-format.md) for detailed format specifications.
+
+## Tech Stack
+
+- **React 19** - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Build tool and dev server
+- **Chart.js** + **react-chartjs-2** - Data visualization
+- **Streaming CSV Parser** - Memory-efficient data processing
+
+## Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   ├── ui/             # Base UI components (cards, etc.)
+│   └── ...             # Feature components (charts, upload)
+├── pipeline/           # Data processing pipeline
+│   ├── aggregators/    # Data aggregation strategies
+│   ├── parser.ts       # CSV parser
+│   ├── streamer.ts     # File streaming
+│   └── runPipeline.ts  # Pipeline orchestration
+├── views/              # Main application views
+├── utils/              # Utility functions
+└── App.tsx             # Main application component
+```
+
+## License
+
+MIT
