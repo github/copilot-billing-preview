@@ -1,27 +1,27 @@
 import type { Aggregator } from './aggregators/base'
-import { parseCsvLine, type ParsedRow } from './parser'
+import { parseTokenUsageHeader, parseTokenUsageRecord, type TokenUsageHeader, type TokenUsageRecord } from './parser'
 import { streamLines } from './streamer'
 
 export async function runPipeline(
   file: File,
-  aggregators: Aggregator<ParsedRow, unknown>[],
+  aggregators: Aggregator<TokenUsageRecord, unknown, TokenUsageHeader>[],
 ): Promise<void> {
-  let isHeader = true
+  let header: TokenUsageHeader | null = null
   let rowIndex = 0
 
   for await (const line of streamLines(file)) {
     const trimmed = line.trimEnd()
     if (!trimmed) continue
 
-    const parsed = parseCsvLine(trimmed)
-
-    if (isHeader) {
-      isHeader = false
-      aggregators.forEach((aggregator) => aggregator.onHeader?.(parsed))
+    if (!header) {
+      const parsedHeader = parseTokenUsageHeader(trimmed)
+      header = parsedHeader
+      aggregators.forEach((aggregator) => aggregator.onHeader?.(parsedHeader))
       continue
     }
 
-    aggregators.forEach((aggregator) => aggregator.accumulate(parsed, rowIndex))
+    const record = parseTokenUsageRecord(trimmed, header)
+    aggregators.forEach((aggregator) => aggregator.accumulate(record, rowIndex))
     rowIndex += 1
   }
 }

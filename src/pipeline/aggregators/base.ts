@@ -1,5 +1,5 @@
-export interface Aggregator<TParsed, TResult> {
-  onHeader?(header: TParsed): void
-  accumulate(record: TParsed, index: number): void
+export interface Aggregator<TRow, TResult, THeader = unknown> {
+  onHeader?(header: THeader): void
+  accumulate(record: TRow, index: number): void
   result(): TResult
 }
