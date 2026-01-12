@@ -130,6 +130,14 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Charts grid */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
 /* Upload page */
 .upload-page {
   flex: 1;
@@ -214,6 +222,19 @@
   font-size: 14px;
 }
 
+/* Chart container */
+.chart-container {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  width: 100%;
+}
+
+.chart-container canvas {
+  width: 100% !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 640px) {
   .primary-header {
@@ -248,5 +269,9 @@
   
   .report-content {
     padding: 16px;
+  }
+  
+  .charts-grid {
+    grid-template-columns: 1fr;
   }
 }

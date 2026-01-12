@@ -1,0 +1,54 @@
+import type { Aggregator } from './base'
+
+export interface DailyTokenData {
+  date: string
+  totalInputTokens: number
+  totalOutputTokens: number
+  totalCacheCreationTokens: number
+  totalCacheReadTokens: number
+}
+
+export interface DailyTokenResult {
+  dailyData: DailyTokenData[]
+}
+
+type CsvRow = Record<string, string>
+
+export class DailyTokenAggregator implements Aggregator<CsvRow, DailyTokenResult> {
+  private dataByDate = new Map<string, DailyTokenData>()
+
+  accumulate(record: CsvRow): void {
+    const date = record['date'] ?? ''
+    if (!date) return
+
+    const existing = this.dataByDate.get(date)
+
+    const inputTokens = parseInt(record['total_input_tokens'] ?? '0', 10) || 0
+    const outputTokens = parseInt(record['total_output_tokens'] ?? '0', 10) || 0
+    const cacheCreationTokens = parseInt(record['total_cache_creation_tokens'] ?? '0', 10) || 0
+    const cacheReadTokens = parseInt(record['total_cache_read_tokens'] ?? '0', 10) || 0
+
+    if (existing) {
+      existing.totalInputTokens += inputTokens
+      existing.totalOutputTokens += outputTokens
+      existing.totalCacheCreationTokens += cacheCreationTokens
+      existing.totalCacheReadTokens += cacheReadTokens
+    } else {
+      this.dataByDate.set(date, {
+        date,
+        totalInputTokens: inputTokens,
+        totalOutputTokens: outputTokens,
+        totalCacheCreationTokens: cacheCreationTokens,
+        totalCacheReadTokens: cacheReadTokens,
+      })
+    }
+  }
+
+  result(): DailyTokenResult {
+    // Sort by date ascending
+    const sortedDates = Array.from(this.dataByDate.keys()).sort()
+    const dailyData = sortedDates.map((date) => this.dataByDate.get(date)!)
+
+    return { dailyData }
+  }
+}

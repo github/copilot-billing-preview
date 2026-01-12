@@ -1,8 +1,10 @@
 import { useCallback, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import './App.css'
+import { DailyStackedBarChart } from './components'
 import { LineCountAggregator } from './pipeline/aggregators/lineCountAggregator'
 import { ReportContextAggregator } from './pipeline/aggregators/reportContextAggregator'
+import { DailyTokenAggregator, type DailyTokenData } from './pipeline/aggregators/dailyTokenAggregator'
 import { runPipeline } from './pipeline/runPipeline'
 
 type Status = 'idle' | 'processing' | 'done'
@@ -14,6 +16,7 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
+  const [dailyTokenData, setDailyTokenData] = useState<DailyTokenData[]>([])
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleProcess = useCallback(async (file: File) => {
@@ -21,14 +24,17 @@ function App() {
     setError(null)
     setLineCount(null)
     setReportRange(null)
+    setDailyTokenData([])
     setFileName(file.name)
 
     try {
       const countAggregator = new LineCountAggregator()
       const contextAggregator = new ReportContextAggregator()
-      await runPipeline(file, [countAggregator, contextAggregator])
+      const tokenAggregator = new DailyTokenAggregator()
+      await runPipeline(file, [countAggregator, contextAggregator, tokenAggregator])
       setLineCount(countAggregator.result().lineCount)
       setReportRange(contextAggregator.result())
+      setDailyTokenData(tokenAggregator.result().dailyData)
       setStatus('done')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process the report.')
@@ -141,6 +147,37 @@ function App() {
                 </div>
               )}
             </section>
+
+            {dailyTokenData.length > 0 && (
+              <section className="charts-grid">
+                <DailyStackedBarChart
+                  title="Daily Input/Output Tokens"
+                  data={dailyTokenData.map((d) => ({
+                    date: d.date,
+                    primaryValue: d.totalInputTokens,
+                    secondaryValue: d.totalOutputTokens,
+                  }))}
+                  primaryLabel="Input Tokens"
+                  secondaryLabel="Output Tokens"
+                  primaryColor="#6366f1"
+                  secondaryColor="#22c55e"
+                  height={320}
+                />
+                <DailyStackedBarChart
+                  title="Daily Cache Tokens"
+                  data={dailyTokenData.map((d) => ({
+                    date: d.date,
+                    primaryValue: d.totalCacheCreationTokens,
+                    secondaryValue: d.totalCacheReadTokens,
+                  }))}
+                  primaryLabel="Cache Creation"
+                  secondaryLabel="Cache Read"
+                  primaryColor="#f59e0b"
+                  secondaryColor="#06b6d4"
+                  height={320}
+                />
+              </section>
+            )}
           </main>
         </>
       ) : (
