@@ -3,10 +3,12 @@ import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import './App.css'
 import { DailyStackedBarChart, SummaryCard, UploadPage } from './components'
 import { UsersView } from './views/UsersView'
+import { CostCentersView } from './views/CostCentersView'
 import { QuickStatsAggregator, type QuickStatsResult } from './pipeline/aggregators/quickStatsAggregator'
 import { ReportContextAggregator } from './pipeline/aggregators/reportContextAggregator'
 import { DailyTokenAggregator, type DailyTokenData } from './pipeline/aggregators/dailyTokenAggregator'
 import { ModelTokenAggregator, type ModelTokenResult } from './pipeline/aggregators/modelTokenAggregator'
+import { CostCenterAggregator, type CostCenterResult } from './pipeline/aggregators/costCenterAggregator'
 import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregators/userUsageAggregator'
 import { runPipeline } from './pipeline/runPipeline'
 
@@ -20,10 +22,11 @@ function App() {
   const [fileName, setFileName] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [dailyTokenData, setDailyTokenData] = useState<DailyTokenData[]>([])
-  const [activeView, setActiveView] = useState<'overview' | 'users'>('overview')
+  const [activeView, setActiveView] = useState<'overview' | 'users' | 'costCenters'>('overview')
   const [userUsage, setUserUsage] = useState<UserUsageResult | null>(null)
   const [modelTokens, setModelTokens] = useState<ModelTokenResult | null>(null)
   const [selectedModel, setSelectedModel] = useState<string>('')
+  const [costCenters, setCostCenters] = useState<CostCenterResult | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleProcess = useCallback(async (file: File) => {
@@ -35,6 +38,7 @@ function App() {
     setUserUsage(null)
     setModelTokens(null)
     setSelectedModel('')
+    setCostCenters(null)
     setActiveView('overview')
     setFileName(file.name)
 
@@ -43,8 +47,9 @@ function App() {
       const contextAggregator = new ReportContextAggregator()
       const tokenAggregator = new DailyTokenAggregator()
       const modelAggregator = new ModelTokenAggregator()
+      const costCenterAggregator = new CostCenterAggregator()
       const userAggregator = new UserUsageAggregator()
-      await runPipeline(file, [statsAggregator, contextAggregator, tokenAggregator, modelAggregator, userAggregator])
+      await runPipeline(file, [statsAggregator, contextAggregator, tokenAggregator, modelAggregator, costCenterAggregator, userAggregator])
       setQuickStats(statsAggregator.result())
       setReportRange(contextAggregator.result())
       setDailyTokenData(tokenAggregator.result().dailyData)
@@ -53,6 +58,7 @@ function App() {
       setModelTokens(modelResult)
       setSelectedModel(modelResult.models[0] ?? '')
 
+      setCostCenters(costCenterAggregator.result())
       setUserUsage(userAggregator.result())
       setStatus('done')
     } catch (err) {
@@ -206,7 +212,7 @@ function App() {
               )}
             </div>
             <div className="secondary-header__actions">
-              {activeView === 'users' && (
+              {activeView !== 'overview' && (
                 <button className="secondary-header__button" onClick={() => setActiveView('overview')}>
                   Back
                 </button>
@@ -235,7 +241,15 @@ function App() {
                         }}
                       />
                       <SummaryCard label="Organizations" value={quickStats.orgCount.toLocaleString()} />
-                      <SummaryCard label="Cost Centers" value={quickStats.costCenterCount.toLocaleString()} />
+                      <SummaryCard
+                        label="Cost Centers"
+                        value={quickStats.costCenterCount.toLocaleString()}
+                        clickable
+                        disabled={!costCenters || costCenters.costCenters.length === 0}
+                        onClick={() => {
+                          if (costCenters && costCenters.costCenters.length > 0) setActiveView('costCenters')
+                        }}
+                      />
                     </>
                   )}
                   {error && (
@@ -352,8 +366,10 @@ function App() {
                   </section>
                 )}
               </>
-            ) : (
+            ) : activeView === 'users' ? (
               <UsersView users={userUsage?.users ?? []} />
+            ) : (
+              <CostCentersView data={costCenters ?? { costCenters: [] }} />
             )}
           </main>
         </>
