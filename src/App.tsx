@@ -4,11 +4,13 @@ import './App.css'
 import { DailyStackedBarChart, SummaryCard, UploadPage } from './components'
 import { UsersView } from './views/UsersView'
 import { CostCentersView } from './views/CostCentersView'
+import { OrganizationsView } from './views/OrganizationsView'
 import { QuickStatsAggregator, type QuickStatsResult } from './pipeline/aggregators/quickStatsAggregator'
 import { ReportContextAggregator } from './pipeline/aggregators/reportContextAggregator'
 import { DailyTokenAggregator, type DailyTokenData } from './pipeline/aggregators/dailyTokenAggregator'
 import { ModelTokenAggregator, type ModelTokenResult } from './pipeline/aggregators/modelTokenAggregator'
 import { CostCenterAggregator, type CostCenterResult } from './pipeline/aggregators/costCenterAggregator'
+import { OrganizationAggregator, type OrganizationResult } from './pipeline/aggregators/organizationAggregator'
 import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregators/userUsageAggregator'
 import { runPipeline } from './pipeline/runPipeline'
 
@@ -22,11 +24,12 @@ function App() {
   const [fileName, setFileName] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [dailyTokenData, setDailyTokenData] = useState<DailyTokenData[]>([])
-  const [activeView, setActiveView] = useState<'overview' | 'users' | 'costCenters'>('overview')
+  const [activeView, setActiveView] = useState<'overview' | 'users' | 'costCenters' | 'orgs'>('overview')
   const [userUsage, setUserUsage] = useState<UserUsageResult | null>(null)
   const [modelTokens, setModelTokens] = useState<ModelTokenResult | null>(null)
   const [selectedModel, setSelectedModel] = useState<string>('')
   const [costCenters, setCostCenters] = useState<CostCenterResult | null>(null)
+  const [orgs, setOrgs] = useState<OrganizationResult | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleProcess = useCallback(async (file: File) => {
@@ -39,6 +42,7 @@ function App() {
     setModelTokens(null)
     setSelectedModel('')
     setCostCenters(null)
+    setOrgs(null)
     setActiveView('overview')
     setFileName(file.name)
 
@@ -48,8 +52,9 @@ function App() {
       const tokenAggregator = new DailyTokenAggregator()
       const modelAggregator = new ModelTokenAggregator()
       const costCenterAggregator = new CostCenterAggregator()
+      const orgAggregator = new OrganizationAggregator()
       const userAggregator = new UserUsageAggregator()
-      await runPipeline(file, [statsAggregator, contextAggregator, tokenAggregator, modelAggregator, costCenterAggregator, userAggregator])
+      await runPipeline(file, [statsAggregator, contextAggregator, tokenAggregator, modelAggregator, costCenterAggregator, orgAggregator, userAggregator])
       setQuickStats(statsAggregator.result())
       setReportRange(contextAggregator.result())
       setDailyTokenData(tokenAggregator.result().dailyData)
@@ -59,6 +64,7 @@ function App() {
       setSelectedModel(modelResult.models[0] ?? '')
 
       setCostCenters(costCenterAggregator.result())
+      setOrgs(orgAggregator.result())
       setUserUsage(userAggregator.result())
       setStatus('done')
     } catch (err) {
@@ -240,7 +246,15 @@ function App() {
                           if (userUsage) setActiveView('users')
                         }}
                       />
-                      <SummaryCard label="Organizations" value={quickStats.orgCount.toLocaleString()} />
+                      <SummaryCard
+                        label="Organizations"
+                        value={quickStats.orgCount.toLocaleString()}
+                        clickable
+                        disabled={!orgs || orgs.organizations.length === 0}
+                        onClick={() => {
+                          if (orgs && orgs.organizations.length > 0) setActiveView('orgs')
+                        }}
+                      />
                       <SummaryCard
                         label="Cost Centers"
                         value={quickStats.costCenterCount.toLocaleString()}
@@ -368,8 +382,10 @@ function App() {
               </>
             ) : activeView === 'users' ? (
               <UsersView users={userUsage?.users ?? []} />
-            ) : (
+            ) : activeView === 'costCenters' ? (
               <CostCentersView data={costCenters ?? { costCenters: [] }} />
+            ) : (
+              <OrganizationsView data={orgs ?? { organizations: [] }} />
             )}
           </main>
         </>
