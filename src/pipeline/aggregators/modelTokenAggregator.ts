@@ -13,6 +13,9 @@ export type ModelCostTotals = {
   grossAmount: number
   discountAmount: number
   netAmount: number
+  totalInputTokens: number
+  totalOutputTokens: number
+  totalCacheReadTokens: number
 }
 
 export type ModelTokenResult = {
@@ -61,6 +64,9 @@ export class ModelTokenAggregator implements Aggregator<TokenUsageRecord, ModelT
           grossAmount: 0,
           discountAmount: 0,
           netAmount: 0,
+          totalInputTokens: 0,
+          totalOutputTokens: 0,
+          totalCacheReadTokens: 0,
         },
       }
       this.byModel.set(modelName, model)
@@ -75,6 +81,9 @@ export class ModelTokenAggregator implements Aggregator<TokenUsageRecord, ModelT
     model.totals.grossAmount += record.gross_amount || 0
     model.totals.discountAmount += record.discount_amount || 0
     model.totals.netAmount += record.net_amount || 0
+    model.totals.totalInputTokens += record.total_input_tokens || 0
+    model.totals.totalOutputTokens += record.total_output_tokens || 0
+    model.totals.totalCacheReadTokens += record.total_cache_read_tokens || 0
   }
 
   result(): ModelTokenResult {

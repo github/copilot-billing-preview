@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import './App.css'
 import { DailyStackedBarChart, SummaryCard, UploadPage } from './components'
@@ -13,6 +13,11 @@ import { CostCenterAggregator, type CostCenterResult } from './pipeline/aggregat
 import { OrganizationAggregator, type OrganizationResult } from './pipeline/aggregators/organizationAggregator'
 import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregators/userUsageAggregator'
 import { runPipeline } from './pipeline/runPipeline'
+import {
+  fetchModelPricingConfig,
+  createCostCalculator,
+  type CostCalculator,
+} from './pipeline/costCalculator'
 
 type Status = 'idle' | 'processing' | 'done'
 
@@ -30,7 +35,19 @@ function App() {
   const [selectedModel, setSelectedModel] = useState<string>('')
   const [costCenters, setCostCenters] = useState<CostCenterResult | null>(null)
   const [orgs, setOrgs] = useState<OrganizationResult | null>(null)
+  const costCalculatorRef = useRef<CostCalculator | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  // Load pricing config on mount
+  useEffect(() => {
+    fetchModelPricingConfig()
+      .then((config) => {
+        costCalculatorRef.current = createCostCalculator(config)
+      })
+      .catch((err) => {
+        console.error('Failed to load model pricing config:', err)
+      })
+  }, [])
 
   const handleProcess = useCallback(async (file: File) => {
     setStatus('processing')
@@ -176,6 +193,15 @@ function App() {
   const selectedGross = selectedModelTotals?.grossAmount ?? 0
   const selectedNet = selectedModelTotals?.netAmount ?? 0
   const selectedIncluded = selectedGross - selectedNet
+
+  // Calculate token-based cost and AI units for selected model
+  const selectedModelCost = selectedModelTotals && costCalculatorRef.current
+    ? costCalculatorRef.current.calculate(selectedModel, {
+        inputTokens: selectedModelTotals.totalInputTokens,
+        outputTokens: selectedModelTotals.totalOutputTokens,
+        cacheReadTokens: selectedModelTotals.totalCacheReadTokens,
+      })
+    : null
 
   return (
     <div className={`app ${hasReport ? 'app--review' : ''}`}>
@@ -343,6 +369,38 @@ function App() {
                               {formatUsd(selectedNet)}
                             </span>
                           </div>
+                          {selectedModelCost && (
+                            <>
+                              <div className="per-model__summary-row per-model__summary-row--divider" />
+                              <div className="per-model__summary-row">
+                                <span className="per-model__summary-label">Token-Based Cost</span>
+                                <span className="per-model__summary-value">
+                                  {formatUsd(selectedModelCost.totalCost)}
+                                </span>
+                              </div>
+                              <div className="per-model__summary-row per-model__summary-row--highlight">
+                                <span className="per-model__summary-label">AI Units</span>
+                                <span className="per-model__summary-value per-model__summary-value--bold">
+                                  {selectedModelCost.aiUnits.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </span>
+                              </div>
+                              <div className="per-model__summary-row">
+                                <span className="per-model__summary-label">Token-Based Diff</span>
+                                <span
+                                  className={`per-model__summary-value per-model__summary-value--bold ${
+                                    selectedModelCost.totalCost - selectedGross <= 0
+                                      ? 'per-model__summary-value--positive'
+                                      : 'per-model__summary-value--negative'
+                                  }`}
+                                >
+                                  {formatUsd(selectedModelCost.totalCost - selectedGross)}
+                                </span>
+                              </div>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>

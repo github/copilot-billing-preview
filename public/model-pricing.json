@@ -1,0 +1,54 @@
+{
+  "models": {
+    "Claude Sonnet 4": {
+      "inputTokenMultiplier": 0.000003,
+      "outputTokenMultiplier": 0.000015,
+      "cacheReadTokenMultiplier": 0.0000003
+    },
+    "Claude Sonnet 4.5": {
+      "inputTokenMultiplier": 0.000003,
+      "outputTokenMultiplier": 0.000015,
+      "cacheReadTokenMultiplier": 0.0000003
+    },
+    "Auto: Claude Sonnet 4.5": {
+      "inputTokenMultiplier": 0.000003,
+      "outputTokenMultiplier": 0.000015,
+      "cacheReadTokenMultiplier": 0.0000003
+    },
+    "Claude Haiku 4.5": {
+      "inputTokenMultiplier": 0.000001,
+      "outputTokenMultiplier": 0.000005,
+      "cacheReadTokenMultiplier": 0.0000001
+    },
+    "Auto: Claude Haiku 4.5": {
+      "inputTokenMultiplier": 0.000001,
+      "outputTokenMultiplier": 0.000005,
+      "cacheReadTokenMultiplier": 0.0000001
+    },
+    "GPT-4o mini": {
+      "inputTokenMultiplier": 0.00000015,
+      "outputTokenMultiplier": 0.0000006,
+      "cacheReadTokenMultiplier": 0.000000075
+    },
+    "GPT-5": {
+      "inputTokenMultiplier": 0.00000125,
+      "outputTokenMultiplier": 0.00001,
+      "cacheReadTokenMultiplier": 0.000000125
+    },
+    "GPT-5.2": {
+      "inputTokenMultiplier": 0.00000175,
+      "outputTokenMultiplier": 0.000014,
+      "cacheReadTokenMultiplier": 0.000000175
+    },
+    "Gemini 2.5 Pro": {
+      "inputTokenMultiplier": 0.00000125,
+      "outputTokenMultiplier": 0.000005,
+      "cacheReadTokenMultiplier": 0.0000003125
+    }
+  },
+  "defaultMultipliers": {
+    "inputTokenMultiplier": 0.000003,
+    "outputTokenMultiplier": 0.000015,
+    "cacheReadTokenMultiplier": 0.0000003
+  }
+}

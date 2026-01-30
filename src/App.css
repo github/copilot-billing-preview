@@ -497,6 +497,12 @@
   border-top: 1px solid #e2e8f0;
 }
 
+.per-model__summary-row--divider {
+  height: 1px;
+  background-color: #e2e8f0;
+  margin: 8px 0;
+}
+
 .per-model__summary-label {
   font-size: 12px;
   font-weight: 500;
@@ -514,6 +520,14 @@
 
 .per-model__summary-value--muted {
   color: #64748b;
+}
+
+.per-model__summary-value--positive {
+  color: #16a34a;
+}
+
+.per-model__summary-value--negative {
+  color: #dc2626;
 }
 
 .per-model__summary-value--bold {
