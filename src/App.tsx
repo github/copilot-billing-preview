@@ -35,18 +35,23 @@ function App() {
   const [selectedModel, setSelectedModel] = useState<string>('')
   const [costCenters, setCostCenters] = useState<CostCenterResult | null>(null)
   const [orgs, setOrgs] = useState<OrganizationResult | null>(null)
-  const costCalculatorRef = useRef<CostCalculator | null>(null)
+  const [costCalculator, setCostCalculator] = useState<CostCalculator | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   // Load pricing config on mount
   useEffect(() => {
+    let cancelled = false
     fetchModelPricingConfig()
       .then((config) => {
-        costCalculatorRef.current = createCostCalculator(config)
+        if (cancelled) return
+        setCostCalculator(createCostCalculator(config))
       })
       .catch((err) => {
         console.error('Failed to load model pricing config:', err)
       })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const handleProcess = useCallback(async (file: File) => {
@@ -195,8 +200,8 @@ function App() {
   const selectedIncluded = selectedGross - selectedNet
 
   // Calculate token-based cost and AI units for selected model
-  const selectedModelCost = selectedModelTotals && costCalculatorRef.current
-    ? costCalculatorRef.current.calculate(selectedModel, {
+  const selectedModelCost = selectedModelTotals && costCalculator
+    ? costCalculator.calculate(selectedModel, {
         inputTokens: selectedModelTotals.totalInputTokens,
         outputTokens: selectedModelTotals.totalOutputTokens,
         cacheReadTokens: selectedModelTotals.totalCacheReadTokens,
