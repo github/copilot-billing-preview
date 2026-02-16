@@ -3,6 +3,7 @@ import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import './App.css'
 import { DailyStackedBarChart, SummaryCard, UploadPage } from './components'
 import { UsersView } from './views/UsersView'
+import { UserDetailsView } from './views/UserDetailsView'
 import { CostCentersView } from './views/CostCentersView'
 import { OrganizationsView } from './views/OrganizationsView'
 import { QuickStatsAggregator, type QuickStatsResult } from './pipeline/aggregators/quickStatsAggregator'
@@ -29,10 +30,11 @@ function App() {
   const [fileName, setFileName] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [dailyTokenData, setDailyTokenData] = useState<DailyTokenData[]>([])
-  const [activeView, setActiveView] = useState<'overview' | 'users' | 'costCenters' | 'orgs'>('overview')
+  const [activeView, setActiveView] = useState<'overview' | 'users' | 'userDetails' | 'costCenters' | 'orgs'>('overview')
   const [userUsage, setUserUsage] = useState<UserUsageResult | null>(null)
   const [modelTokens, setModelTokens] = useState<ModelTokenResult | null>(null)
   const [selectedModel, setSelectedModel] = useState<string>('')
+  const [selectedUsername, setSelectedUsername] = useState<string>('')
   const [costCenters, setCostCenters] = useState<CostCenterResult | null>(null)
   const [orgs, setOrgs] = useState<OrganizationResult | null>(null)
   const [costCalculator, setCostCalculator] = useState<CostCalculator | null>(null)
@@ -63,6 +65,7 @@ function App() {
     setUserUsage(null)
     setModelTokens(null)
     setSelectedModel('')
+    setSelectedUsername('')
     setCostCenters(null)
     setOrgs(null)
     setActiveView('overview')
@@ -198,6 +201,9 @@ function App() {
   const selectedGross = selectedModelTotals?.grossAmount ?? 0
   const selectedNet = selectedModelTotals?.netAmount ?? 0
   const selectedIncluded = selectedGross - selectedNet
+  const selectedUser = selectedUsername && userUsage
+    ? userUsage.users.find((u) => u.username === selectedUsername) ?? null
+    : null
 
   // Calculate token-based cost and AI units for selected model
   const selectedModelCost = selectedModelTotals && costCalculator
@@ -250,8 +256,17 @@ function App() {
             </div>
             <div className="secondary-header__actions">
               {activeView !== 'overview' && (
-                <button className="secondary-header__button" onClick={() => setActiveView('overview')}>
-                  Back
+                <button
+                  className="secondary-header__button"
+                  onClick={() => {
+                    if (activeView === 'userDetails') {
+                      setActiveView('users')
+                    } else {
+                      setActiveView('overview')
+                    }
+                  }}
+                >
+                  {activeView === 'userDetails' ? 'Back to users' : 'Back'}
                 </button>
               )}
               <button className="secondary-header__button" onClick={triggerFileDialog}>
@@ -444,7 +459,19 @@ function App() {
                 )}
               </>
             ) : activeView === 'users' ? (
-              <UsersView users={userUsage?.users ?? []} />
+              <UsersView
+                users={userUsage?.users ?? []}
+                onSelectUser={(username) => {
+                  setSelectedUsername(username)
+                  setActiveView('userDetails')
+                }}
+              />
+            ) : activeView === 'userDetails' ? (
+              <UserDetailsView
+                user={selectedUser}
+                costCalculator={costCalculator}
+                onBack={() => setActiveView('users')}
+              />
             ) : activeView === 'costCenters' ? (
               <CostCentersView data={costCenters ?? { costCenters: [] }} />
             ) : (

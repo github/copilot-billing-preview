@@ -11,7 +11,12 @@ function formatCost(n: number): string {
   return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-export function UsersView({ users }: { users: UserUsage[] }) {
+export interface UsersViewProps {
+  users: UserUsage[]
+  onSelectUser?: (username: string) => void
+}
+
+export function UsersView({ users, onSelectUser }: UsersViewProps) {
   const [query, setQuery] = useState('')
 
   const sortedUsers = useMemo(() => {
@@ -67,7 +72,23 @@ export function UsersView({ users }: { users: UserUsage[] }) {
           </thead>
           <tbody>
             {filteredUsers.map((u) => (
-              <tr key={u.username}>
+              <tr
+                key={u.username}
+                className={onSelectUser ? 'users-view__row users-view__row--clickable' : 'users-view__row'}
+                onClick={onSelectUser ? () => onSelectUser(u.username) : undefined}
+                onKeyDown={
+                  onSelectUser
+                    ? (event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          onSelectUser(u.username)
+                        }
+                      }
+                    : undefined
+                }
+                role={onSelectUser ? 'button' : undefined}
+                tabIndex={onSelectUser ? 0 : undefined}
+              >
                 <td className="users-view__user">{u.username}</td>
                 <td className="users-view__num">{formatInt(u.totals.requests)}</td>
                 <td className="users-view__num">{formatInt(u.totals.inputTokens)}</td>

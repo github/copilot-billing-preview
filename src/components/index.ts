@@ -1,5 +1,7 @@
 export { DailyStackedBarChart } from './DailyStackedBarChart'
 export type { DailyData, StackedBarChartProps } from './DailyStackedBarChart'
+export { MultiSeriesStackedBarChart } from './MultiSeriesStackedBarChart'
+export type { MultiSeriesStackedBarChartProps, StackedSeries } from './MultiSeriesStackedBarChart'
 export { UploadPage } from './UploadPage'
 export type { UploadPageProps } from './UploadPage'
 export { SummaryCard, CostBreakdownCard } from './ui'
