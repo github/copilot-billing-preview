@@ -6,15 +6,19 @@ function formatUsd(n: number): string {
   return `$ ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-function includedFrom(t: CostTotals): number {
-  return t.grossAmount - t.netAmount
+function formatAiu(n: number): string {
+  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
+}
+
+function discountsFrom(totals: CostTotals): number {
+  return totals.discountAmount
 }
 
 export function CostCentersView({ data }: { data: CostCenterResult }) {
   const [selected, setSelected] = useState<string>(data.costCenters[0]?.costCenterName ?? '')
 
   const selectedCostCenter = useMemo(() => {
-    return data.costCenters.find((c) => c.costCenterName === selected) ?? null
+    return data.costCenters.find((costCenter) => costCenter.costCenterName === selected) ?? null
   }, [data.costCenters, selected])
 
   const modelRows = useMemo(() => {
@@ -26,9 +30,9 @@ export function CostCentersView({ data }: { data: CostCenterResult }) {
 
   const userRows = useMemo(() => {
     if (!selectedCostCenter) return []
-    return Object.entries(selectedCostCenter.netByUser)
-      .map(([username, netAmount]) => ({ username, netAmount }))
-      .sort((a, b) => b.netAmount - a.netAmount)
+    return Object.entries(selectedCostCenter.totalsByUser)
+      .map(([username, totals]) => ({ username, totals }))
+      .sort((a, b) => b.totals.netAmount - a.totals.netAmount)
   }, [selectedCostCenter])
 
   if (data.costCenters.length === 0) {
@@ -47,10 +51,10 @@ export function CostCentersView({ data }: { data: CostCenterResult }) {
           <h2 className="cost-centers-view__heading">Cost Centers</h2>
           <span className="cost-centers-view__count">{data.costCenters.length.toLocaleString()} total</span>
         </div>
-        <select className="cost-centers-view__select" value={selected} onChange={(e) => setSelected(e.target.value)}>
-          {data.costCenters.map((c) => (
-            <option key={c.costCenterName} value={c.costCenterName}>
-              {c.costCenterName}
+        <select className="cost-centers-view__select" value={selected} onChange={(event) => setSelected(event.target.value)}>
+          {data.costCenters.map((costCenter) => (
+            <option key={costCenter.costCenterName} value={costCenter.costCenterName}>
+              {costCenter.costCenterName}
             </option>
           ))}
         </select>
@@ -64,8 +68,8 @@ export function CostCentersView({ data }: { data: CostCenterResult }) {
               value: formatUsd(selectedCostCenter.totals.grossAmount),
             },
             {
-              label: 'Included',
-              value: formatUsd(includedFrom(selectedCostCenter.totals)),
+              label: 'Discounts',
+              value: formatUsd(discountsFrom(selectedCostCenter.totals)),
               variant: 'muted',
             },
             {
@@ -73,25 +77,31 @@ export function CostCentersView({ data }: { data: CostCenterResult }) {
               value: formatUsd(selectedCostCenter.totals.netAmount),
               variant: 'highlight',
             },
+            {
+              label: 'AI Credits',
+              value: formatAiu(selectedCostCenter.totals.aiuQuantity),
+            },
           ]}
         />
       )}
 
       <div className="cost-centers-view__tables">
         <div className="cost-centers-view__tableWrap">
-          <div className="cost-centers-view__tableTitle">Per user (net)</div>
+          <div className="cost-centers-view__tableTitle">Per user</div>
           <table className="cost-centers-view__table">
             <thead>
               <tr>
                 <th>User</th>
+                <th className="cost-centers-view__num">AI Credits</th>
                 <th className="cost-centers-view__num">Net Cost</th>
               </tr>
             </thead>
             <tbody>
-              {userRows.map((r) => (
-                <tr key={r.username}>
-                  <td className="cost-centers-view__name">{r.username}</td>
-                  <td className="cost-centers-view__num">{formatUsd(r.netAmount)}</td>
+              {userRows.map((row) => (
+                <tr key={row.username}>
+                  <td className="cost-centers-view__name">{row.username}</td>
+                  <td className="cost-centers-view__num">{formatAiu(row.totals.aiuQuantity)}</td>
+                  <td className="cost-centers-view__num">{formatUsd(row.totals.netAmount)}</td>
                 </tr>
               ))}
             </tbody>
@@ -104,18 +114,20 @@ export function CostCentersView({ data }: { data: CostCenterResult }) {
             <thead>
               <tr>
                 <th>Model</th>
+                <th className="cost-centers-view__num">AI Credits</th>
                 <th className="cost-centers-view__num">Gross</th>
-                <th className="cost-centers-view__num">Included</th>
+                <th className="cost-centers-view__num">Discounts</th>
                 <th className="cost-centers-view__num">Net</th>
               </tr>
             </thead>
             <tbody>
-              {modelRows.map((r) => (
-                <tr key={r.model}>
-                  <td className="cost-centers-view__name">{r.model}</td>
-                  <td className="cost-centers-view__num">{formatUsd(r.totals.grossAmount)}</td>
-                  <td className="cost-centers-view__num">{formatUsd(includedFrom(r.totals))}</td>
-                  <td className="cost-centers-view__num">{formatUsd(r.totals.netAmount)}</td>
+              {modelRows.map((row) => (
+                <tr key={row.model}>
+                  <td className="cost-centers-view__name">{row.model}</td>
+                  <td className="cost-centers-view__num">{formatAiu(row.totals.aiuQuantity)}</td>
+                  <td className="cost-centers-view__num">{formatUsd(row.totals.grossAmount)}</td>
+                  <td className="cost-centers-view__num">{formatUsd(discountsFrom(row.totals))}</td>
+                  <td className="cost-centers-view__num">{formatUsd(row.totals.netAmount)}</td>
                 </tr>
               ))}
             </tbody>

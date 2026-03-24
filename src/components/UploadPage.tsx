@@ -22,7 +22,7 @@ export function UploadPage({
       <div className="upload-content">
         <h2 className="upload-content__title">Upload a Report</h2>
         <p className="upload-content__description">
-          Drop a Copilot token billing CSV report to stream it and analyze usage data.
+          Drop a Copilot usage billing CSV report to stream it and analyze requests, costs, and AI Credits.
         </p>
         <section
           className={`dropzone ${dragActive ? 'dropzone--active' : ''}`}
@@ -45,10 +45,8 @@ export function UploadPage({
         <p className="upload-content__attribution">
           <a target="_blank" href="https://icons8.com/icon/s6BMuiR0tvY2/github-copilot" rel="noreferrer">
             Github Copilot
-          </a>
-          {' '}
-          icon by
-          {' '}
+          </a>{' '}
+          icon by{' '}
           <a target="_blank" href="https://icons8.com" rel="noreferrer">
             Icons8
           </a>

@@ -4,6 +4,10 @@ function formatUsd(n: number): string {
   return `$ ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+function formatAiu(n: number): string {
+  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
+}
+
 export function OrganizationsView({ data }: { data: OrganizationResult }) {
   if (data.organizations.length === 0) {
     return (
@@ -30,20 +34,22 @@ export function OrganizationsView({ data }: { data: OrganizationResult }) {
               <th>Organization</th>
               <th className="orgs-view__num">Users</th>
               <th className="orgs-view__num">Models</th>
+              <th className="orgs-view__num">AI Credits</th>
               <th className="orgs-view__num">Gross Cost</th>
-              <th className="orgs-view__num">Included</th>
+              <th className="orgs-view__num">Discounts</th>
               <th className="orgs-view__num">Net Cost</th>
             </tr>
           </thead>
           <tbody>
-            {data.organizations.map((o) => (
-              <tr key={o.organization}>
-                <td className="orgs-view__name">{o.organization}</td>
-                <td className="orgs-view__num">{o.userCount.toLocaleString()}</td>
-                <td className="orgs-view__num">{o.modelCount.toLocaleString()}</td>
-                <td className="orgs-view__num">{formatUsd(o.grossAmount)}</td>
-                <td className="orgs-view__num">{formatUsd(o.grossAmount - o.netAmount)}</td>
-                <td className="orgs-view__num">{formatUsd(o.netAmount)}</td>
+            {data.organizations.map((organization) => (
+              <tr key={organization.organization}>
+                <td className="orgs-view__name">{organization.organization}</td>
+                <td className="orgs-view__num">{organization.userCount.toLocaleString()}</td>
+                <td className="orgs-view__num">{organization.modelCount.toLocaleString()}</td>
+                <td className="orgs-view__num">{formatAiu(organization.aiuQuantity)}</td>
+                <td className="orgs-view__num">{formatUsd(organization.grossAmount)}</td>
+                <td className="orgs-view__num">{formatUsd(organization.discountAmount)}</td>
+                <td className="orgs-view__num">{formatUsd(organization.netAmount)}</td>
               </tr>
             ))}
           </tbody>

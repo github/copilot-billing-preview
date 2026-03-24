@@ -1,14 +1,14 @@
-# GitHub Copilot Token-Based Billing Report Viewer
+# GitHub Copilot Usage Billing Report Viewer
 
-A web application for analyzing and visualizing GitHub Copilot token-based billing reports. Upload your CSV billing reports and get insights into token usage, costs, and trends across users, organizations, models, and cost centers.
+A web application for analyzing and visualizing GitHub Copilot usage billing reports. Upload your CSV billing reports and explore requests, costs, AI Credits, and trends across users, organizations, models, and cost centers.
 
 ## Features
 
 ### Overview Dashboard
 - **Quick Statistics**: Total rows, users, organizations, and cost centers at a glance
-- **Daily Token Charts**: Visualize input/output tokens and cache usage over time
-- **Per-Model Breakdown**: Analyze token usage and costs by AI model (Claude, GPT, Gemini, etc.)
-- **Cost Analysis**: View gross costs, included amounts, and net costs per model
+- **Daily Usage Charts**: Visualize daily requests, AI Credits, and gross-cost breakdowns
+- **Per-Model Breakdown**: Analyze requests, costs, and AI Credits by AI model
+- **Cost Summary**: Review gross cost, discounts, and net cost for the full report
 
 ### Detailed Views
 - **Users View**: Breakdown of usage by individual GitHub users
@@ -22,7 +22,7 @@ A web application for analyzing and visualizing GitHub Copilot token-based billi
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 
 ### Installation
@@ -56,35 +56,34 @@ npm run preview
 ## Usage
 
 1. Launch the application
-2. Upload a GitHub Copilot token billing CSV report (drag-and-drop or click to browse)
+2. Upload a GitHub Copilot usage billing CSV report (drag-and-drop or click to browse)
 3. The app will parse and analyze the report
 4. Explore the visualizations and data views
 
-Sample reports are available in the `examples/` directory.
+Sample reports are available in the `examples/` directory. Older examples without `aiu_quantity` still load, but AI Credits will remain `0` for those rows.
 
 ## CSV Report Format
 
-The application expects CSV files with the following columns:
+The application expects CSV files with the following primary columns:
 
 - `date` - ISO date (YYYY-MM-DD)
 - `username` - GitHub username
-- `product` - Product name (e.g., "copilot")
+- `product` - Product name (for example `copilot` or `spark`)
 - `sku` - SKU identifier
-- `model` - AI model name (e.g., "Claude Sonnet 4.5", "GPT-5.2")
-- `quantity` - Number of billable units
-- `unit_type` - Unit basis for billing
-- `applied_cost_per_quantity` - Unit price
+- `model` - AI model name (for example `Claude Sonnet 4.5`, `GPT-5.2`)
+- `quantity` - Number of billable units for the row
+- `unit_type` - Unit basis for billing (`requests` today, later `credits` after cutover)
+- `applied_cost_per_quantity` - Unit price applied to the row
 - `gross_amount` - Gross charge before discounts
-- `discount_amount` - Discount applied
+- `discount_amount` - Discount applied to the row
 - `net_amount` - Net charge after discounts
 - `exceeds_quota` - Whether usage exceeded quota
 - `total_monthly_quota` - Monthly quota amount
 - `organization` - Organization slug
 - `cost_center_name` - Optional cost center identifier
-- `total_input_tokens` - Input token count
-- `total_output_tokens` - Output token count
-- `total_cache_creation_tokens` - Cache creation token count
-- `total_cache_read_tokens` - Cache read token count
+- `aiu_quantity` - AI Credits for the same usage row
+
+The viewer currently ignores `aiu_gross_amount`. Legacy token columns may still appear in older exports, but they are no longer used by the app.
 
 See [docs/report-format.md](docs/report-format.md) for detailed format specifications.
 
@@ -98,11 +97,9 @@ See [docs/report-format.md](docs/report-format.md) for detailed format specifica
 
 ## Project Structure
 
-```
+```text
 src/
 ├── components/          # Reusable UI components
-│   ├── ui/             # Base UI components (cards, etc.)
-│   └── ...             # Feature components (charts, upload)
 ├── pipeline/           # Data processing pipeline
 │   ├── aggregators/    # Data aggregation strategies
 │   ├── parser.ts       # CSV parser

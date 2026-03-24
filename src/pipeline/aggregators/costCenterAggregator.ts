@@ -5,15 +5,12 @@ export type CostTotals = {
   grossAmount: number
   discountAmount: number
   netAmount: number
-}
-
-export type CostCenterModelTotals = CostTotals & {
-  model: string
+  aiuQuantity: number
 }
 
 export type CostCenterUserTotals = {
-  username: string
   netAmount: number
+  aiuQuantity: number
 }
 
 export type CostCenterUsage = {
@@ -22,7 +19,7 @@ export type CostCenterUsage = {
   netCostPerUser: number
   totals: CostTotals
   totalsByModel: Record<string, CostTotals>
-  netByUser: Record<string, number>
+  totalsByUser: Record<string, CostCenterUserTotals>
 }
 
 export type CostCenterResult = {
@@ -34,13 +31,30 @@ type CostCenterInternal = {
   users: Set<string>
   totals: CostTotals
   totalsByModel: Map<string, CostTotals>
-  netByUser: Map<string, number>
+  totalsByUser: Map<string, CostCenterUserTotals>
+}
+
+function createCostTotals(): CostTotals {
+  return {
+    grossAmount: 0,
+    discountAmount: 0,
+    netAmount: 0,
+    aiuQuantity: 0,
+  }
 }
 
 function ensureTotals(map: Map<string, CostTotals>, key: string): CostTotals {
   const existing = map.get(key)
   if (existing) return existing
-  const created: CostTotals = { grossAmount: 0, discountAmount: 0, netAmount: 0 }
+  const created = createCostTotals()
+  map.set(key, created)
+  return created
+}
+
+function ensureUserTotals(map: Map<string, CostCenterUserTotals>, key: string): CostCenterUserTotals {
+  const existing = map.get(key)
+  if (existing) return existing
+  const created: CostCenterUserTotals = { netAmount: 0, aiuQuantity: 0 }
   map.set(key, created)
   return created
 }
@@ -59,61 +73,66 @@ export class CostCenterAggregator implements Aggregator<TokenUsageRecord, CostCe
     const username = record.username.trim()
     const model = (record.model || '—').trim() || '—'
 
-    let cc = this.byCostCenter.get(costCenterName)
-    if (!cc) {
-      cc = {
+    let costCenter = this.byCostCenter.get(costCenterName)
+    if (!costCenter) {
+      costCenter = {
         costCenterName,
         users: new Set(),
-        totals: { grossAmount: 0, discountAmount: 0, netAmount: 0 },
+        totals: createCostTotals(),
         totalsByModel: new Map(),
-        netByUser: new Map(),
+        totalsByUser: new Map(),
       }
-      this.byCostCenter.set(costCenterName, cc)
+      this.byCostCenter.set(costCenterName, costCenter)
     }
 
-    if (username) cc.users.add(username)
+    if (username) costCenter.users.add(username)
 
-    const gross = record.gross_amount || 0
-    const discount = record.discount_amount || 0
-    const net = record.net_amount || 0
+    const grossAmount = record.gross_amount || 0
+    const discountAmount = record.discount_amount || 0
+    const netAmount = record.net_amount || 0
+    const aiuQuantity = record.aiu_quantity || 0
 
-    cc.totals.grossAmount += gross
-    cc.totals.discountAmount += discount
-    cc.totals.netAmount += net
+    costCenter.totals.grossAmount += grossAmount
+    costCenter.totals.discountAmount += discountAmount
+    costCenter.totals.netAmount += netAmount
+    costCenter.totals.aiuQuantity += aiuQuantity
 
-    const byModel = ensureTotals(cc.totalsByModel, model)
-    byModel.grossAmount += gross
-    byModel.discountAmount += discount
-    byModel.netAmount += net
+    const byModel = ensureTotals(costCenter.totalsByModel, model)
+    byModel.grossAmount += grossAmount
+    byModel.discountAmount += discountAmount
+    byModel.netAmount += netAmount
+    byModel.aiuQuantity += aiuQuantity
 
     if (username) {
-      cc.netByUser.set(username, (cc.netByUser.get(username) ?? 0) + net)
+      const byUser = ensureUserTotals(costCenter.totalsByUser, username)
+      byUser.netAmount += netAmount
+      byUser.aiuQuantity += aiuQuantity
     }
   }
 
   result(): CostCenterResult {
     const costCenters = Array.from(this.byCostCenter.values())
-      .map<CostCenterUsage>((cc) => {
+      .map<CostCenterUsage>((costCenter) => {
         const totalsByModel: Record<string, CostTotals> = {}
-        for (const [model, totals] of cc.totalsByModel.entries()) {
+        for (const [model, totals] of costCenter.totalsByModel.entries()) {
           totalsByModel[model] = totals
         }
 
-        const netByUser: Record<string, number> = {}
-        for (const [user, net] of cc.netByUser.entries()) {
-          netByUser[user] = net
+        const totalsByUser: Record<string, CostCenterUserTotals> = {}
+        for (const [user, totals] of costCenter.totalsByUser.entries()) {
+          totalsByUser[user] = totals
         }
 
-        const userCount = cc.users.size
-        const netCostPerUser = userCount > 0 ? cc.totals.netAmount / userCount : 0
+        const userCount = costCenter.users.size
+        const netCostPerUser = userCount > 0 ? costCenter.totals.netAmount / userCount : 0
 
         return {
-          costCenterName: cc.costCenterName,
+          costCenterName: costCenter.costCenterName,
           userCount,
           netCostPerUser,
-          totals: cc.totals,
+          totals: costCenter.totals,
           totalsByModel,
-          netByUser,
+          totalsByUser,
         }
       })
       .sort((a, b) => a.costCenterName.localeCompare(b.costCenterName))

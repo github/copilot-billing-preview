@@ -14,10 +14,7 @@ export type TokenUsageRecord = {
   total_monthly_quota: number
   organization: string
   cost_center_name: string | null
-  total_input_tokens: number
-  total_output_tokens: number
-  total_cache_creation_tokens: number
-  total_cache_read_tokens: number
+  aiu_quantity: number
 }
 
 export type TokenUsageHeader = {
@@ -30,7 +27,6 @@ function stripBom(s: string): string {
 }
 
 export function parseCsvRow(line: string): string[] {
-  // Minimal RFC4180-ish parser for a single line: handles commas and double quotes.
   const out: string[] = []
   let cur = ''
   let inQuotes = false
@@ -91,13 +87,6 @@ function getNumber(row: string[], i: number | undefined): number {
   return Number.isFinite(n) ? n : 0
 }
 
-function getInt(row: string[], i: number | undefined): number {
-  const raw = getString(row, i).trim()
-  if (!raw) return 0
-  const n = Number.parseInt(raw, 10)
-  return Number.isFinite(n) ? n : 0
-}
-
 function getBool(row: string[], i: number | undefined): boolean {
   const raw = getString(row, i).trim().toLowerCase()
   return raw === 'true'
@@ -111,7 +100,6 @@ function getNullableString(row: string[], i: number | undefined): string | null 
 export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): TokenUsageRecord {
   const row = parseCsvRow(line)
 
-  // All fields are present in the example, but we stay resilient to missing/blank values.
   return {
     date: getString(row, header.index['date']).trim(),
     username: getString(row, header.index['username']).trim(),
@@ -128,9 +116,6 @@ export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): T
     total_monthly_quota: getNumber(row, header.index['total_monthly_quota']),
     organization: getString(row, header.index['organization']).trim(),
     cost_center_name: getNullableString(row, header.index['cost_center_name']),
-    total_input_tokens: getInt(row, header.index['total_input_tokens']),
-    total_output_tokens: getInt(row, header.index['total_output_tokens']),
-    total_cache_creation_tokens: getInt(row, header.index['total_cache_creation_tokens']),
-    total_cache_read_tokens: getInt(row, header.index['total_cache_read_tokens']),
+    aiu_quantity: getNumber(row, header.index['aiu_quantity']),
   }
 }
