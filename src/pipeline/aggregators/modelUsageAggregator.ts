@@ -6,6 +6,7 @@ export type ModelDailyUsageData = {
   requests: number
   aiuQuantity: number
   grossAmount: number
+  aiuGrossAmount: number
   discountAmount: number
   netAmount: number
 }
@@ -14,6 +15,7 @@ export type ModelUsageTotals = {
   requests: number
   aiuQuantity: number
   grossAmount: number
+  aiuGrossAmount: number
   discountAmount: number
   netAmount: number
 }
@@ -38,6 +40,7 @@ function ensureDay(model: ModelInternal, date: string): ModelDailyUsageData {
     requests: 0,
     aiuQuantity: 0,
     grossAmount: 0,
+    aiuGrossAmount: 0,
     discountAmount: 0,
     netAmount: 0,
   }
@@ -66,6 +69,7 @@ export class ModelUsageAggregator implements Aggregator<TokenUsageRecord, ModelU
           requests: 0,
           aiuQuantity: 0,
           grossAmount: 0,
+          aiuGrossAmount: 0,
           discountAmount: 0,
           netAmount: 0,
         },
@@ -76,6 +80,7 @@ export class ModelUsageAggregator implements Aggregator<TokenUsageRecord, ModelU
     const requests = record.quantity || 0
     const aiuQuantity = record.aiu_quantity || 0
     const grossAmount = record.gross_amount || 0
+    const aiuGrossAmount = record.aiu_gross_amount || 0
     const discountAmount = record.discount_amount || 0
     const netAmount = record.net_amount || 0
 
@@ -83,12 +88,14 @@ export class ModelUsageAggregator implements Aggregator<TokenUsageRecord, ModelU
     day.requests += requests
     day.aiuQuantity += aiuQuantity
     day.grossAmount += grossAmount
+    day.aiuGrossAmount += aiuGrossAmount
     day.discountAmount += discountAmount
     day.netAmount += netAmount
 
     model.totals.requests += requests
     model.totals.aiuQuantity += aiuQuantity
     model.totals.grossAmount += grossAmount
+    model.totals.aiuGrossAmount += aiuGrossAmount
     model.totals.discountAmount += discountAmount
     model.totals.netAmount += netAmount
   }
