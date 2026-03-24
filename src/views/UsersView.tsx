@@ -7,6 +7,10 @@ function formatInt(n: number): string {
   return n.toLocaleString()
 }
 
+function formatAiu(n: number): string {
+  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
+}
+
 function formatCost(n: number): string {
   return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
@@ -24,21 +28,21 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
   }, [users])
 
   const trie = useMemo(() => {
-    const t = new Trie()
-    sortedUsers.forEach((u, idx) => t.insert(u.username.toLowerCase(), idx))
-    return t
+    const nextTrie = new Trie()
+    sortedUsers.forEach((user, index) => nextTrie.insert(user.username.toLowerCase(), index))
+    return nextTrie
   }, [sortedUsers])
 
   const filteredUsers = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return sortedUsers
+    const normalizedQuery = query.trim().toLowerCase()
+    if (!normalizedQuery) return sortedUsers
 
-    const indices = trie.searchPrefix(q)
-    return indices.map((i) => sortedUsers[i])
+    const indices = trie.searchPrefix(normalizedQuery)
+    return indices.map((index) => sortedUsers[index])
   }, [query, sortedUsers, trie])
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value)
+  const onChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setQuery(event.target.value)
   }
 
   return (
@@ -61,27 +65,25 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
             <tr>
               <th>User</th>
               <th className="users-view__num">Requests</th>
-              <th className="users-view__num">Input</th>
-              <th className="users-view__num">Output</th>
-              <th className="users-view__num">Cache Create</th>
-              <th className="users-view__num">Cache Read</th>
-              <th className="users-view__num">Total Tokens</th>
+              <th className="users-view__num">AI Credits</th>
               <th className="users-view__num">Models</th>
+              <th className="users-view__num">Gross Cost</th>
+              <th className="users-view__num">Discounts</th>
               <th className="users-view__num">Net Cost</th>
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map((u) => (
+            {filteredUsers.map((user) => (
               <tr
-                key={u.username}
+                key={user.username}
                 className={onSelectUser ? 'users-view__row users-view__row--clickable' : 'users-view__row'}
-                onClick={onSelectUser ? () => onSelectUser(u.username) : undefined}
+                onClick={onSelectUser ? () => onSelectUser(user.username) : undefined}
                 onKeyDown={
                   onSelectUser
                     ? (event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault()
-                          onSelectUser(u.username)
+                          onSelectUser(user.username)
                         }
                       }
                     : undefined
@@ -89,15 +91,13 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
                 role={onSelectUser ? 'button' : undefined}
                 tabIndex={onSelectUser ? 0 : undefined}
               >
-                <td className="users-view__user">{u.username}</td>
-                <td className="users-view__num">{formatInt(u.totals.requests)}</td>
-                <td className="users-view__num">{formatInt(u.totals.inputTokens)}</td>
-                <td className="users-view__num">{formatInt(u.totals.outputTokens)}</td>
-                <td className="users-view__num">{formatInt(u.totals.cacheCreationTokens)}</td>
-                <td className="users-view__num">{formatInt(u.totals.cacheReadTokens)}</td>
-                <td className="users-view__num">{formatInt(u.totals.totalTokens)}</td>
-                <td className="users-view__num">{formatInt(u.totals.distinctModels)}</td>
-                <td className="users-view__num">{formatCost(u.totals.netAmount)}</td>
+                <td className="users-view__user">{user.username}</td>
+                <td className="users-view__num">{formatInt(user.totals.requests)}</td>
+                <td className="users-view__num">{formatAiu(user.totals.aiuQuantity)}</td>
+                <td className="users-view__num">{formatInt(user.totals.distinctModels)}</td>
+                <td className="users-view__num">{formatCost(user.totals.grossAmount)}</td>
+                <td className="users-view__num">{formatCost(user.totals.discountAmount)}</td>
+                <td className="users-view__num">{formatCost(user.totals.netAmount)}</td>
               </tr>
             ))}
           </tbody>

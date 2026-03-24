@@ -6,10 +6,7 @@ export type UserModelDailyUsage = {
   grossAmount: number
   discountAmount: number
   netAmount: number
-  inputTokens: number
-  outputTokens: number
-  cacheCreationTokens: number
-  cacheReadTokens: number
+  aiuQuantity: number
 }
 
 export type UserDailyUsage = {
@@ -18,10 +15,7 @@ export type UserDailyUsage = {
   grossAmount: number
   discountAmount: number
   netAmount: number
-  inputTokens: number
-  outputTokens: number
-  cacheCreationTokens: number
-  cacheReadTokens: number
+  aiuQuantity: number
   models: Record<string, UserModelDailyUsage>
 }
 
@@ -29,7 +23,6 @@ export type UserUsage = {
   username: string
   daily: Record<string, UserDailyUsage>
   totals: Omit<UserDailyUsage, 'date' | 'models'> & {
-    totalTokens: number
     distinctModels: number
   }
 }
@@ -47,25 +40,20 @@ type UserUsageInternal = {
     grossAmount: number
     discountAmount: number
     netAmount: number
-    inputTokens: number
-    outputTokens: number
-    cacheCreationTokens: number
-    cacheReadTokens: number
+    aiuQuantity: number
   }
 }
 
 function ensureModel(day: UserDailyUsage, model: string): UserModelDailyUsage {
   const existing = day.models[model]
   if (existing) return existing
+
   const created: UserModelDailyUsage = {
     requests: 0,
     grossAmount: 0,
     discountAmount: 0,
     netAmount: 0,
-    inputTokens: 0,
-    outputTokens: 0,
-    cacheCreationTokens: 0,
-    cacheReadTokens: 0,
+    aiuQuantity: 0,
   }
   day.models[model] = created
   return created
@@ -74,16 +62,14 @@ function ensureModel(day: UserDailyUsage, model: string): UserModelDailyUsage {
 function ensureDay(user: UserUsageInternal, date: string): UserDailyUsage {
   const existing = user.daily.get(date)
   if (existing) return existing
+
   const created: UserDailyUsage = {
     date,
     requests: 0,
     grossAmount: 0,
     discountAmount: 0,
     netAmount: 0,
-    inputTokens: 0,
-    outputTokens: 0,
-    cacheCreationTokens: 0,
-    cacheReadTokens: 0,
+    aiuQuantity: 0,
     models: {},
   }
   user.daily.set(date, created)
@@ -117,76 +103,55 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
           grossAmount: 0,
           discountAmount: 0,
           netAmount: 0,
-          inputTokens: 0,
-          outputTokens: 0,
-          cacheCreationTokens: 0,
-          cacheReadTokens: 0,
+          aiuQuantity: 0,
         },
       }
       this.byUser.set(username, user)
     }
 
-    user.distinctModels.add(model)
-
     const requests = record.quantity || 0
     const grossAmount = record.gross_amount || 0
     const discountAmount = record.discount_amount || 0
     const netAmount = record.net_amount || 0
+    const aiuQuantity = record.aiu_quantity || 0
 
-    const inputTokens = record.total_input_tokens || 0
-    const outputTokens = record.total_output_tokens || 0
-    const cacheCreationTokens = record.total_cache_creation_tokens || 0
-    const cacheReadTokens = record.total_cache_read_tokens || 0
-
+    user.distinctModels.add(model)
     user.totals.requests += requests
     user.totals.grossAmount += grossAmount
     user.totals.discountAmount += discountAmount
     user.totals.netAmount += netAmount
-    user.totals.inputTokens += inputTokens
-    user.totals.outputTokens += outputTokens
-    user.totals.cacheCreationTokens += cacheCreationTokens
-    user.totals.cacheReadTokens += cacheReadTokens
+    user.totals.aiuQuantity += aiuQuantity
 
     const day = ensureDay(user, date)
     day.requests += requests
     day.grossAmount += grossAmount
     day.discountAmount += discountAmount
     day.netAmount += netAmount
-    day.inputTokens += inputTokens
-    day.outputTokens += outputTokens
-    day.cacheCreationTokens += cacheCreationTokens
-    day.cacheReadTokens += cacheReadTokens
+    day.aiuQuantity += aiuQuantity
 
     const dayModel = ensureModel(day, model)
     dayModel.requests += requests
     dayModel.grossAmount += grossAmount
     dayModel.discountAmount += discountAmount
     dayModel.netAmount += netAmount
-    dayModel.inputTokens += inputTokens
-    dayModel.outputTokens += outputTokens
-    dayModel.cacheCreationTokens += cacheCreationTokens
-    dayModel.cacheReadTokens += cacheReadTokens
+    dayModel.aiuQuantity += aiuQuantity
   }
 
   result(): UserUsageResult {
     const users = Array.from(this.byUser.values())
       .sort((a, b) => a.username.localeCompare(b.username))
-      .map<UserUsage>((u) => {
+      .map<UserUsage>((user) => {
         const daily: Record<string, UserDailyUsage> = {}
-        for (const [date, d] of u.daily.entries()) {
-          daily[date] = d
+        for (const [date, day] of user.daily.entries()) {
+          daily[date] = day
         }
 
-        const totalTokens =
-          u.totals.inputTokens + u.totals.outputTokens + u.totals.cacheCreationTokens + u.totals.cacheReadTokens
-
         return {
-          username: u.username,
+          username: user.username,
           daily,
           totals: {
-            ...u.totals,
-            totalTokens,
-            distinctModels: u.distinctModels.size,
+            ...user.totals,
+            distinctModels: user.distinctModels.size,
           },
         }
       })

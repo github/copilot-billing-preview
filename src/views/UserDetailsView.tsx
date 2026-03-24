@@ -1,17 +1,14 @@
 import { useMemo } from 'react'
 import { MultiSeriesStackedBarChart } from '../components'
 import type { UserUsage } from '../pipeline/aggregators/userUsageAggregator'
-import type { CostCalculator } from '../pipeline/costCalculator'
 
 type DailySummaryModelRow = {
   model: string
   requests: number
-  inputTokens: number
-  outputTokens: number
-  cacheReadTokens: number
-  pruGrossCost: number
-  tokenBasedCost: number | null
-  grossDiff: number | null
+  aiuQuantity: number
+  grossAmount: number
+  discountAmount: number
+  netAmount: number
 }
 
 type DailySummaryGroup = {
@@ -36,6 +33,10 @@ function formatInt(n: number): string {
   return n.toLocaleString()
 }
 
+function formatAiu(n: number): string {
+  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
+}
+
 function formatCost(n: number): string {
   const sign = n < 0 ? '-' : ''
   const absValue = Math.abs(n)
@@ -44,11 +45,10 @@ function formatCost(n: number): string {
 
 export interface UserDetailsViewProps {
   user: UserUsage | null
-  costCalculator: CostCalculator | null
   onBack: () => void
 }
 
-export function UserDetailsView({ user, costCalculator, onBack }: UserDetailsViewProps) {
+export function UserDetailsView({ user, onBack }: UserDetailsViewProps) {
   const dailyEntries = useMemo(() => {
     if (!user) return []
     return Object.values(user.daily).sort((a, b) => a.date.localeCompare(b.date))
@@ -74,15 +74,11 @@ export function UserDetailsView({ user, costCalculator, onBack }: UserDetailsVie
     }))
   }, [dailyEntries, modelNames])
 
-  const tokenSeries = useMemo(() => {
+  const aiuSeries = useMemo(() => {
     return modelNames.map((model, index) => ({
       label: model,
       color: MODEL_COLORS[index % MODEL_COLORS.length],
-      data: dailyEntries.map((day) => {
-        const usage = day.models[model]
-        if (!usage) return 0
-        return usage.inputTokens + usage.outputTokens + usage.cacheReadTokens
-      }),
+      data: dailyEntries.map((day) => day.models[model]?.aiuQuantity ?? 0),
     }))
   }, [dailyEntries, modelNames])
 
@@ -94,24 +90,13 @@ export function UserDetailsView({ user, costCalculator, onBack }: UserDetailsVie
 
       for (const model of dayModelNames) {
         const usage = day.models[model]
-        const tokenBasedCost = costCalculator
-          ? costCalculator.calculate(model, {
-              inputTokens: usage.inputTokens,
-              outputTokens: usage.outputTokens,
-              cacheReadTokens: usage.cacheReadTokens,
-            }).totalCost
-          : null
-        const grossDiff = tokenBasedCost === null ? null : tokenBasedCost - usage.grossAmount
-
         rows.push({
           model,
           requests: usage.requests,
-          inputTokens: usage.inputTokens,
-          outputTokens: usage.outputTokens,
-          cacheReadTokens: usage.cacheReadTokens,
-          pruGrossCost: usage.grossAmount,
-          tokenBasedCost,
-          grossDiff,
+          aiuQuantity: usage.aiuQuantity,
+          grossAmount: usage.grossAmount,
+          discountAmount: usage.discountAmount,
+          netAmount: usage.netAmount,
         })
       }
 
@@ -119,15 +104,7 @@ export function UserDetailsView({ user, costCalculator, onBack }: UserDetailsVie
     }
 
     return groups
-  }, [costCalculator, dailyEntries])
-
-  const summaryPruGrossCost = user?.totals.grossAmount ?? 0
-  const summaryAiUnitGrossCost = useMemo(() => {
-    if (!costCalculator) return null
-    return dailySummaryGroups.reduce((total, group) => {
-      return total + group.rows.reduce((rowTotal, row) => rowTotal + (row.tokenBasedCost ?? 0), 0)
-    }, 0)
-  }, [costCalculator, dailySummaryGroups])
+  }, [dailyEntries])
 
   if (!user) {
     return (
@@ -166,12 +143,20 @@ export function UserDetailsView({ user, costCalculator, onBack }: UserDetailsVie
               <td>{formatInt(modelNames.length)}</td>
             </tr>
             <tr>
-              <th>PRU Gross Cost</th>
-              <td>{formatCost(summaryPruGrossCost)}</td>
+              <th>Requests</th>
+              <td>{formatInt(user.totals.requests)}</td>
             </tr>
             <tr>
-              <th>AI Units Gross Cost</th>
-              <td>{summaryAiUnitGrossCost === null ? '—' : formatCost(summaryAiUnitGrossCost)}</td>
+              <th>AI Credits</th>
+              <td>{formatAiu(user.totals.aiuQuantity)}</td>
+            </tr>
+            <tr>
+              <th>Gross Cost</th>
+              <td>{formatCost(user.totals.grossAmount)}</td>
+            </tr>
+            <tr>
+              <th>Net Cost</th>
+              <td>{formatCost(user.totals.netAmount)}</td>
             </tr>
           </tbody>
         </table>
@@ -182,13 +167,8 @@ export function UserDetailsView({ user, costCalculator, onBack }: UserDetailsVie
       ) : (
         <>
           <div className="charts-grid">
-            <MultiSeriesStackedBarChart title="Daily PRUs by Model" labels={labels} series={requestSeries} height={340} />
-            <MultiSeriesStackedBarChart
-              title="Daily Billable Token Ops by Model"
-              labels={labels}
-              series={tokenSeries}
-              height={340}
-            />
+            <MultiSeriesStackedBarChart title="Daily Requests by Model" labels={labels} series={requestSeries} height={340} />
+            <MultiSeriesStackedBarChart title="Daily AI Credits by Model" labels={labels} series={aiuSeries} height={340} />
           </div>
 
           <div className="user-details__tableWrap">
@@ -198,12 +178,10 @@ export function UserDetailsView({ user, costCalculator, onBack }: UserDetailsVie
                   <th>Date</th>
                   <th>Model</th>
                   <th className="user-details__num">Requests</th>
-                  <th className="user-details__num">Input Tokens</th>
-                  <th className="user-details__num">Output Tokens</th>
-                  <th className="user-details__num">Cache Read Tokens</th>
-                  <th className="user-details__num">PRU Gross Cost</th>
-                  <th className="user-details__num">AI Unit Cost</th>
-                  <th className="user-details__num">Gross Diff</th>
+                  <th className="user-details__num">AI Credits</th>
+                  <th className="user-details__num">Gross Cost</th>
+                  <th className="user-details__num">Discounts</th>
+                  <th className="user-details__num">Net Cost</th>
                 </tr>
               </thead>
               <tbody>
@@ -217,24 +195,10 @@ export function UserDetailsView({ user, costCalculator, onBack }: UserDetailsVie
                       )}
                       <td className="user-details__model">{`- ${row.model}`}</td>
                       <td className="user-details__num">{formatInt(row.requests)}</td>
-                      <td className="user-details__num">{formatInt(row.inputTokens)}</td>
-                      <td className="user-details__num">{formatInt(row.outputTokens)}</td>
-                      <td className="user-details__num">{formatInt(row.cacheReadTokens)}</td>
-                      <td className="user-details__num">{formatCost(row.pruGrossCost)}</td>
-                      <td className="user-details__num">
-                        {row.tokenBasedCost === null ? '—' : formatCost(row.tokenBasedCost)}
-                      </td>
-                      <td
-                        className={`user-details__num ${
-                          row.grossDiff === null
-                            ? ''
-                            : row.grossDiff <= 0
-                              ? 'user-details__diff--positive'
-                              : 'user-details__diff--negative'
-                        }`}
-                      >
-                        {row.grossDiff === null ? '—' : formatCost(row.grossDiff)}
-                      </td>
+                      <td className="user-details__num">{formatAiu(row.aiuQuantity)}</td>
+                      <td className="user-details__num">{formatCost(row.grossAmount)}</td>
+                      <td className="user-details__num">{formatCost(row.discountAmount)}</td>
+                      <td className="user-details__num">{formatCost(row.netAmount)}</td>
                     </tr>
                   )),
                 )}

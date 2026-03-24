@@ -8,6 +8,7 @@ export type OrganizationUsage = {
   grossAmount: number
   discountAmount: number
   netAmount: number
+  aiuQuantity: number
 }
 
 export type OrganizationResult = {
@@ -21,6 +22,7 @@ type OrgInternal = {
   grossAmount: number
   discountAmount: number
   netAmount: number
+  aiuQuantity: number
 }
 
 export class OrganizationAggregator implements Aggregator<TokenUsageRecord, OrganizationResult, TokenUsageHeader> {
@@ -46,6 +48,7 @@ export class OrganizationAggregator implements Aggregator<TokenUsageRecord, Orga
         grossAmount: 0,
         discountAmount: 0,
         netAmount: 0,
+        aiuQuantity: 0,
       }
       this.byOrg.set(organization, org)
     }
@@ -56,17 +59,19 @@ export class OrganizationAggregator implements Aggregator<TokenUsageRecord, Orga
     org.grossAmount += record.gross_amount || 0
     org.discountAmount += record.discount_amount || 0
     org.netAmount += record.net_amount || 0
+    org.aiuQuantity += record.aiu_quantity || 0
   }
 
   result(): OrganizationResult {
     const organizations = Array.from(this.byOrg.values())
-      .map<OrganizationUsage>((o) => ({
-        organization: o.organization,
-        userCount: o.users.size,
-        modelCount: o.models.size,
-        grossAmount: o.grossAmount,
-        discountAmount: o.discountAmount,
-        netAmount: o.netAmount,
+      .map<OrganizationUsage>((org) => ({
+        organization: org.organization,
+        userCount: org.users.size,
+        modelCount: org.models.size,
+        grossAmount: org.grossAmount,
+        discountAmount: org.discountAmount,
+        netAmount: org.netAmount,
+        aiuQuantity: org.aiuQuantity,
       }))
       .sort((a, b) => a.organization.localeCompare(b.organization))
 

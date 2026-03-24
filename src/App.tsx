@@ -1,26 +1,81 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import './App.css'
-import { DailyStackedBarChart, SummaryCard, UploadPage } from './components'
+import { CostBreakdownCard, DailyStackedBarChart, MultiSeriesStackedBarChart, SummaryCard, UploadPage } from './components'
 import { UsersView } from './views/UsersView'
 import { UserDetailsView } from './views/UserDetailsView'
 import { CostCentersView } from './views/CostCentersView'
 import { OrganizationsView } from './views/OrganizationsView'
 import { QuickStatsAggregator, type QuickStatsResult } from './pipeline/aggregators/quickStatsAggregator'
 import { ReportContextAggregator } from './pipeline/aggregators/reportContextAggregator'
-import { DailyTokenAggregator, type DailyTokenData } from './pipeline/aggregators/dailyTokenAggregator'
-import { ModelTokenAggregator, type ModelTokenResult } from './pipeline/aggregators/modelTokenAggregator'
+import { DailyUsageAggregator, type DailyUsageData } from './pipeline/aggregators/dailyUsageAggregator'
+import { ModelUsageAggregator, type ModelDailyUsageData, type ModelUsageResult } from './pipeline/aggregators/modelUsageAggregator'
 import { CostCenterAggregator, type CostCenterResult } from './pipeline/aggregators/costCenterAggregator'
 import { OrganizationAggregator, type OrganizationResult } from './pipeline/aggregators/organizationAggregator'
 import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregators/userUsageAggregator'
 import { runPipeline } from './pipeline/runPipeline'
-import {
-  fetchModelPricingConfig,
-  createCostCalculator,
-  type CostCalculator,
-} from './pipeline/costCalculator'
 
 type Status = 'idle' | 'processing' | 'done'
+
+type DatedMetric = {
+  date: string
+}
+
+function formatUsd(n: number): string {
+  return `$ ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+function formatAiu(n: number): string {
+  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
+}
+
+function fillDataForRange<T extends DatedMetric>(
+  data: T[],
+  startDate: string | null,
+  endDate: string | null,
+  createEmpty: (date: string) => T,
+): T[] {
+  if (!startDate || !endDate) return data
+
+  const start = new Date(`${startDate}T00:00:00Z`)
+  const end = new Date(`${endDate}T00:00:00Z`)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return data
+
+  const byDate = new Map<string, T>()
+  for (const item of data) {
+    byDate.set(item.date, item)
+  }
+
+  const out: T[] = []
+  for (let current = start; current <= end; current = new Date(current.getTime() + 24 * 60 * 60 * 1000)) {
+    const isoDate = current.toISOString().slice(0, 10)
+    out.push(byDate.get(isoDate) ?? createEmpty(isoDate))
+  }
+
+  return out
+}
+
+function createEmptyDailyUsage(date: string): DailyUsageData {
+  return {
+    date,
+    requests: 0,
+    aiuQuantity: 0,
+    grossAmount: 0,
+    discountAmount: 0,
+    netAmount: 0,
+  }
+}
+
+function createEmptyModelDailyUsage(date: string): ModelDailyUsageData {
+  return {
+    date,
+    requests: 0,
+    aiuQuantity: 0,
+    grossAmount: 0,
+    discountAmount: 0,
+    netAmount: 0,
+  }
+}
 
 function App() {
   const [status, setStatus] = useState<Status>('idle')
@@ -29,41 +84,24 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
-  const [dailyTokenData, setDailyTokenData] = useState<DailyTokenData[]>([])
+  const [dailyUsageData, setDailyUsageData] = useState<DailyUsageData[]>([])
   const [activeView, setActiveView] = useState<'overview' | 'users' | 'userDetails' | 'costCenters' | 'orgs'>('overview')
   const [userUsage, setUserUsage] = useState<UserUsageResult | null>(null)
-  const [modelTokens, setModelTokens] = useState<ModelTokenResult | null>(null)
+  const [modelUsage, setModelUsage] = useState<ModelUsageResult | null>(null)
   const [selectedModel, setSelectedModel] = useState<string>('')
   const [selectedUsername, setSelectedUsername] = useState<string>('')
   const [costCenters, setCostCenters] = useState<CostCenterResult | null>(null)
   const [orgs, setOrgs] = useState<OrganizationResult | null>(null)
-  const [costCalculator, setCostCalculator] = useState<CostCalculator | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-
-  // Load pricing config on mount
-  useEffect(() => {
-    let cancelled = false
-    fetchModelPricingConfig()
-      .then((config) => {
-        if (cancelled) return
-        setCostCalculator(createCostCalculator(config))
-      })
-      .catch((err) => {
-        console.error('Failed to load model pricing config:', err)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   const handleProcess = useCallback(async (file: File) => {
     setStatus('processing')
     setError(null)
     setQuickStats(null)
     setReportRange(null)
-    setDailyTokenData([])
+    setDailyUsageData([])
     setUserUsage(null)
-    setModelTokens(null)
+    setModelUsage(null)
     setSelectedModel('')
     setSelectedUsername('')
     setCostCenters(null)
@@ -74,19 +112,29 @@ function App() {
     try {
       const statsAggregator = new QuickStatsAggregator()
       const contextAggregator = new ReportContextAggregator()
-      const tokenAggregator = new DailyTokenAggregator()
-      const modelAggregator = new ModelTokenAggregator()
+      const dailyAggregator = new DailyUsageAggregator()
+      const modelAggregator = new ModelUsageAggregator()
       const costCenterAggregator = new CostCenterAggregator()
       const orgAggregator = new OrganizationAggregator()
       const userAggregator = new UserUsageAggregator()
-      await runPipeline(file, [statsAggregator, contextAggregator, tokenAggregator, modelAggregator, costCenterAggregator, orgAggregator, userAggregator])
+
+      await runPipeline(file, [
+        statsAggregator,
+        contextAggregator,
+        dailyAggregator,
+        modelAggregator,
+        costCenterAggregator,
+        orgAggregator,
+        userAggregator,
+      ])
+
       setQuickStats(statsAggregator.result())
       setReportRange(contextAggregator.result())
-      setDailyTokenData(tokenAggregator.result().dailyData)
+      setDailyUsageData(dailyAggregator.result().dailyData)
 
-      const modelResult = modelAggregator.result()
-      setModelTokens(modelResult)
-      setSelectedModel(modelResult.models[0] ?? '')
+      const nextModelUsage = modelAggregator.result()
+      setModelUsage(nextModelUsage)
+      setSelectedModel(nextModelUsage.models[0] ?? '')
 
       setCostCenters(costCenterAggregator.result())
       setOrgs(orgAggregator.result())
@@ -142,77 +190,29 @@ function App() {
   }
 
   const hasReport = fileName !== null || status === 'processing'
-
-  const perModelDailyData = selectedModel && modelTokens ? (modelTokens.byModel[selectedModel] ?? []) : []
-
-  const formatUsd = (n: number): string => {
-    return `$ ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  }
-
-  const fillTokenDataForRange = <T extends {
-    date: string
-    totalInputTokens: number
-    totalOutputTokens: number
-    totalCacheCreationTokens: number
-    totalCacheReadTokens: number
-  }>(
-    data: T[],
-    startDate: string | null,
-    endDate: string | null,
-  ): T[] => {
-    if (!startDate || !endDate) return data
-
-    const start = new Date(`${startDate}T00:00:00Z`)
-    const end = new Date(`${endDate}T00:00:00Z`)
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return data
-
-    const byDate = new Map<string, T>()
-    for (const d of data) {
-      byDate.set(d.date, d)
-    }
-
-    const out: T[] = []
-    for (let cur = start; cur <= end; cur = new Date(cur.getTime() + 24 * 60 * 60 * 1000)) {
-      const iso = cur.toISOString().slice(0, 10)
-      const existing = byDate.get(iso)
-      if (existing) {
-        out.push(existing)
-      } else {
-        out.push({
-          date: iso,
-          totalInputTokens: 0,
-          totalOutputTokens: 0,
-          totalCacheCreationTokens: 0,
-          totalCacheReadTokens: 0,
-        } as T)
-      }
-    }
-
-    return out
-  }
-
   const rangeStart = reportRange?.startDate ?? null
   const rangeEnd = reportRange?.endDate ?? null
 
-  const filledTotalDailyTokenData = fillTokenDataForRange(dailyTokenData, rangeStart, rangeEnd)
-  const filledPerModelDailyData = fillTokenDataForRange(perModelDailyData, rangeStart, rangeEnd)
+  const filledDailyUsageData = fillDataForRange(dailyUsageData, rangeStart, rangeEnd, createEmptyDailyUsage)
+  const perModelDailyData = selectedModel && modelUsage ? (modelUsage.byModel[selectedModel] ?? []) : []
+  const filledPerModelDailyData = fillDataForRange(perModelDailyData, rangeStart, rangeEnd, createEmptyModelDailyUsage)
 
-  const selectedModelTotals = selectedModel && modelTokens ? modelTokens.totalsByModel[selectedModel] : null
-  const selectedGross = selectedModelTotals?.grossAmount ?? 0
-  const selectedNet = selectedModelTotals?.netAmount ?? 0
-  const selectedIncluded = selectedGross - selectedNet
+  const selectedModelTotals = selectedModel && modelUsage ? modelUsage.totalsByModel[selectedModel] : null
   const selectedUser = selectedUsername && userUsage
-    ? userUsage.users.find((u) => u.username === selectedUsername) ?? null
+    ? userUsage.users.find((user) => user.username === selectedUsername) ?? null
     : null
 
-  // Calculate token-based cost and AI units for selected model
-  const selectedModelCost = selectedModelTotals && costCalculator
-    ? costCalculator.calculate(selectedModel, {
-        inputTokens: selectedModelTotals.totalInputTokens,
-        outputTokens: selectedModelTotals.totalOutputTokens,
-        cacheReadTokens: selectedModelTotals.totalCacheReadTokens,
-      })
-    : null
+  const overviewTotals = dailyUsageData.reduce(
+    (totals, day) => {
+      totals.requests += day.requests
+      totals.aiuQuantity += day.aiuQuantity
+      totals.grossAmount += day.grossAmount
+      totals.discountAmount += day.discountAmount
+      totals.netAmount += day.netAmount
+      return totals
+    },
+    { requests: 0, aiuQuantity: 0, grossAmount: 0, discountAmount: 0, netAmount: 0 },
+  )
 
   return (
     <div className={`app ${hasReport ? 'app--review' : ''}`}>
@@ -226,14 +226,12 @@ function App() {
         style={{ display: 'none' }}
       />
 
-      {/* Primary header - black bar */}
       <header className="primary-header">
-        <h1 className="primary-header__title">GitHub Copilot Token Based Billing Report Viewer</h1>
+        <h1 className="primary-header__title">GitHub Copilot Usage Billing Report Viewer</h1>
       </header>
 
       {hasReport ? (
         <>
-          {/* Secondary header - white bar with report info */}
           <nav className="secondary-header">
             <div className="secondary-header__info">
               <span className="secondary-header__label">File:</span>
@@ -275,7 +273,6 @@ function App() {
             </div>
           </nav>
 
-          {/* Main content area for charts and data */}
           <main className="report-content">
             {activeView === 'overview' ? (
               <>
@@ -319,38 +316,61 @@ function App() {
                   )}
                 </section>
 
-                {dailyTokenData.length > 0 && (
-                  <section className="charts-grid">
-                    <DailyStackedBarChart
-                      title="Daily Input/Output Tokens"
-                      data={filledTotalDailyTokenData.map((d) => ({
-                        date: d.date,
-                        primaryValue: d.totalInputTokens,
-                        secondaryValue: d.totalOutputTokens,
-                      }))}
-                      primaryLabel="Input Tokens"
-                      secondaryLabel="Output Tokens"
-                      primaryColor="#6366f1"
-                      secondaryColor="#22c55e"
-                      height={320}
+                {dailyUsageData.length > 0 && (
+                  <section>
+                    <CostBreakdownCard
+                      items={[
+                        { label: 'Requests', value: overviewTotals.requests.toLocaleString() },
+                        { label: 'AI Credits', value: formatAiu(overviewTotals.aiuQuantity) },
+                        { label: 'Gross Cost', value: formatUsd(overviewTotals.grossAmount) },
+                        { label: 'Discounts', value: formatUsd(overviewTotals.discountAmount), variant: 'muted' },
+                        { label: 'Net Cost', value: formatUsd(overviewTotals.netAmount), variant: 'highlight' },
+                      ]}
                     />
-                    <DailyStackedBarChart
-                      title="Daily Cache Tokens"
-                      data={filledTotalDailyTokenData.map((d) => ({
-                        date: d.date,
-                        primaryValue: d.totalCacheCreationTokens,
-                        secondaryValue: d.totalCacheReadTokens,
-                      }))}
-                      primaryLabel="Cache Creation"
-                      secondaryLabel="Cache Read"
-                      primaryColor="#f59e0b"
-                      secondaryColor="#06b6d4"
-                      height={320}
-                    />
+
+                    <section className="charts-grid">
+                      <MultiSeriesStackedBarChart
+                        title="Daily Requests"
+                        labels={filledDailyUsageData.map((day) => day.date)}
+                        series={[
+                          {
+                            label: 'Requests',
+                            color: '#6366f1',
+                            data: filledDailyUsageData.map((day) => day.requests),
+                          },
+                        ]}
+                        height={320}
+                      />
+                      <MultiSeriesStackedBarChart
+                        title="Daily AI Credits"
+                        labels={filledDailyUsageData.map((day) => day.date)}
+                        series={[
+                          {
+                            label: 'AI Credits',
+                            color: '#22c55e',
+                            data: filledDailyUsageData.map((day) => day.aiuQuantity),
+                          },
+                        ]}
+                        height={320}
+                      />
+                      <DailyStackedBarChart
+                        title="Daily Gross Breakdown"
+                        data={filledDailyUsageData.map((day) => ({
+                          date: day.date,
+                          primaryValue: day.discountAmount,
+                          secondaryValue: day.netAmount,
+                        }))}
+                        primaryLabel="Discounts"
+                        secondaryLabel="Net Cost"
+                        primaryColor="#f59e0b"
+                        secondaryColor="#06b6d4"
+                        height={320}
+                      />
+                    </section>
                   </section>
                 )}
 
-                {modelTokens && modelTokens.models.length > 0 && (
+                {modelUsage && modelUsage.models.length > 0 && (
                   <section className="per-model" aria-label="Per-Model Breakdown">
                     <div className="per-model__header">
                       <h3 className="per-model__title">Per-Model Breakdown</h3>
@@ -361,11 +381,11 @@ function App() {
                         <select
                           className="per-model__select"
                           value={selectedModel}
-                          onChange={(e) => setSelectedModel(e.target.value)}
+                          onChange={(event) => setSelectedModel(event.target.value)}
                         >
-                          {modelTokens.models.map((m) => (
-                            <option key={m} value={m}>
-                              {m}
+                          {modelUsage.models.map((model) => (
+                            <option key={model} value={model}>
+                              {model}
                             </option>
                           ))}
                         </select>
@@ -374,81 +394,68 @@ function App() {
                       {selectedModelTotals && (
                         <div className="per-model__summary">
                           <div className="per-model__summary-row">
-                            <span className="per-model__summary-label">Gross Cost</span>
-                            <span className="per-model__summary-value">{formatUsd(selectedGross)}</span>
+                            <span className="per-model__summary-label">Requests</span>
+                            <span className="per-model__summary-value">{selectedModelTotals.requests.toLocaleString()}</span>
                           </div>
                           <div className="per-model__summary-row">
-                            <span className="per-model__summary-label">Included</span>
+                            <span className="per-model__summary-label">AI Credits</span>
+                            <span className="per-model__summary-value">{formatAiu(selectedModelTotals.aiuQuantity)}</span>
+                          </div>
+                          <div className="per-model__summary-row">
+                            <span className="per-model__summary-label">Gross Cost</span>
+                            <span className="per-model__summary-value">{formatUsd(selectedModelTotals.grossAmount)}</span>
+                          </div>
+                          <div className="per-model__summary-row">
+                            <span className="per-model__summary-label">Discounts</span>
                             <span className="per-model__summary-value per-model__summary-value--muted">
-                              {formatUsd(selectedIncluded)}
+                              {formatUsd(selectedModelTotals.discountAmount)}
                             </span>
                           </div>
                           <div className="per-model__summary-row per-model__summary-row--highlight">
                             <span className="per-model__summary-label">Net Cost</span>
                             <span className="per-model__summary-value per-model__summary-value--bold">
-                              {formatUsd(selectedNet)}
+                              {formatUsd(selectedModelTotals.netAmount)}
                             </span>
                           </div>
-                          {selectedModelCost && (
-                            <>
-                              <div className="per-model__summary-row per-model__summary-row--divider" />
-                              <div className="per-model__summary-row">
-                                <span className="per-model__summary-label">Token-Based Cost</span>
-                                <span className="per-model__summary-value">
-                                  {formatUsd(selectedModelCost.totalCost)}
-                                </span>
-                              </div>
-                              <div className="per-model__summary-row per-model__summary-row--highlight">
-                                <span className="per-model__summary-label">AI Units</span>
-                                <span className="per-model__summary-value per-model__summary-value--bold">
-                                  {selectedModelCost.aiUnits.toLocaleString(undefined, {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                  })}
-                                </span>
-                              </div>
-                              <div className="per-model__summary-row">
-                                <span className="per-model__summary-label">Token-Based Diff</span>
-                                <span
-                                  className={`per-model__summary-value per-model__summary-value--bold ${
-                                    selectedModelCost.totalCost - selectedGross <= 0
-                                      ? 'per-model__summary-value--positive'
-                                      : 'per-model__summary-value--negative'
-                                  }`}
-                                >
-                                  {formatUsd(selectedModelCost.totalCost - selectedGross)}
-                                </span>
-                              </div>
-                            </>
-                          )}
                         </div>
                       )}
                     </div>
 
                     {selectedModel && filledPerModelDailyData.length > 0 && (
                       <div className="per-model__charts charts-grid">
-                        <DailyStackedBarChart
-                          title={`Daily Input/Output Tokens (${selectedModel})`}
-                          data={filledPerModelDailyData.map((d) => ({
-                            date: d.date,
-                            primaryValue: d.totalInputTokens,
-                            secondaryValue: d.totalOutputTokens,
-                          }))}
-                          primaryLabel="Input Tokens"
-                          secondaryLabel="Output Tokens"
-                          primaryColor="#6366f1"
-                          secondaryColor="#22c55e"
+                        <MultiSeriesStackedBarChart
+                          title={`Daily Requests (${selectedModel})`}
+                          labels={filledPerModelDailyData.map((day) => day.date)}
+                          series={[
+                            {
+                              label: 'Requests',
+                              color: '#6366f1',
+                              data: filledPerModelDailyData.map((day) => day.requests),
+                            },
+                          ]}
+                          height={320}
+                        />
+                        <MultiSeriesStackedBarChart
+                          title={`Daily AI Credits (${selectedModel})`}
+                          labels={filledPerModelDailyData.map((day) => day.date)}
+                          series={[
+                            {
+                              label: 'AI Credits',
+                              color: '#22c55e',
+                              data: filledPerModelDailyData.map((day) => day.aiuQuantity),
+                            },
+                          ]}
                           height={320}
                         />
                         <DailyStackedBarChart
-                          title={`Daily Cache Tokens (${selectedModel})`}
-                          data={filledPerModelDailyData.map((d) => ({
-                            date: d.date,
-                            primaryValue: d.totalCacheCreationTokens,
-                            secondaryValue: d.totalCacheReadTokens,
+                          title={`Daily Gross Breakdown (${selectedModel})`}
+                          data={filledPerModelDailyData.map((day) => ({
+                            date: day.date,
+                            primaryValue: day.discountAmount,
+                            secondaryValue: day.netAmount,
                           }))}
-                          primaryLabel="Cache Creation"
-                          secondaryLabel="Cache Read"
+                          primaryLabel="Discounts"
+                          secondaryLabel="Net Cost"
                           primaryColor="#f59e0b"
                           secondaryColor="#06b6d4"
                           height={320}
@@ -467,11 +474,7 @@ function App() {
                 }}
               />
             ) : activeView === 'userDetails' ? (
-              <UserDetailsView
-                user={selectedUser}
-                costCalculator={costCalculator}
-                onBack={() => setActiveView('users')}
-              />
+              <UserDetailsView user={selectedUser} onBack={() => setActiveView('users')} />
             ) : activeView === 'costCenters' ? (
               <CostCentersView data={costCenters ?? { costCenters: [] }} />
             ) : (
