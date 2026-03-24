@@ -15,6 +15,7 @@ export type TokenUsageRecord = {
   organization: string
   cost_center_name: string | null
   aiu_quantity: number
+  aiu_gross_amount: number
 }
 
 export type TokenUsageHeader = {
@@ -117,5 +118,6 @@ export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): T
     organization: getString(row, header.index['organization']).trim(),
     cost_center_name: getNullableString(row, header.index['cost_center_name']),
     aiu_quantity: getNumber(row, header.index['aiu_quantity']),
+    aiu_gross_amount: getNumber(row, header.index['aiu_gross_amount']),
   }
 }

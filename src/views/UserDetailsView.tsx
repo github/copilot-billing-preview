@@ -45,10 +45,9 @@ function formatCost(n: number): string {
 
 export interface UserDetailsViewProps {
   user: UserUsage | null
-  onBack: () => void
 }
 
-export function UserDetailsView({ user, onBack }: UserDetailsViewProps) {
+export function UserDetailsView({ user }: UserDetailsViewProps) {
   const dailyEntries = useMemo(() => {
     if (!user) return []
     return Object.values(user.daily).sort((a, b) => a.date.localeCompare(b.date))
@@ -111,9 +110,6 @@ export function UserDetailsView({ user, onBack }: UserDetailsViewProps) {
       <section className="user-details">
         <div className="user-details__header">
           <h2 className="user-details__heading">User Details</h2>
-          <button className="secondary-header__button" onClick={onBack}>
-            Back to users
-          </button>
         </div>
         <div className="user-details__empty">Select a user from the list to view details.</div>
       </section>
@@ -126,9 +122,6 @@ export function UserDetailsView({ user, onBack }: UserDetailsViewProps) {
         <div className="user-details__title">
           <h2 className="user-details__heading">{user.username}</h2>
         </div>
-        <button className="secondary-header__button" onClick={onBack}>
-          Back to users
-        </button>
       </div>
 
       <div className="user-details__summaryWrap">
