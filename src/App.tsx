@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import './App.css'
-import { CostBreakdownCard, DailyStackedBarChart, MultiSeriesStackedBarChart, SummaryCard, UploadPage } from './components'
+import { CostBreakdownCard, DailyStackedBarChart, DualAxisLineChart, UploadPage } from './components'
 import { UsersView } from './views/UsersView'
 import { UserDetailsView } from './views/UserDetailsView'
 import { CostCentersView } from './views/CostCentersView'
@@ -61,6 +61,7 @@ function createEmptyDailyUsage(date: string): DailyUsageData {
     requests: 0,
     aiuQuantity: 0,
     grossAmount: 0,
+    aiuGrossAmount: 0,
     discountAmount: 0,
     netAmount: 0,
   }
@@ -72,6 +73,7 @@ function createEmptyModelDailyUsage(date: string): ModelDailyUsageData {
     requests: 0,
     aiuQuantity: 0,
     grossAmount: 0,
+    aiuGrossAmount: 0,
     discountAmount: 0,
     netAmount: 0,
   }
@@ -207,11 +209,12 @@ function App() {
       totals.requests += day.requests
       totals.aiuQuantity += day.aiuQuantity
       totals.grossAmount += day.grossAmount
+      totals.aiuGrossAmount += day.aiuGrossAmount
       totals.discountAmount += day.discountAmount
       totals.netAmount += day.netAmount
       return totals
     },
-    { requests: 0, aiuQuantity: 0, grossAmount: 0, discountAmount: 0, netAmount: 0 },
+    { requests: 0, aiuQuantity: 0, grossAmount: 0, aiuGrossAmount: 0, discountAmount: 0, netAmount: 0 },
   )
 
   return (
@@ -245,6 +248,13 @@ function App() {
                   </span>
                 </>
               )}
+              {quickStats && (
+                <>
+                  <span className="secondary-header__separator">|</span>
+                  <span className="secondary-header__label">Total rows:</span>
+                  <span className="secondary-header__value">{quickStats.lineCount.toLocaleString()}</span>
+                </>
+              )}
               {status === 'processing' && (
                 <>
                   <span className="secondary-header__separator">|</span>
@@ -253,62 +263,77 @@ function App() {
               )}
             </div>
             <div className="secondary-header__actions">
-              {activeView !== 'overview' && (
-                <button
-                  className="secondary-header__button"
-                  onClick={() => {
-                    if (activeView === 'userDetails') {
-                      setActiveView('users')
-                    } else {
-                      setActiveView('overview')
-                    }
-                  }}
-                >
-                  {activeView === 'userDetails' ? 'Back to users' : 'Back'}
-                </button>
-              )}
               <button className="secondary-header__button" onClick={triggerFileDialog}>
                 Upload another report
               </button>
             </div>
           </nav>
 
-          <main className="report-content">
+          <div className="app-layout">
+            <aside className="sidebar" aria-label="Navigation">
+              <nav className="sidebar__nav">
+                <button
+                  type="button"
+                  className={`sidebar__item ${activeView === 'overview' ? 'sidebar__item--active' : ''}`}
+                  onClick={() => setActiveView('overview')}
+                >
+                  <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                  </svg>
+                  <span className="sidebar__label">Overview</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`sidebar__item ${activeView === 'users' || activeView === 'userDetails' ? 'sidebar__item--active' : ''}`}
+                  disabled={!userUsage}
+                  onClick={() => setActiveView('users')}
+                >
+                  <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M20 21a8 8 0 1 0-16 0" />
+                  </svg>
+                  <span className="sidebar__label">Users</span>
+                </button>
+
+                {orgs && orgs.organizations.length > 0 && (
+                  <button
+                    type="button"
+                    className={`sidebar__item ${activeView === 'orgs' ? 'sidebar__item--active' : ''}`}
+                    onClick={() => setActiveView('orgs')}
+                  >
+                    <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="4" y="3" width="16" height="18" rx="1" />
+                      <path d="M9 7h2M9 11h2M9 15h2M13 7h2M13 11h2M13 15h2" />
+                    </svg>
+                    <span className="sidebar__label">Organizations</span>
+                  </button>
+                )}
+
+                {costCenters && costCenters.costCenters.length > 0 && (
+                  <button
+                    type="button"
+                    className={`sidebar__item ${activeView === 'costCenters' ? 'sidebar__item--active' : ''}`}
+                    onClick={() => setActiveView('costCenters')}
+                  >
+                    <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 3C8.5 3 6 5 6 7c0 2 2.5 4 6 4s6-2 6-4c0-2-2.5-4-6-4Z" />
+                      <path d="M6 7v4c0 2 2.5 4 6 4s6-2 6-4V7" />
+                      <path d="M6 11v4c0 2 2.5 4 6 4s6-2 6-4v-4" />
+                    </svg>
+                    <span className="sidebar__label">Cost Centers</span>
+                  </button>
+                )}
+              </nav>
+            </aside>
+
+            <main className="report-content">
             {activeView === 'overview' ? (
               <>
                 <section className="report-summary" aria-live="polite">
-                  {quickStats && (
-                    <>
-                      <SummaryCard label="Total rows" value={quickStats.lineCount.toLocaleString()} />
-                      <SummaryCard
-                        label="Users"
-                        value={quickStats.userCount.toLocaleString()}
-                        clickable
-                        disabled={!userUsage}
-                        onClick={() => {
-                          if (userUsage) setActiveView('users')
-                        }}
-                      />
-                      <SummaryCard
-                        label="Organizations"
-                        value={quickStats.orgCount.toLocaleString()}
-                        clickable
-                        disabled={!orgs || orgs.organizations.length === 0}
-                        onClick={() => {
-                          if (orgs && orgs.organizations.length > 0) setActiveView('orgs')
-                        }}
-                      />
-                      <SummaryCard
-                        label="Cost Centers"
-                        value={quickStats.costCenterCount.toLocaleString()}
-                        clickable
-                        disabled={!costCenters || costCenters.costCenters.length === 0}
-                        onClick={() => {
-                          if (costCenters && costCenters.costCenters.length > 0) setActiveView('costCenters')
-                        }}
-                      />
-                    </>
-                  )}
                   {error && (
                     <div className="error" role="status">
                       <span>⚠️ {error}</span>
@@ -318,37 +343,91 @@ function App() {
 
                 {dailyUsageData.length > 0 && (
                   <section>
-                    <CostBreakdownCard
-                      items={[
-                        { label: 'Requests', value: overviewTotals.requests.toLocaleString() },
-                        { label: 'AI Credits', value: formatAiu(overviewTotals.aiuQuantity) },
-                        { label: 'Gross Cost', value: formatUsd(overviewTotals.grossAmount) },
-                        { label: 'Discounts', value: formatUsd(overviewTotals.discountAmount), variant: 'muted' },
-                        { label: 'Net Cost', value: formatUsd(overviewTotals.netAmount), variant: 'highlight' },
-                      ]}
-                    />
+                    <div className="overview-cards">
+                      <CostBreakdownCard
+                        items={[
+                          { label: 'Premium Requests', value: overviewTotals.requests.toLocaleString() },
+                          { label: 'AI Credits', value: formatAiu(overviewTotals.aiuQuantity) },
+                          { label: 'PRU Gross Cost', value: formatUsd(overviewTotals.grossAmount) },
+                          { label: 'AI Credits Gross Cost', value: formatUsd(overviewTotals.aiuGrossAmount) },
+                          { label: 'Discounts', value: formatUsd(overviewTotals.discountAmount), variant: 'muted' },
+                          { label: 'Net Cost', value: formatUsd(overviewTotals.netAmount), variant: 'highlight' },
+                        ]}
+                      />
+
+                      {(() => {
+                        const pruCost = overviewTotals.grossAmount
+                        const aicCost = overviewTotals.aiuGrossAmount
+                        const diff = aicCost - pruCost
+                        const absDiff = Math.abs(diff)
+                        const pctChange = pruCost !== 0 ? (diff / pruCost) * 100 : 0
+                        const aicCheaper = diff < 0
+                        const same = Math.abs(diff) < 0.01
+
+                        return (
+                          <div className="billing-comparison">
+                            <h4 className="billing-comparison__title">Billing Comparison</h4>
+                            <div className="billing-comparison__rows">
+                              <div className="billing-comparison__row">
+                                <span className="billing-comparison__label">Current (PRU)</span>
+                                <span className="billing-comparison__value">{formatUsd(pruCost)}</span>
+                              </div>
+                              <div className="billing-comparison__row">
+                                <span className="billing-comparison__label">AI Credits (new)</span>
+                                <span className="billing-comparison__value">{formatUsd(aicCost)}</span>
+                              </div>
+                              <div className="billing-comparison__divider" />
+                              <div className="billing-comparison__row">
+                                <span className="billing-comparison__label">Difference</span>
+                                <span className={`billing-comparison__value ${same ? '' : aicCheaper ? 'billing-comparison__value--savings' : 'billing-comparison__value--overspend'}`}>
+                                  {same ? '$0.00' : `${aicCheaper ? '−' : '+'}${formatUsd(absDiff)}`}
+                                  {!same && pruCost !== 0 && (
+                                    <span className="billing-comparison__pct">
+                                      {` (${Math.abs(pctChange).toFixed(1)}%)`}
+                                    </span>
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                            <div className={`billing-comparison__verdict ${same ? 'billing-comparison__verdict--neutral' : aicCheaper ? 'billing-comparison__verdict--savings' : 'billing-comparison__verdict--overspend'}`}>
+                              <svg className="billing-comparison__verdict-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                {same ? (
+                                  <><line x1="5" y1="12" x2="19" y2="12" /><line x1="12" y1="5" x2="12" y2="19" /></>
+                                ) : aicCheaper ? (
+                                  <><polyline points="6 9 12 15 18 9" /></>
+                                ) : (
+                                  <><polyline points="6 15 12 9 18 15" /></>
+                                )}
+                              </svg>
+                              <span className="billing-comparison__verdict-text">
+                                {same
+                                  ? 'AI Credits and PRU billing are equal'
+                                  : aicCheaper
+                                    ? 'AI Credits billing is cheaper than PRU'
+                                    : 'AI Credits billing is more expensive than PRU'}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })()}
+                    </div>
 
                     <section className="charts-grid">
-                      <MultiSeriesStackedBarChart
-                        title="Daily Requests"
+                      <DualAxisLineChart
+                        title="Daily Requests & AI Credits"
                         labels={filledDailyUsageData.map((day) => day.date)}
                         series={[
                           {
-                            label: 'Requests',
+                            label: 'Premium Requests',
                             color: '#6366f1',
                             data: filledDailyUsageData.map((day) => day.requests),
+                            yAxisID: 'y',
                           },
-                        ]}
-                        height={320}
-                      />
-                      <MultiSeriesStackedBarChart
-                        title="Daily AI Credits"
-                        labels={filledDailyUsageData.map((day) => day.date)}
-                        series={[
                           {
                             label: 'AI Credits',
                             color: '#22c55e',
                             data: filledDailyUsageData.map((day) => day.aiuQuantity),
+                            yAxisID: 'y1',
                           },
                         ]}
                         height={320}
@@ -392,57 +471,114 @@ function App() {
                       </label>
 
                       {selectedModelTotals && (
-                        <div className="per-model__summary">
-                          <div className="per-model__summary-row">
-                            <span className="per-model__summary-label">Requests</span>
-                            <span className="per-model__summary-value">{selectedModelTotals.requests.toLocaleString()}</span>
+                        <div className="overview-cards">
+                          <div className="per-model__summary">
+                            <div className="per-model__summary-row">
+                              <span className="per-model__summary-label">Premium Requests</span>
+                              <span className="per-model__summary-value">{selectedModelTotals.requests.toLocaleString()}</span>
+                            </div>
+                            <div className="per-model__summary-row">
+                              <span className="per-model__summary-label">AI Credits</span>
+                              <span className="per-model__summary-value">{formatAiu(selectedModelTotals.aiuQuantity)}</span>
+                            </div>
+                            <div className="per-model__summary-row">
+                              <span className="per-model__summary-label">PRU Gross Cost</span>
+                              <span className="per-model__summary-value">{formatUsd(selectedModelTotals.grossAmount)}</span>
+                            </div>
+                            <div className="per-model__summary-row">
+                              <span className="per-model__summary-label">AI Credits Gross Cost</span>
+                              <span className="per-model__summary-value">{formatUsd(selectedModelTotals.aiuGrossAmount)}</span>
+                            </div>
+                            <div className="per-model__summary-row">
+                              <span className="per-model__summary-label">Discounts</span>
+                              <span className="per-model__summary-value per-model__summary-value--muted">
+                                {formatUsd(selectedModelTotals.discountAmount)}
+                              </span>
+                            </div>
+                            <div className="per-model__summary-row per-model__summary-row--highlight">
+                              <span className="per-model__summary-label">Net Cost</span>
+                              <span className="per-model__summary-value per-model__summary-value--bold">
+                                {formatUsd(selectedModelTotals.netAmount)}
+                              </span>
+                            </div>
                           </div>
-                          <div className="per-model__summary-row">
-                            <span className="per-model__summary-label">AI Credits</span>
-                            <span className="per-model__summary-value">{formatAiu(selectedModelTotals.aiuQuantity)}</span>
-                          </div>
-                          <div className="per-model__summary-row">
-                            <span className="per-model__summary-label">Gross Cost</span>
-                            <span className="per-model__summary-value">{formatUsd(selectedModelTotals.grossAmount)}</span>
-                          </div>
-                          <div className="per-model__summary-row">
-                            <span className="per-model__summary-label">Discounts</span>
-                            <span className="per-model__summary-value per-model__summary-value--muted">
-                              {formatUsd(selectedModelTotals.discountAmount)}
-                            </span>
-                          </div>
-                          <div className="per-model__summary-row per-model__summary-row--highlight">
-                            <span className="per-model__summary-label">Net Cost</span>
-                            <span className="per-model__summary-value per-model__summary-value--bold">
-                              {formatUsd(selectedModelTotals.netAmount)}
-                            </span>
-                          </div>
+
+                          {(() => {
+                            const pruCost = selectedModelTotals.grossAmount
+                            const aicCost = selectedModelTotals.aiuGrossAmount
+                            const diff = aicCost - pruCost
+                            const absDiff = Math.abs(diff)
+                            const pctChange = pruCost !== 0 ? (diff / pruCost) * 100 : 0
+                            const aicCheaper = diff < 0
+                            const same = Math.abs(diff) < 0.01
+
+                            return (
+                              <div className="billing-comparison">
+                                <h4 className="billing-comparison__title">Model Billing Comparison</h4>
+                                <div className="billing-comparison__rows">
+                                  <div className="billing-comparison__row">
+                                    <span className="billing-comparison__label">Current (PRU)</span>
+                                    <span className="billing-comparison__value">{formatUsd(pruCost)}</span>
+                                  </div>
+                                  <div className="billing-comparison__row">
+                                    <span className="billing-comparison__label">AI Credits (new)</span>
+                                    <span className="billing-comparison__value">{formatUsd(aicCost)}</span>
+                                  </div>
+                                  <div className="billing-comparison__divider" />
+                                  <div className="billing-comparison__row">
+                                    <span className="billing-comparison__label">Difference</span>
+                                    <span className={`billing-comparison__value ${same ? '' : aicCheaper ? 'billing-comparison__value--savings' : 'billing-comparison__value--overspend'}`}>
+                                      {same ? '$0.00' : `${aicCheaper ? '−' : '+'}${formatUsd(absDiff)}`}
+                                      {!same && pruCost !== 0 && (
+                                        <span className="billing-comparison__pct">
+                                          {` (${Math.abs(pctChange).toFixed(1)}%)`}
+                                        </span>
+                                      )}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className={`billing-comparison__verdict ${same ? 'billing-comparison__verdict--neutral' : aicCheaper ? 'billing-comparison__verdict--savings' : 'billing-comparison__verdict--overspend'}`}>
+                                  <svg className="billing-comparison__verdict-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    {same ? (
+                                      <><line x1="5" y1="12" x2="19" y2="12" /><line x1="12" y1="5" x2="12" y2="19" /></>
+                                    ) : aicCheaper ? (
+                                      <><polyline points="6 9 12 15 18 9" /></>
+                                    ) : (
+                                      <><polyline points="6 15 12 9 18 15" /></>
+                                    )}
+                                  </svg>
+                                  <span className="billing-comparison__verdict-text">
+                                    {same
+                                      ? 'AI Credits and PRU billing are equal'
+                                      : aicCheaper
+                                        ? 'AI Credits billing is cheaper for this model'
+                                        : 'AI Credits billing is more expensive for this model'}
+                                  </span>
+                                </div>
+                              </div>
+                            )
+                          })()}
                         </div>
                       )}
                     </div>
 
                     {selectedModel && filledPerModelDailyData.length > 0 && (
                       <div className="per-model__charts charts-grid">
-                        <MultiSeriesStackedBarChart
-                          title={`Daily Requests (${selectedModel})`}
+                        <DualAxisLineChart
+                          title={`Daily Requests & AI Credits (${selectedModel})`}
                           labels={filledPerModelDailyData.map((day) => day.date)}
                           series={[
                             {
-                              label: 'Requests',
+                              label: 'Premium Requests',
                               color: '#6366f1',
                               data: filledPerModelDailyData.map((day) => day.requests),
+                              yAxisID: 'y',
                             },
-                          ]}
-                          height={320}
-                        />
-                        <MultiSeriesStackedBarChart
-                          title={`Daily AI Credits (${selectedModel})`}
-                          labels={filledPerModelDailyData.map((day) => day.date)}
-                          series={[
                             {
                               label: 'AI Credits',
                               color: '#22c55e',
                               data: filledPerModelDailyData.map((day) => day.aiuQuantity),
+                              yAxisID: 'y1',
                             },
                           ]}
                           height={320}
@@ -474,13 +610,14 @@ function App() {
                 }}
               />
             ) : activeView === 'userDetails' ? (
-              <UserDetailsView user={selectedUser} onBack={() => setActiveView('users')} />
+              <UserDetailsView user={selectedUser} />
             ) : activeView === 'costCenters' ? (
               <CostCentersView data={costCenters ?? { costCenters: [] }} />
             ) : (
               <OrganizationsView data={orgs ?? { organizations: [] }} />
             )}
           </main>
+          </div>
         </>
       ) : (
         <UploadPage
