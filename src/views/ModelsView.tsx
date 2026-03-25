@@ -1,11 +1,8 @@
 import { useState, useMemo } from 'react'
 import type { ModelUsageResult, ModelDailyUsageData } from '../pipeline/aggregators/modelUsageAggregator'
 import { BillingComparisonCard, DualAxisLineChart } from '../components'
-import { formatUsd } from '../utils/format'
-
-function formatAiu(n: number): string {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
-}
+import { fillDataForRange } from '../utils/fillDataForRange'
+import { formatAiu, formatUsd } from '../utils/format'
 
 function createEmptyModelDailyUsage(date: string): ModelDailyUsageData {
   return {
@@ -17,31 +14,6 @@ function createEmptyModelDailyUsage(date: string): ModelDailyUsageData {
     discountAmount: 0,
     netAmount: 0,
   }
-}
-
-function fillDataForRange(
-  data: ModelDailyUsageData[],
-  startDate: string | null,
-  endDate: string | null,
-): ModelDailyUsageData[] {
-  if (!startDate || !endDate) return data
-
-  const start = new Date(`${startDate}T00:00:00Z`)
-  const end = new Date(`${endDate}T00:00:00Z`)
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return data
-
-  const byDate = new Map<string, ModelDailyUsageData>()
-  for (const item of data) {
-    byDate.set(item.date, item)
-  }
-
-  const out: ModelDailyUsageData[] = []
-  for (let current = start; current <= end; current = new Date(current.getTime() + 24 * 60 * 60 * 1000)) {
-    const isoDate = current.toISOString().slice(0, 10)
-    out.push(byDate.get(isoDate) ?? createEmptyModelDailyUsage(isoDate))
-  }
-
-  return out
 }
 
 type ModelsViewProps = {
@@ -61,7 +33,7 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
 
   const filledPerModelDailyData = useMemo(() => {
     const raw = selectedModel ? (modelUsage.byModel[selectedModel] ?? []) : []
-    return fillDataForRange(raw, rangeStart, rangeEnd)
+    return fillDataForRange(raw, rangeStart, rangeEnd, createEmptyModelDailyUsage)
   }, [selectedModel, modelUsage, rangeStart, rangeEnd])
 
   const selectedModelAicDiscount = selectedModelTotals ? aicDiscountRate * selectedModelTotals.aiuGrossAmount : 0

@@ -1,11 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { CostCenterResult, CostTotals } from '../pipeline/aggregators/costCenterAggregator'
 import { CostBreakdownCard } from '../components'
-import { formatUsd } from '../utils/format'
-
-function formatAiu(n: number): string {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
-}
+import { formatAiu, formatUsd } from '../utils/format'
 
 function discountsFrom(totals: CostTotals): number {
   return totals.discountAmount

@@ -15,43 +15,10 @@ import { CostCenterAggregator, type CostCenterResult } from './pipeline/aggregat
 import { OrganizationAggregator, type OrganizationResult } from './pipeline/aggregators/organizationAggregator'
 import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregators/userUsageAggregator'
 import { runPipeline } from './pipeline/runPipeline'
-import { formatUsd } from './utils/format'
+import { fillDataForRange } from './utils/fillDataForRange'
+import { formatAiu, formatUsd } from './utils/format'
 
 type Status = 'idle' | 'processing' | 'done'
-
-type DatedMetric = {
-  date: string
-}
-
-function formatAiu(n: number): string {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
-}
-
-function fillDataForRange<T extends DatedMetric>(
-  data: T[],
-  startDate: string | null,
-  endDate: string | null,
-  createEmpty: (date: string) => T,
-): T[] {
-  if (!startDate || !endDate) return data
-
-  const start = new Date(`${startDate}T00:00:00Z`)
-  const end = new Date(`${endDate}T00:00:00Z`)
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return data
-
-  const byDate = new Map<string, T>()
-  for (const item of data) {
-    byDate.set(item.date, item)
-  }
-
-  const out: T[] = []
-  for (let current = start; current <= end; current = new Date(current.getTime() + 24 * 60 * 60 * 1000)) {
-    const isoDate = current.toISOString().slice(0, 10)
-    out.push(byDate.get(isoDate) ?? createEmpty(isoDate))
-  }
-
-  return out
-}
 
 function createEmptyDailyUsage(date: string): DailyUsageData {
   return {
@@ -454,7 +421,7 @@ function App() {
                         href="https://docs.github.com/billing/managing-your-copilot-usage"
                         className="entitlement-banner__link"
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                       >
                         Learn more &rarr;
                       </a>
@@ -466,22 +433,22 @@ function App() {
                         <div className="next-steps__card">
                           <h3 className="next-steps__card-title">Set an account-level budget</h3>
                           <p className="next-steps__card-body">Control your total Copilot costs and prevent overages across your account. A top-level budget ensures spending stays within the limits you set.</p>
-                          <a href="https://github.com/settings/billing/budgets/new" className="next-steps__cta next-steps__cta--primary" target="_blank" rel="noreferrer">Set account budget &rarr;</a>
+                          <a href="https://github.com/settings/billing/budgets/new" className="next-steps__cta next-steps__cta--primary" target="_blank" rel="noopener noreferrer">Set account budget &rarr;</a>
                         </div>
                         <div className="next-steps__card">
                           <h3 className="next-steps__card-title">Set per-user budgets</h3>
                           <p className="next-steps__card-body">Ensure every user gets the access they need while you control how entitlements are distributed. User-level budgets prevent any single person from consuming an outsized share of the pool.</p>
-                          <a href="https://github.com/settings/billing/budgets" className="next-steps__cta" target="_blank" rel="noreferrer">Manage user budgets &rarr;</a>
+                          <a href="https://github.com/settings/billing/budgets" className="next-steps__cta" target="_blank" rel="noopener noreferrer">Manage user budgets &rarr;</a>
                         </div>
                         <div className="next-steps__card">
                           <h3 className="next-steps__card-title">Set product-level budgets</h3>
                           <p className="next-steps__card-body">Your usage breakdown shows cost by product. Set budgets per product (e.g., Coding Agent, Copilot Chat) to control spending where it matters most.</p>
-                          <a href="https://github.com/settings/billing/budgets" className="next-steps__cta" target="_blank" rel="noreferrer">Set product budgets &rarr;</a>
+                          <a href="https://github.com/settings/billing/budgets" className="next-steps__cta" target="_blank" rel="noopener noreferrer">Set product budgets &rarr;</a>
                         </div>
                         <div className="next-steps__card">
                           <h3 className="next-steps__card-title">Read the docs</h3>
                           <p className="next-steps__card-body">Learn how token-based billing works and how to plan for the transition.</p>
-                          <a href="https://docs.github.com/billing" className="next-steps__cta" target="_blank" rel="noreferrer">View documentation &rarr;</a>
+                          <a href="https://docs.github.com/billing" className="next-steps__cta" target="_blank" rel="noopener noreferrer">View documentation &rarr;</a>
                         </div>
                       </div>
                     </section>
