@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import './App.css'
-import { CostBreakdownCard, DailyStackedBarChart, DualAxisLineChart, UploadPage } from './components'
+import { CostBreakdownCard, DualAxisLineChart, UploadPage } from './components'
 import { UsersView } from './views/UsersView'
 import { UserDetailsView } from './views/UserDetailsView'
 import { CostCentersView } from './views/CostCentersView'
@@ -217,6 +217,19 @@ function App() {
     { requests: 0, aiuQuantity: 0, grossAmount: 0, aiuGrossAmount: 0, discountAmount: 0, netAmount: 0 },
   )
 
+  const pooledAicCredits = (userUsage?.users ?? []).reduce((sum, user) => {
+    if (user.totalMonthlyQuota >= 1000) return sum + 7000
+    if (user.totalMonthlyQuota >= 300) return sum + 3000
+    return sum
+  }, 0)
+
+  const aicDiscountRate =
+    overviewTotals.aiuQuantity > 0
+      ? Math.min(pooledAicCredits / overviewTotals.aiuQuantity, 1)
+      : 0
+  const aicDiscount = aicDiscountRate * overviewTotals.aiuGrossAmount
+  const aicNetCost = Math.max(overviewTotals.aiuGrossAmount - aicDiscount, 0)
+
   return (
     <div className={`app ${hasReport ? 'app--review' : ''}`}>
       <input
@@ -358,8 +371,8 @@ function App() {
                         items={[
                           { label: 'AI Credits', value: formatAiu(overviewTotals.aiuQuantity) },
                           { label: 'AI Credits Gross Cost', value: formatUsd(overviewTotals.aiuGrossAmount) },
-                          { label: 'AI Credits Discount', value: formatUsd(0), variant: 'muted' },
-                          { label: 'Net Cost', value: formatUsd(overviewTotals.aiuGrossAmount), variant: 'highlight' },
+                          { label: 'AI Credits Discount', value: formatUsd(aicDiscount), variant: 'muted' },
+                          { label: 'Net Cost', value: formatUsd(aicNetCost), variant: 'highlight' },
                         ]}
                       />
 
@@ -440,17 +453,23 @@ function App() {
                         ]}
                         height={320}
                       />
-                      <DailyStackedBarChart
+                      <DualAxisLineChart
                         title="Daily Gross Breakdown"
-                        data={filledDailyUsageData.map((day) => ({
-                          date: day.date,
-                          primaryValue: day.discountAmount,
-                          secondaryValue: day.netAmount,
-                        }))}
-                        primaryLabel="Discounts"
-                        secondaryLabel="Net Cost"
-                        primaryColor="#f59e0b"
-                        secondaryColor="#06b6d4"
+                        labels={filledDailyUsageData.map((day) => day.date)}
+                        series={[
+                          {
+                            label: 'PRU Gross Cost',
+                            color: '#f59e0b',
+                            data: filledDailyUsageData.map((day) => day.grossAmount),
+                            yAxisID: 'y',
+                          },
+                          {
+                            label: 'AIC Gross Cost',
+                            color: '#06b6d4',
+                            data: filledDailyUsageData.map((day) => day.aiuGrossAmount),
+                            yAxisID: 'y1',
+                          },
+                        ]}
                         height={320}
                       />
                     </section>
@@ -608,17 +627,23 @@ function App() {
                           ]}
                           height={320}
                         />
-                        <DailyStackedBarChart
+                        <DualAxisLineChart
                           title={`Daily Gross Breakdown (${selectedModel})`}
-                          data={filledPerModelDailyData.map((day) => ({
-                            date: day.date,
-                            primaryValue: day.discountAmount,
-                            secondaryValue: day.netAmount,
-                          }))}
-                          primaryLabel="Discounts"
-                          secondaryLabel="Net Cost"
-                          primaryColor="#f59e0b"
-                          secondaryColor="#06b6d4"
+                          labels={filledPerModelDailyData.map((day) => day.date)}
+                          series={[
+                            {
+                              label: 'PRU Gross Cost',
+                              color: '#f59e0b',
+                              data: filledPerModelDailyData.map((day) => day.grossAmount),
+                              yAxisID: 'y',
+                            },
+                            {
+                              label: 'AIC Gross Cost',
+                              color: '#06b6d4',
+                              data: filledPerModelDailyData.map((day) => day.aiuGrossAmount),
+                              yAxisID: 'y1',
+                            },
+                          ]}
                           height={320}
                         />
                       </div>
