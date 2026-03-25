@@ -79,6 +79,17 @@ function createEmptyModelDailyUsage(date: string): ModelDailyUsageData {
   }
 }
 
+// Current pooled AI Credits estimate based on Copilot plan assumptions in the billing export:
+// quota >= 300 => 3,000 included credits, quota >= 1,000 => 7,000 included credits.
+const INCLUDED_AIC_BY_MONTHLY_QUOTA = [
+  { minimumQuota: 1000, includedCredits: 7000 },
+  { minimumQuota: 300, includedCredits: 3000 },
+] as const
+
+function getIncludedAicCredits(totalMonthlyQuota: number): number {
+  return INCLUDED_AIC_BY_MONTHLY_QUOTA.find((plan) => totalMonthlyQuota >= plan.minimumQuota)?.includedCredits ?? 0
+}
+
 function App() {
   const [status, setStatus] = useState<Status>('idle')
   const [quickStats, setQuickStats] = useState<QuickStatsResult | null>(null)
@@ -217,11 +228,7 @@ function App() {
     { requests: 0, aiuQuantity: 0, grossAmount: 0, aiuGrossAmount: 0, discountAmount: 0, netAmount: 0 },
   )
 
-  const pooledAicCredits = (userUsage?.users ?? []).reduce((sum, user) => {
-    if (user.totalMonthlyQuota >= 1000) return sum + 7000
-    if (user.totalMonthlyQuota >= 300) return sum + 3000
-    return sum
-  }, 0)
+  const pooledAicCredits = (userUsage?.users ?? []).reduce((sum, user) => sum + getIncludedAicCredits(user.totalMonthlyQuota), 0)
 
   const aicDiscountRate =
     overviewTotals.aiuQuantity > 0
@@ -377,8 +384,8 @@ function App() {
                       />
 
                       {(() => {
-                        const pruCost = overviewTotals.grossAmount
-                        const aicCost = overviewTotals.aiuGrossAmount
+                        const pruCost = overviewTotals.netAmount
+                        const aicCost = aicNetCost
                         const diff = aicCost - pruCost
                         const absDiff = Math.abs(diff)
                         const pctChange = pruCost !== 0 ? (diff / pruCost) * 100 : 0
@@ -390,11 +397,11 @@ function App() {
                             <h4 className="billing-comparison__title">Billing Comparison</h4>
                             <div className="billing-comparison__rows">
                               <div className="billing-comparison__row">
-                                <span className="billing-comparison__label">Current (PRU)</span>
+                                <span className="billing-comparison__label">Current (PRU net)</span>
                                 <span className="billing-comparison__value">{formatUsd(pruCost)}</span>
                               </div>
                               <div className="billing-comparison__row">
-                                <span className="billing-comparison__label">AI Credits (new)</span>
+                                <span className="billing-comparison__label">AI Credits (net)</span>
                                 <span className="billing-comparison__value">{formatUsd(aicCost)}</span>
                               </div>
                               <div className="billing-comparison__divider" />
@@ -467,7 +474,7 @@ function App() {
                             label: 'AIC Gross Cost',
                             color: '#06b6d4',
                             data: filledDailyUsageData.map((day) => day.aiuGrossAmount),
-                            yAxisID: 'y1',
+                            yAxisID: 'y',
                           },
                         ]}
                         height={320}
@@ -631,20 +638,20 @@ function App() {
                           title={`Daily Gross Breakdown (${selectedModel})`}
                           labels={filledPerModelDailyData.map((day) => day.date)}
                           series={[
-                            {
-                              label: 'PRU Gross Cost',
-                              color: '#f59e0b',
-                              data: filledPerModelDailyData.map((day) => day.grossAmount),
-                              yAxisID: 'y',
-                            },
-                            {
-                              label: 'AIC Gross Cost',
-                              color: '#06b6d4',
-                              data: filledPerModelDailyData.map((day) => day.aiuGrossAmount),
-                              yAxisID: 'y1',
-                            },
-                          ]}
-                          height={320}
+                          {
+                            label: 'PRU Gross Cost',
+                            color: '#f59e0b',
+                            data: filledPerModelDailyData.map((day) => day.grossAmount),
+                            yAxisID: 'y',
+                          },
+                          {
+                            label: 'AIC Gross Cost',
+                            color: '#06b6d4',
+                            data: filledPerModelDailyData.map((day) => day.aiuGrossAmount),
+                            yAxisID: 'y',
+                          },
+                        ]}
+                        height={320}
                         />
                       </div>
                     )}
