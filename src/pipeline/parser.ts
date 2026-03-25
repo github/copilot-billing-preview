@@ -1,3 +1,13 @@
+export const KNOWN_PRODUCTS = ['copilot', 'spark'] as const
+export const KNOWN_SKUS = [
+  'copilot_premium_request',
+  'coding_agent_premium_request',
+  'copilot_ai_unit',
+  'coding_agent_ai_unit',
+  'spark_ai_unit',
+] as const
+export const KNOWN_UNIT_TYPES = ['requests', 'ai-units'] as const
+
 export type TokenUsageRecord = {
   date: string
   username: string

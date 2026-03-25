@@ -7,7 +7,7 @@ import { UserDetailsView } from './views/UserDetailsView'
 import { CostCentersView } from './views/CostCentersView'
 import { OrganizationsView } from './views/OrganizationsView'
 import { QuickStatsAggregator, type QuickStatsResult } from './pipeline/aggregators/quickStatsAggregator'
-import { ReportContextAggregator } from './pipeline/aggregators/reportContextAggregator'
+import { ReportContextAggregator, type ReportContextResult } from './pipeline/aggregators/reportContextAggregator'
 import { DailyUsageAggregator, type DailyUsageData } from './pipeline/aggregators/dailyUsageAggregator'
 import { ModelUsageAggregator, type ModelDailyUsageData, type ModelUsageResult } from './pipeline/aggregators/modelUsageAggregator'
 import { CostCenterAggregator, type CostCenterResult } from './pipeline/aggregators/costCenterAggregator'
@@ -82,7 +82,7 @@ function createEmptyModelDailyUsage(date: string): ModelDailyUsageData {
 function App() {
   const [status, setStatus] = useState<Status>('idle')
   const [quickStats, setQuickStats] = useState<QuickStatsResult | null>(null)
-  const [reportRange, setReportRange] = useState<{ startDate: string | null; endDate: string | null } | null>(null)
+  const [reportRange, setReportRange] = useState<ReportContextResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)

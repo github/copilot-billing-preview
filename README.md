@@ -69,10 +69,10 @@ The application expects CSV files with the following primary columns:
 - `date` - ISO date (YYYY-MM-DD)
 - `username` - GitHub username
 - `product` - Product name (for example `copilot` or `spark`)
-- `sku` - SKU identifier
+- `sku` - SKU identifier (for example `copilot_premium_request`, `coding_agent_premium_request`, `copilot_ai_unit`, `coding_agent_ai_unit`, or `spark_ai_unit`)
 - `model` - AI model name (for example `Claude Sonnet 4.5`, `GPT-5.2`)
 - `quantity` - Number of billable units for the row
-- `unit_type` - Unit basis for billing (`requests` today, later `credits` after cutover)
+- `unit_type` - Unit basis for billing (`requests` or `ai-units` in current reports)
 - `applied_cost_per_quantity` - Unit price applied to the row
 - `gross_amount` - Gross charge before discounts
 - `discount_amount` - Discount applied to the row
