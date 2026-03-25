@@ -26,6 +26,8 @@ export type TokenUsageRecord = {
   cost_center_name: string | null
   aiu_quantity: number
   aiu_gross_amount: number
+  has_aiu_quantity: boolean
+  has_aiu_gross_amount: boolean
 }
 
 export type TokenUsageHeader = {
@@ -51,14 +53,15 @@ export type UsageMetrics = {
 }
 
 export function getUsageMetrics(record: TokenUsageRecord): UsageMetrics {
-  const quantity = record.quantity || 0
-  const grossAmount = record.gross_amount || 0
-  const discountAmount = record.discount_amount || 0
-  const netAmount = record.net_amount || 0
-  const aiuQuantity = record.aiu_quantity || quantity
-  const aiuGrossAmount = record.aiu_gross_amount || grossAmount
+  const quantity = record.quantity
+  const grossAmount = record.gross_amount
+  const discountAmount = record.discount_amount
+  const netAmount = record.net_amount
 
   if (isAiUnitUsageRecord(record.unit_type)) {
+    const aiuQuantity = record.has_aiu_quantity ? record.aiu_quantity : quantity
+    const aiuGrossAmount = record.has_aiu_gross_amount ? record.aiu_gross_amount : grossAmount
+
     return {
       requests: 0,
       aiuQuantity,
@@ -71,9 +74,9 @@ export function getUsageMetrics(record: TokenUsageRecord): UsageMetrics {
 
   return {
     requests: quantity,
-    aiuQuantity,
+    aiuQuantity: record.aiu_quantity,
     grossAmount,
-    aiuGrossAmount,
+    aiuGrossAmount: record.aiu_gross_amount,
     discountAmount,
     netAmount,
   }
@@ -156,6 +159,8 @@ function getNullableString(row: string[], i: number | undefined): string | null 
 
 export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): TokenUsageRecord {
   const row = parseCsvRow(line)
+  const aiuQuantityRaw = getString(row, header.index['aiu_quantity']).trim()
+  const aiuGrossAmountRaw = getString(row, header.index['aiu_gross_amount']).trim()
 
   return {
     date: getString(row, header.index['date']).trim(),
@@ -175,5 +180,7 @@ export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): T
     cost_center_name: getNullableString(row, header.index['cost_center_name']),
     aiu_quantity: getNumber(row, header.index['aiu_quantity']),
     aiu_gross_amount: getNumber(row, header.index['aiu_gross_amount']),
+    has_aiu_quantity: aiuQuantityRaw !== '',
+    has_aiu_gross_amount: aiuGrossAmountRaw !== '',
   }
 }
