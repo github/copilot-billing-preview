@@ -1,12 +1,5 @@
 import type { OrganizationResult } from '../pipeline/aggregators/organizationAggregator'
-
-function formatUsd(n: number): string {
-  return `$ ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
-function formatAiu(n: number): string {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
-}
+import { formatAiu, formatUsd } from '../utils/format'
 
 export function OrganizationsView({ data }: { data: OrganizationResult }) {
   if (data.organizations.length === 0) {

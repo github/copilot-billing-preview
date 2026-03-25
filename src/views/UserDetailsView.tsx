@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { MultiSeriesStackedBarChart } from '../components'
 import type { UserUsage } from '../pipeline/aggregators/userUsageAggregator'
+import { formatAiu } from '../utils/format'
 
 type DailySummaryModelRow = {
   model: string
@@ -31,10 +32,6 @@ const MODEL_COLORS = [
 
 function formatInt(n: number): string {
   return n.toLocaleString()
-}
-
-function formatAiu(n: number): string {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
 }
 
 function formatCost(n: number): string {

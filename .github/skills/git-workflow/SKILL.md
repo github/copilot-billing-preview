@@ -35,7 +35,7 @@ Prefixes: `fix:`, `feat:`, `refactor:`, `chore:`, `ci:`, `docs:`, `test:`
 Use `feat!:` or `fix!:` for breaking changes.
 
 Rules:
-- If this is the first commit in a batch, run `npm run build && npm run lint && npm run test` before creating commits. If any step fails, abort immediately and return the failure to the caller. Do not attempt to fix unrelated issues from inside this skill.
+- If this is the first commit in a batch, inspect `package.json` and run only the validation scripts that actually exist among `build`, `lint`, and `test`. If any existing required script fails, abort immediately and return the failure to the caller. Do not attempt to fix unrelated issues from inside this skill.
 - One logical change per commit — do not bundle unrelated changes
 - Keep the subject line under 72 characters
 - No period at the end of the subject line
@@ -43,6 +43,33 @@ Rules:
   `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`
 
 Before creating any commit, review staged changes with `git diff --cached` to ensure only intended changes are included.
+
+## Enforcing Atomic Commits
+
+Do not treat "atomic commits" as a preference. Treat it as a required workflow.
+
+Before creating any commit:
+
+1. Inspect the full working tree with `git status --short` and `git diff --stat`.
+2. Identify the logical change units before staging anything.
+3. Create a brief internal commit plan such as:
+   - `feat: add parser support for new field`
+   - `feat: add reusable chart component`
+   - `ui: refresh dashboard layout`
+4. Stage and commit one logical unit at a time. Prefer file-based staging when a file belongs entirely to one change; use partial staging such as `git add -p` when multiple logical changes share a file.
+5. After each staged unit, run `git diff --cached` and verify the staged diff matches exactly one logical change.
+6. If the current working tree cannot be cleanly split into atomic commits without risky manual surgery, stop and tell the caller that the changes need to be reorganized before committing.
+
+Never create a single catch-all commit when the diff spans multiple concerns, such as:
+
+- parser or data-shape changes mixed with UI changes
+- new reusable components mixed with feature wiring
+- layout/styling changes mixed with behavior changes
+- review feedback fixes mixed with unrelated cleanup
+
+If the user asks to create a PR and the branch contains uncommitted work spanning multiple logical changes, the skill must split that work into multiple commits before pushing.
+
+If the user asks to address PR feedback, keep the fixes in one commit only when they all serve the same review-driven purpose. If feedback touches separate concerns, split it into multiple commits.
 
 ## PR Creation and Updates
 

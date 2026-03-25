@@ -1,73 +1,26 @@
 import { useCallback, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import './App.css'
-import { CostBreakdownCard, DualAxisLineChart, UploadPage } from './components'
+import { DualAxisLineChart, UploadPage } from './components'
 import { UsersView } from './views/UsersView'
 import { UserDetailsView } from './views/UserDetailsView'
 import { CostCentersView } from './views/CostCentersView'
 import { OrganizationsView } from './views/OrganizationsView'
+import { ModelsView } from './views/ModelsView'
 import { QuickStatsAggregator, type QuickStatsResult } from './pipeline/aggregators/quickStatsAggregator'
 import { ReportContextAggregator, type ReportContextResult } from './pipeline/aggregators/reportContextAggregator'
 import { DailyUsageAggregator, type DailyUsageData } from './pipeline/aggregators/dailyUsageAggregator'
-import { ModelUsageAggregator, type ModelDailyUsageData, type ModelUsageResult } from './pipeline/aggregators/modelUsageAggregator'
+import { ModelUsageAggregator, type ModelUsageResult } from './pipeline/aggregators/modelUsageAggregator'
 import { CostCenterAggregator, type CostCenterResult } from './pipeline/aggregators/costCenterAggregator'
 import { OrganizationAggregator, type OrganizationResult } from './pipeline/aggregators/organizationAggregator'
 import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregators/userUsageAggregator'
 import { runPipeline } from './pipeline/runPipeline'
+import { fillDataForRange } from './utils/fillDataForRange'
+import { formatAiu, formatUsd } from './utils/format'
 
 type Status = 'idle' | 'processing' | 'done'
 
-type DatedMetric = {
-  date: string
-}
-
-function formatUsd(n: number): string {
-  return `$ ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
-function formatAiu(n: number): string {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
-}
-
-function fillDataForRange<T extends DatedMetric>(
-  data: T[],
-  startDate: string | null,
-  endDate: string | null,
-  createEmpty: (date: string) => T,
-): T[] {
-  if (!startDate || !endDate) return data
-
-  const start = new Date(`${startDate}T00:00:00Z`)
-  const end = new Date(`${endDate}T00:00:00Z`)
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return data
-
-  const byDate = new Map<string, T>()
-  for (const item of data) {
-    byDate.set(item.date, item)
-  }
-
-  const out: T[] = []
-  for (let current = start; current <= end; current = new Date(current.getTime() + 24 * 60 * 60 * 1000)) {
-    const isoDate = current.toISOString().slice(0, 10)
-    out.push(byDate.get(isoDate) ?? createEmpty(isoDate))
-  }
-
-  return out
-}
-
 function createEmptyDailyUsage(date: string): DailyUsageData {
-  return {
-    date,
-    requests: 0,
-    aiuQuantity: 0,
-    grossAmount: 0,
-    aiuGrossAmount: 0,
-    discountAmount: 0,
-    netAmount: 0,
-  }
-}
-
-function createEmptyModelDailyUsage(date: string): ModelDailyUsageData {
   return {
     date,
     requests: 0,
@@ -90,75 +43,7 @@ function getIncludedAicCredits(totalMonthlyQuota: number): number {
   return INCLUDED_AIC_BY_MONTHLY_QUOTA.find((plan) => totalMonthlyQuota >= plan.minimumQuota)?.includedCredits ?? 0
 }
 
-type BillingComparisonCardProps = {
-  title: string
-  currentLabel: string
-  currentValue: number
-  aicLabel: string
-  aicValue: number
-  savingsText: string
-  overspendText: string
-  equalText?: string
-}
 
-function BillingComparisonCard({
-  title,
-  currentLabel,
-  currentValue,
-  aicLabel,
-  aicValue,
-  savingsText,
-  overspendText,
-  equalText = 'AIC and PRU billing are equal',
-}: BillingComparisonCardProps) {
-  const diff = aicValue - currentValue
-  const absDiff = Math.abs(diff)
-  const pctChange = currentValue !== 0 ? (diff / currentValue) * 100 : 0
-  const aicCheaper = diff < 0
-  const same = Math.abs(diff) < 0.01
-
-  return (
-    <div className="billing-comparison">
-      <h4 className="billing-comparison__title">{title}</h4>
-      <div className="billing-comparison__rows">
-        <div className="billing-comparison__row">
-          <span className="billing-comparison__label">{currentLabel}</span>
-          <span className="billing-comparison__value">{formatUsd(currentValue)}</span>
-        </div>
-        <div className="billing-comparison__row">
-          <span className="billing-comparison__label">{aicLabel}</span>
-          <span className="billing-comparison__value">{formatUsd(aicValue)}</span>
-        </div>
-        <div className="billing-comparison__divider" />
-        <div className="billing-comparison__row">
-          <span className="billing-comparison__label">Difference</span>
-          <span className={`billing-comparison__value ${same ? '' : aicCheaper ? 'billing-comparison__value--savings' : 'billing-comparison__value--overspend'}`}>
-            {same ? formatUsd(0) : `${aicCheaper ? '−' : '+'}${formatUsd(absDiff)}`}
-            {!same && currentValue !== 0 && (
-              <span className="billing-comparison__pct">
-                {` (${Math.abs(pctChange).toFixed(1)}%)`}
-              </span>
-            )}
-          </span>
-        </div>
-      </div>
-      <div className={`billing-comparison__verdict ${same ? 'billing-comparison__verdict--neutral' : aicCheaper ? 'billing-comparison__verdict--savings' : 'billing-comparison__verdict--overspend'}`}>
-        <svg className="billing-comparison__verdict-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          {same ? (
-            <><line x1="5" y1="12" x2="19" y2="12" /><line x1="12" y1="5" x2="12" y2="19" /></>
-          ) : aicCheaper ? (
-            <><polyline points="6 9 12 15 18 9" /></>
-          ) : (
-            <><polyline points="6 15 12 9 18 15" /></>
-          )}
-        </svg>
-        <span className="billing-comparison__verdict-text">
-          {same ? equalText : aicCheaper ? savingsText : overspendText}
-        </span>
-      </div>
-    </div>
-  )
-}
 
 function App() {
   const [status, setStatus] = useState<Status>('idle')
@@ -168,10 +53,9 @@ function App() {
   const [fileName, setFileName] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [dailyUsageData, setDailyUsageData] = useState<DailyUsageData[]>([])
-  const [activeView, setActiveView] = useState<'overview' | 'users' | 'userDetails' | 'costCenters' | 'orgs'>('overview')
+  const [activeView, setActiveView] = useState<'overview' | 'users' | 'userDetails' | 'costCenters' | 'orgs' | 'models'>('overview')
   const [userUsage, setUserUsage] = useState<UserUsageResult | null>(null)
   const [modelUsage, setModelUsage] = useState<ModelUsageResult | null>(null)
-  const [selectedModel, setSelectedModel] = useState<string>('')
   const [selectedUsername, setSelectedUsername] = useState<string>('')
   const [costCenters, setCostCenters] = useState<CostCenterResult | null>(null)
   const [orgs, setOrgs] = useState<OrganizationResult | null>(null)
@@ -185,7 +69,6 @@ function App() {
     setDailyUsageData([])
     setUserUsage(null)
     setModelUsage(null)
-    setSelectedModel('')
     setSelectedUsername('')
     setCostCenters(null)
     setOrgs(null)
@@ -217,7 +100,6 @@ function App() {
 
       const nextModelUsage = modelAggregator.result()
       setModelUsage(nextModelUsage)
-      setSelectedModel(nextModelUsage.models[0] ?? '')
 
       setCostCenters(costCenterAggregator.result())
       setOrgs(orgAggregator.result())
@@ -277,10 +159,7 @@ function App() {
   const rangeEnd = reportContext?.endDate ?? null
 
   const filledDailyUsageData = fillDataForRange(dailyUsageData, rangeStart, rangeEnd, createEmptyDailyUsage)
-  const perModelDailyData = selectedModel && modelUsage ? (modelUsage.byModel[selectedModel] ?? []) : []
-  const filledPerModelDailyData = fillDataForRange(perModelDailyData, rangeStart, rangeEnd, createEmptyModelDailyUsage)
 
-  const selectedModelTotals = selectedModel && modelUsage ? modelUsage.totalsByModel[selectedModel] : null
   const selectedUser = selectedUsername && userUsage
     ? userUsage.users.find((user) => user.username === selectedUsername) ?? null
     : null
@@ -306,10 +185,6 @@ function App() {
       : 0
   const aicDiscount = aicDiscountRate * overviewTotals.aiuGrossAmount
   const aicNetCost = Math.max(overviewTotals.aiuGrossAmount - aicDiscount, 0)
-  const selectedModelAicDiscount = selectedModelTotals ? aicDiscountRate * selectedModelTotals.aiuGrossAmount : 0
-  const selectedModelAicNetCost = selectedModelTotals
-    ? Math.max(selectedModelTotals.aiuGrossAmount - selectedModelAicDiscount, 0)
-    : 0
 
   return (
     <div className={`app ${hasReport ? 'app--review' : ''}`}>
@@ -378,7 +253,7 @@ function App() {
                   className={`sidebar__item ${activeView === 'overview' ? 'sidebar__item--active' : ''}`}
                   onClick={() => setActiveView('overview')}
                 >
-                  <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                     <rect x="3" y="3" width="7" height="7" rx="1" />
                     <rect x="14" y="3" width="7" height="7" rx="1" />
                     <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -393,12 +268,27 @@ function App() {
                   disabled={!userUsage}
                   onClick={() => setActiveView('users')}
                 >
-                  <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                     <circle cx="12" cy="8" r="4" />
                     <path d="M20 21a8 8 0 1 0-16 0" />
                   </svg>
                   <span className="sidebar__label">Users</span>
                 </button>
+
+                {modelUsage && modelUsage.models.length > 0 && (
+                  <button
+                    type="button"
+                    className={`sidebar__item ${activeView === 'models' ? 'sidebar__item--active' : ''}`}
+                    onClick={() => setActiveView('models')}
+                  >
+                    <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                      <path d="M12 2L2 7l10 5 10-5-10-5Z" />
+                      <path d="M2 17l10 5 10-5" />
+                      <path d="M2 12l10 5 10-5" />
+                    </svg>
+                    <span className="sidebar__label">Models</span>
+                  </button>
+                )}
 
                 {orgs && orgs.organizations.length > 0 && (
                   <button
@@ -406,7 +296,7 @@ function App() {
                     className={`sidebar__item ${activeView === 'orgs' ? 'sidebar__item--active' : ''}`}
                     onClick={() => setActiveView('orgs')}
                   >
-                    <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                       <rect x="4" y="3" width="16" height="18" rx="1" />
                       <path d="M9 7h2M9 11h2M9 15h2M13 7h2M13 11h2M13 15h2" />
                     </svg>
@@ -420,7 +310,7 @@ function App() {
                     className={`sidebar__item ${activeView === 'costCenters' ? 'sidebar__item--active' : ''}`}
                     onClick={() => setActiveView('costCenters')}
                   >
-                    <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                       <path d="M12 3C8.5 3 6 5 6 7c0 2 2.5 4 6 4s6-2 6-4c0-2-2.5-4-6-4Z" />
                       <path d="M6 7v4c0 2 2.5 4 6 4s6-2 6-4V7" />
                       <path d="M6 11v4c0 2 2.5 4 6 4s6-2 6-4v-4" />
@@ -444,44 +334,39 @@ function App() {
 
                 {dailyUsageData.length > 0 && (
                   <section>
-                    <div className="overview-cards">
-                      <CostBreakdownCard
-                        title="PRU Cost"
-                        items={[
-                          { label: 'Premium Requests', value: overviewTotals.requests.toLocaleString() },
-                          { label: 'PRU Gross Cost', value: formatUsd(overviewTotals.grossAmount) },
-                          { label: 'PRU Discounts', value: formatUsd(overviewTotals.discountAmount), variant: 'muted' },
-                          { label: 'Net Cost', value: formatUsd(overviewTotals.netAmount), variant: 'highlight' },
-                        ]}
-                      />
-                      <CostBreakdownCard
-                        title="AIC Cost"
-                        items={[
-                          { label: 'AI Credits', value: formatAiu(overviewTotals.aiuQuantity) },
-                          { label: 'AIC Gross Cost', value: formatUsd(overviewTotals.aiuGrossAmount) },
-                          { label: 'AIC Discount', value: formatUsd(aicDiscount), variant: 'muted' },
-                          { label: 'Net Cost', value: formatUsd(aicNetCost), variant: 'highlight' },
-                        ]}
-                      />
+                    <div className="context-banner">
+                      <h2 className="context-banner__title">GitHub Copilot is moving to token-based billing</h2>
+                      <p className="context-banner__body">
+                        Starting May 1, Copilot usage will be measured in AI Units (AIUs) instead of Premium Requests (PRUs). <strong className="aiu-callout">1 AIU = $0.01.</strong> This preview shows what your usage would look like under the new pricing.
+                      </p>
+                      {fileName && (
+                        <p className="context-banner__note">
+                          Note: This is a preview estimate based on your uploaded report ({fileName}). Actual bills under token-based pricing may differ based on model mix and final pricing.
+                        </p>
+                      )}
+                      <a
+                        href="https://docs.github.com/billing/managing-your-copilot-usage"
+                        className="context-banner__link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Learn more about token-based billing &rarr;
+                      </a>
+                    </div>
 
-                      <BillingComparisonCard
-                        title="Billing Comparison Gross"
-                        currentLabel="Current (PRU gross)"
-                        currentValue={overviewTotals.grossAmount}
-                        aicLabel="AIC (gross)"
-                        aicValue={overviewTotals.aiuGrossAmount}
-                        savingsText="AIC gross billing is cheaper than PRU"
-                        overspendText="AIC gross billing is more expensive than PRU"
-                      />
-                      <BillingComparisonCard
-                        title="Billing Comparison Net"
-                        currentLabel="Current (PRU net)"
-                        currentValue={overviewTotals.netAmount}
-                        aicLabel="AIC (net)"
-                        aicValue={aicNetCost}
-                        savingsText="AIC net billing is cheaper than PRU"
-                        overspendText="AIC net billing is more expensive than PRU"
-                      />
+                    <div className="comparison-grid">
+                      <div className="card comparison-card">
+                        <div className="comparison-card__label">Current billing (PRUs)</div>
+                        <div className="comparison-card__big-number">{formatUsd(overviewTotals.netAmount)}</div>
+                        <div className="comparison-card__period">{overviewTotals.requests.toLocaleString()} PRUs</div>
+                        <div className="comparison-card__rate">1 PRU = $0.04</div>
+                      </div>
+                      <div className="card comparison-card">
+                        <div className="comparison-card__label">Token-based billing (AIUs)</div>
+                        <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatUsd(aicNetCost)}</div>
+                        <div className="comparison-card__period">{formatAiu(overviewTotals.aiuQuantity)} AIUs</div>
+                        <div className="comparison-card__rate">1 AIU = $0.01</div>
+                      </div>
                     </div>
 
                     <section className="charts-grid">
@@ -524,147 +409,62 @@ function App() {
                         height={320}
                       />
                     </section>
-                  </section>
-                )}
 
-                {modelUsage && modelUsage.models.length > 0 && (
-                  <section className="per-model" aria-label="Per-Model Breakdown">
-                    <div className="per-model__header">
-                      <h3 className="per-model__title">Per-Model Breakdown</h3>
-                    </div>
-                    <div className="per-model__controls">
-                      <label className="per-model__label">
-                        Model
-                        <select
-                          className="per-model__select"
-                          value={selectedModel}
-                          onChange={(event) => setSelectedModel(event.target.value)}
-                        >
-                          {modelUsage.models.map((model) => (
-                            <option key={model} value={model}>
-                              {model}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      {selectedModelTotals && (
-                        <div className="overview-cards">
-                          <div className="per-model__summary">
-                            <h4 className="cost-breakdown-card__title">PRU Cost</h4>
-                            <div className="per-model__summary-row">
-                              <span className="per-model__summary-label">Premium Requests</span>
-                              <span className="per-model__summary-value">{selectedModelTotals.requests.toLocaleString()}</span>
-                            </div>
-                            <div className="per-model__summary-row">
-                              <span className="per-model__summary-label">PRU Gross Cost</span>
-                              <span className="per-model__summary-value">{formatUsd(selectedModelTotals.grossAmount)}</span>
-                            </div>
-                            <div className="per-model__summary-row">
-                              <span className="per-model__summary-label">PRU Discounts</span>
-                              <span className="per-model__summary-value per-model__summary-value--muted">
-                                {formatUsd(selectedModelTotals.discountAmount)}
-                              </span>
-                            </div>
-                            <div className="per-model__summary-row per-model__summary-row--highlight">
-                              <span className="per-model__summary-label">Net Cost</span>
-                              <span className="per-model__summary-value per-model__summary-value--bold">
-                                {formatUsd(selectedModelTotals.netAmount)}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="per-model__summary">
-                            <h4 className="cost-breakdown-card__title">AIC Cost</h4>
-                            <div className="per-model__summary-row">
-                              <span className="per-model__summary-label">AI Credits</span>
-                              <span className="per-model__summary-value">{formatAiu(selectedModelTotals.aiuQuantity)}</span>
-                            </div>
-                            <div className="per-model__summary-row">
-                              <span className="per-model__summary-label">AIC Gross Cost</span>
-                              <span className="per-model__summary-value">{formatUsd(selectedModelTotals.aiuGrossAmount)}</span>
-                            </div>
-                            <div className="per-model__summary-row">
-                              <span className="per-model__summary-label">AIC Discount</span>
-                              <span className="per-model__summary-value per-model__summary-value--muted">
-                                {formatUsd(selectedModelAicDiscount)}
-                              </span>
-                            </div>
-                            <div className="per-model__summary-row per-model__summary-row--highlight">
-                              <span className="per-model__summary-label">Net Cost</span>
-                              <span className="per-model__summary-value per-model__summary-value--bold">
-                                {formatUsd(selectedModelAicNetCost)}
-                              </span>
-                            </div>
-                          </div>
-
-                          <BillingComparisonCard
-                            title="Billing Comparison Gross"
-                            currentLabel="Current (PRU gross)"
-                            currentValue={selectedModelTotals.grossAmount}
-                            aicLabel="AIC (gross)"
-                            aicValue={selectedModelTotals.aiuGrossAmount}
-                            savingsText="AIC gross billing is cheaper for this model"
-                            overspendText="AIC gross billing is more expensive for this model"
-                          />
-                          <BillingComparisonCard
-                            title="Billing Comparison Net"
-                            currentLabel="Current (PRU net)"
-                            currentValue={selectedModelTotals.netAmount}
-                            aicLabel="AIC (net)"
-                            aicValue={selectedModelAicNetCost}
-                            savingsText="AIC net billing is cheaper for this model"
-                            overspendText="AIC net billing is more expensive for this model"
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {selectedModel && filledPerModelDailyData.length > 0 && (
-                      <div className="per-model__charts charts-grid">
-                        <DualAxisLineChart
-                          title={`Daily Requests & AI Credits (${selectedModel})`}
-                          labels={filledPerModelDailyData.map((day) => day.date)}
-                          series={[
-                            {
-                              label: 'Premium Requests',
-                              color: '#6366f1',
-                              data: filledPerModelDailyData.map((day) => day.requests),
-                              yAxisID: 'y',
-                            },
-                            {
-                              label: 'AI Credits',
-                              color: '#22c55e',
-                              data: filledPerModelDailyData.map((day) => day.aiuQuantity),
-                              yAxisID: 'y1',
-                            },
-                          ]}
-                          height={320}
-                        />
-                        <DualAxisLineChart
-                          title={`Daily Gross Breakdown (${selectedModel})`}
-                          labels={filledPerModelDailyData.map((day) => day.date)}
-                          series={[
-                          {
-                            label: 'PRU Gross Cost',
-                            color: '#f59e0b',
-                            data: filledPerModelDailyData.map((day) => day.grossAmount),
-                            yAxisID: 'y',
-                          },
-                          {
-                            label: 'AIC Gross Cost',
-                            color: '#06b6d4',
-                            data: filledPerModelDailyData.map((day) => day.aiuGrossAmount),
-                            yAxisID: 'y',
-                          },
-                        ]}
-                        height={320}
-                        />
+                    <div className="entitlement-banner">
+                      <div className="entitlement-banner__body">
+                        <strong className="entitlement-banner__title">Pooled entitlements are coming</strong>
+                        <p className="entitlement-banner__text">
+                          Under token-based billing, entitlements will be pooled across all licensed users in your organization. No more unused capacity going to waste from idle users.
+                        </p>
                       </div>
-                    )}
+                      <a
+                        href="https://docs.github.com/billing/managing-your-copilot-usage"
+                        className="entitlement-banner__link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Learn more &rarr;
+                      </a>
+                    </div>
+
+                    <section className="next-steps">
+                      <h2 className="next-steps__heading">Recommended next steps</h2>
+                      <div className="next-steps__grid">
+                        <div className="next-steps__card">
+                          <h3 className="next-steps__card-title">Set an account-level budget</h3>
+                          <p className="next-steps__card-body">Control your total Copilot costs and prevent overages across your account. A top-level budget ensures spending stays within the limits you set.</p>
+                          <a href="https://github.com/settings/billing/budgets/new" className="next-steps__cta next-steps__cta--primary" target="_blank" rel="noopener noreferrer">Set account budget &rarr;</a>
+                        </div>
+                        <div className="next-steps__card">
+                          <h3 className="next-steps__card-title">Set per-user budgets</h3>
+                          <p className="next-steps__card-body">Ensure every user gets the access they need while you control how entitlements are distributed. User-level budgets prevent any single person from consuming an outsized share of the pool.</p>
+                          <a href="https://github.com/settings/billing/budgets" className="next-steps__cta" target="_blank" rel="noopener noreferrer">Manage user budgets &rarr;</a>
+                        </div>
+                        <div className="next-steps__card">
+                          <h3 className="next-steps__card-title">Set product-level budgets</h3>
+                          <p className="next-steps__card-body">Your usage breakdown shows cost by product. Set budgets per product (e.g., Coding Agent, Copilot Chat) to control spending where it matters most.</p>
+                          <a href="https://github.com/settings/billing/budgets" className="next-steps__cta" target="_blank" rel="noopener noreferrer">Set product budgets &rarr;</a>
+                        </div>
+                        <div className="next-steps__card">
+                          <h3 className="next-steps__card-title">Read the docs</h3>
+                          <p className="next-steps__card-body">Learn how token-based billing works and how to plan for the transition.</p>
+                          <a href="https://docs.github.com/billing" className="next-steps__cta" target="_blank" rel="noopener noreferrer">View documentation &rarr;</a>
+                        </div>
+                      </div>
+                    </section>
                   </section>
                 )}
+
               </>
+            ) : activeView === 'models' ? (
+              modelUsage && modelUsage.models.length > 0 ? (
+                <ModelsView
+                  modelUsage={modelUsage}
+                  aicDiscountRate={aicDiscountRate}
+                  rangeStart={rangeStart}
+                  rangeEnd={rangeEnd}
+                />
+              ) : null
             ) : activeView === 'users' ? (
               <UsersView
                 users={userUsage?.users ?? []}

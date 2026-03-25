@@ -1,14 +1,11 @@
 import { useMemo, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import type { UserUsage } from '../pipeline/aggregators/userUsageAggregator'
+import { formatAiu } from '../utils/format'
 import { Trie } from '../utils/trie'
 
 function formatInt(n: number): string {
   return n.toLocaleString()
-}
-
-function formatAiu(n: number): string {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
 }
 
 function formatCost(n: number): string {
