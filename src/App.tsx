@@ -345,13 +345,21 @@ function App() {
                   <section>
                     <div className="overview-cards">
                       <CostBreakdownCard
+                        title="PRU Cost"
                         items={[
                           { label: 'Premium Requests', value: overviewTotals.requests.toLocaleString() },
-                          { label: 'AI Credits', value: formatAiu(overviewTotals.aiuQuantity) },
                           { label: 'PRU Gross Cost', value: formatUsd(overviewTotals.grossAmount) },
-                          { label: 'AI Credits Gross Cost', value: formatUsd(overviewTotals.aiuGrossAmount) },
-                          { label: 'Discounts', value: formatUsd(overviewTotals.discountAmount), variant: 'muted' },
+                          { label: 'PRU Discounts', value: formatUsd(overviewTotals.discountAmount), variant: 'muted' },
                           { label: 'Net Cost', value: formatUsd(overviewTotals.netAmount), variant: 'highlight' },
+                        ]}
+                      />
+                      <CostBreakdownCard
+                        title="AIC Cost"
+                        items={[
+                          { label: 'AI Credits', value: formatAiu(overviewTotals.aiuQuantity) },
+                          { label: 'AI Credits Gross Cost', value: formatUsd(overviewTotals.aiuGrossAmount) },
+                          { label: 'AI Credits Discount', value: formatUsd(0), variant: 'muted' },
+                          { label: 'Net Cost', value: formatUsd(overviewTotals.aiuGrossAmount), variant: 'highlight' },
                         ]}
                       />
 
@@ -473,24 +481,17 @@ function App() {
                       {selectedModelTotals && (
                         <div className="overview-cards">
                           <div className="per-model__summary">
+                            <h4 className="cost-breakdown-card__title">PRU Cost</h4>
                             <div className="per-model__summary-row">
                               <span className="per-model__summary-label">Premium Requests</span>
                               <span className="per-model__summary-value">{selectedModelTotals.requests.toLocaleString()}</span>
-                            </div>
-                            <div className="per-model__summary-row">
-                              <span className="per-model__summary-label">AI Credits</span>
-                              <span className="per-model__summary-value">{formatAiu(selectedModelTotals.aiuQuantity)}</span>
                             </div>
                             <div className="per-model__summary-row">
                               <span className="per-model__summary-label">PRU Gross Cost</span>
                               <span className="per-model__summary-value">{formatUsd(selectedModelTotals.grossAmount)}</span>
                             </div>
                             <div className="per-model__summary-row">
-                              <span className="per-model__summary-label">AI Credits Gross Cost</span>
-                              <span className="per-model__summary-value">{formatUsd(selectedModelTotals.aiuGrossAmount)}</span>
-                            </div>
-                            <div className="per-model__summary-row">
-                              <span className="per-model__summary-label">Discounts</span>
+                              <span className="per-model__summary-label">PRU Discounts</span>
                               <span className="per-model__summary-value per-model__summary-value--muted">
                                 {formatUsd(selectedModelTotals.discountAmount)}
                               </span>
@@ -499,6 +500,30 @@ function App() {
                               <span className="per-model__summary-label">Net Cost</span>
                               <span className="per-model__summary-value per-model__summary-value--bold">
                                 {formatUsd(selectedModelTotals.netAmount)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="per-model__summary">
+                            <h4 className="cost-breakdown-card__title">AIC Cost</h4>
+                            <div className="per-model__summary-row">
+                              <span className="per-model__summary-label">AI Credits</span>
+                              <span className="per-model__summary-value">{formatAiu(selectedModelTotals.aiuQuantity)}</span>
+                            </div>
+                            <div className="per-model__summary-row">
+                              <span className="per-model__summary-label">AI Credits Gross Cost</span>
+                              <span className="per-model__summary-value">{formatUsd(selectedModelTotals.aiuGrossAmount)}</span>
+                            </div>
+                            <div className="per-model__summary-row">
+                              <span className="per-model__summary-label">AI Credits Discount</span>
+                              <span className="per-model__summary-value per-model__summary-value--muted">
+                                {formatUsd(0)}
+                              </span>
+                            </div>
+                            <div className="per-model__summary-row per-model__summary-row--highlight">
+                              <span className="per-model__summary-label">Net Cost</span>
+                              <span className="per-model__summary-value per-model__summary-value--bold">
+                                {formatUsd(selectedModelTotals.aiuGrossAmount)}
                               </span>
                             </div>
                           </div>
