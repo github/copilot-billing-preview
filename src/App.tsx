@@ -323,7 +323,7 @@ function App() {
 
             <main className="report-content">
             {activeView === 'overview' ? (
-              <>
+              <div className="overview-page">
                 <section className="report-summary" aria-live="polite">
                   {error && (
                     <div className="error" role="status">
@@ -354,18 +354,59 @@ function App() {
                       </a>
                     </div>
 
+                    {(() => {
+                      const savings = overviewTotals.netAmount - aicNetCost
+                      const periodLabel = rangeStart
+                        ? new Date(rangeStart + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric' })
+                        : null
+                      return savings > 0 && periodLabel ? (
+                        <p className="comparison-framing">
+                          Your <strong>{periodLabel}</strong> usage would cost{' '}
+                          <strong>{formatUsd(savings)} less</strong> under token-based pricing
+                        </p>
+                      ) : null
+                    })()}
+
                     <div className="comparison-grid">
                       <div className="card comparison-card">
                         <div className="comparison-card__label">Current billing (PRUs)</div>
                         <div className="comparison-card__big-number">{formatUsd(overviewTotals.netAmount)}</div>
                         <div className="comparison-card__period">{overviewTotals.requests.toLocaleString()} PRUs</div>
                         <div className="comparison-card__rate">1 PRU = $0.04</div>
+                        <div className="comparison-card__breakdown">
+                          <div className="comparison-card__breakdown-row">
+                            <span>Gross cost</span>
+                            <span>{formatUsd(overviewTotals.grossAmount)}</span>
+                          </div>
+                          <div className="comparison-card__breakdown-row comparison-card__breakdown-row--muted">
+                            <span>Discounts</span>
+                            <span>−{formatUsd(overviewTotals.discountAmount)}</span>
+                          </div>
+                          <div className="comparison-card__breakdown-row comparison-card__breakdown-row--total">
+                            <span>Net cost</span>
+                            <span>{formatUsd(overviewTotals.netAmount)}</span>
+                          </div>
+                        </div>
                       </div>
                       <div className="card comparison-card">
                         <div className="comparison-card__label">Token-based billing (AIUs)</div>
                         <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatUsd(aicNetCost)}</div>
                         <div className="comparison-card__period">{formatAiu(overviewTotals.aiuQuantity)} AIUs</div>
                         <div className="comparison-card__rate">1 AIU = $0.01</div>
+                        <div className="comparison-card__breakdown">
+                          <div className="comparison-card__breakdown-row">
+                            <span>Gross cost</span>
+                            <span>{formatUsd(overviewTotals.aiuGrossAmount)}</span>
+                          </div>
+                          <div className="comparison-card__breakdown-row comparison-card__breakdown-row--muted">
+                            <span>Included credits discount</span>
+                            <span>−{formatUsd(aicDiscount)}</span>
+                          </div>
+                          <div className="comparison-card__breakdown-row comparison-card__breakdown-row--total">
+                            <span>Net cost</span>
+                            <span>{formatUsd(aicNetCost)}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -390,22 +431,23 @@ function App() {
                         height={320}
                       />
                       <DualAxisLineChart
-                        title="Daily Gross Breakdown"
+                        title="Daily cost: PRU cost vs AIU cost"
                         labels={filledDailyUsageData.map((day) => day.date)}
                         series={[
                           {
                             label: 'PRU Gross Cost',
-                            color: '#f59e0b',
+                            color: '#cf222e',
                             data: filledDailyUsageData.map((day) => day.grossAmount),
                             yAxisID: 'y',
                           },
                           {
-                            label: 'AIC Gross Cost',
-                            color: '#06b6d4',
+                            label: 'AIU Gross Cost',
+                            color: '#54aeff',
                             data: filledDailyUsageData.map((day) => day.aiuGrossAmount),
                             yAxisID: 'y',
                           },
                         ]}
+                        formatYAsCurrency
                         height={320}
                       />
                     </section>
@@ -455,30 +497,40 @@ function App() {
                   </section>
                 )}
 
-              </>
+              </div>
             ) : activeView === 'models' ? (
               modelUsage && modelUsage.models.length > 0 ? (
-                <ModelsView
-                  modelUsage={modelUsage}
-                  aicDiscountRate={aicDiscountRate}
-                  rangeStart={rangeStart}
-                  rangeEnd={rangeEnd}
-                />
+                <div className="view-content">
+                  <ModelsView
+                    modelUsage={modelUsage}
+                    aicDiscountRate={aicDiscountRate}
+                    rangeStart={rangeStart}
+                    rangeEnd={rangeEnd}
+                  />
+                </div>
               ) : null
             ) : activeView === 'users' ? (
-              <UsersView
-                users={userUsage?.users ?? []}
-                onSelectUser={(username) => {
-                  setSelectedUsername(username)
-                  setActiveView('userDetails')
-                }}
-              />
+              <div className="view-content">
+                <UsersView
+                  users={userUsage?.users ?? []}
+                  onSelectUser={(username) => {
+                    setSelectedUsername(username)
+                    setActiveView('userDetails')
+                  }}
+                />
+              </div>
             ) : activeView === 'userDetails' ? (
-              <UserDetailsView user={selectedUser} />
+              <div className="view-content">
+                <UserDetailsView user={selectedUser} />
+              </div>
             ) : activeView === 'costCenters' ? (
-              <CostCentersView data={costCenters ?? { costCenters: [] }} />
+              <div className="view-content">
+                <CostCentersView data={costCenters ?? { costCenters: [] }} rangeStart={rangeStart} />
+              </div>
             ) : (
-              <OrganizationsView data={orgs ?? { organizations: [] }} />
+              <div className="view-content">
+                <OrganizationsView data={orgs ?? { organizations: [] }} />
+              </div>
             )}
           </main>
           </div>
@@ -492,6 +544,14 @@ function App() {
           onClickDropzone={triggerFileDialog}
           onKeyDown={onKeyDown}
         />
+      )}
+
+      {hasReport && (
+        <footer className="site-footer">
+          This is a preview based on your uploaded usage data. Actual bills may differ.<br />
+          Your data never leaves your browser.{' '}
+          Questions? <a href="https://support.github.com" target="_blank" rel="noopener noreferrer">Contact GitHub Support</a>.
+        </footer>
       )}
     </div>
   )
