@@ -1,5 +1,5 @@
 import type { Aggregator } from './base'
-import type { TokenUsageHeader, TokenUsageRecord } from '../parser'
+import { getUsageMetrics, type TokenUsageHeader, type TokenUsageRecord } from '../parser'
 
 export type OrganizationUsage = {
   organization: string
@@ -56,10 +56,12 @@ export class OrganizationAggregator implements Aggregator<TokenUsageRecord, Orga
     if (username) org.users.add(username)
     org.models.add(model)
 
-    org.grossAmount += record.gross_amount || 0
-    org.discountAmount += record.discount_amount || 0
-    org.netAmount += record.net_amount || 0
-    org.aiuQuantity += record.aiu_quantity || 0
+    const { grossAmount, discountAmount, netAmount, aiuQuantity } = getUsageMetrics(record)
+
+    org.grossAmount += grossAmount
+    org.discountAmount += discountAmount
+    org.netAmount += netAmount
+    org.aiuQuantity += aiuQuantity
   }
 
   result(): OrganizationResult {

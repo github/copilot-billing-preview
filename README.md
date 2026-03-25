@@ -83,7 +83,7 @@ The application expects CSV files with the following primary columns:
 - `cost_center_name` - Optional cost center identifier
 - `aiu_quantity` - AI Credits for the same usage row
 
-The viewer currently ignores `aiu_gross_amount`. Legacy token columns may still appear in older exports, but they are no longer used by the app.
+The viewer now supports both billing units. On `requests` rows, `quantity` and `applied_cost_per_quantity` drive PRU-based calculations while `aiu_quantity` and `aiu_gross_amount` remain comparison values. On `ai-units` rows, Premium Requests and generic PRU gross/discount/net totals are counted as `0`; AI Credits are counted from the AI-specific credit fields (`aiu_quantity`, falling back to `quantity`) and AI Credit gross cost comes from `aiu_gross_amount` (falling back to `gross_amount`). Legacy token columns may still appear in older exports, but they are no longer used by the app.
 
 See [docs/report-format.md](docs/report-format.md) for detailed format specifications.
 

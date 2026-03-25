@@ -33,6 +33,52 @@ export type TokenUsageHeader = {
   index: Record<string, number>
 }
 
+export function isRequestUsageRecord(unitType: string): boolean {
+  return unitType === 'requests'
+}
+
+export function isAiUnitUsageRecord(unitType: string): boolean {
+  return unitType === 'ai-units'
+}
+
+export type UsageMetrics = {
+  requests: number
+  aiuQuantity: number
+  grossAmount: number
+  aiuGrossAmount: number
+  discountAmount: number
+  netAmount: number
+}
+
+export function getUsageMetrics(record: TokenUsageRecord): UsageMetrics {
+  const quantity = record.quantity || 0
+  const grossAmount = record.gross_amount || 0
+  const discountAmount = record.discount_amount || 0
+  const netAmount = record.net_amount || 0
+  const aiuQuantity = record.aiu_quantity || quantity
+  const aiuGrossAmount = record.aiu_gross_amount || grossAmount
+
+  if (isAiUnitUsageRecord(record.unit_type)) {
+    return {
+      requests: 0,
+      aiuQuantity,
+      grossAmount: 0,
+      aiuGrossAmount,
+      discountAmount: 0,
+      netAmount: 0,
+    }
+  }
+
+  return {
+    requests: quantity,
+    aiuQuantity,
+    grossAmount,
+    aiuGrossAmount,
+    discountAmount,
+    netAmount,
+  }
+}
+
 function stripBom(s: string): string {
   return s.replace(/^\uFEFF/, '')
 }

@@ -1,5 +1,5 @@
 import type { Aggregator } from './base'
-import type { TokenUsageRecord } from '../parser'
+import { getUsageMetrics, type TokenUsageRecord } from '../parser'
 
 export interface DailyUsageData {
   date: string
@@ -24,12 +24,7 @@ export class DailyUsageAggregator implements Aggregator<TokenUsageRecord, DailyU
 
     const existing = this.dataByDate.get(date)
 
-    const requests = record.quantity || 0
-    const aiuQuantity = record.aiu_quantity || 0
-    const grossAmount = record.gross_amount || 0
-    const aiuGrossAmount = record.aiu_gross_amount || 0
-    const discountAmount = record.discount_amount || 0
-    const netAmount = record.net_amount || 0
+    const { requests, aiuQuantity, grossAmount, aiuGrossAmount, discountAmount, netAmount } = getUsageMetrics(record)
 
     if (existing) {
       existing.requests += requests
