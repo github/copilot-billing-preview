@@ -9,21 +9,60 @@
   background: #f1f5f9;
 }
 
-/* Primary header - black bar */
-.primary-header {
-  background: #0f172a;
-  padding: 16px 24px;
+/* Site header */
+.site-header {
+  background: #24292f;
+  padding: 14px 24px;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.primary-header__title {
-  margin: 0;
+.site-header__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.site-header__logo {
+  display: block;
+}
+
+.site-header__title {
   font-size: 18px;
   font-weight: 600;
   color: #ffffff;
   letter-spacing: -0.01em;
+}
+
+.site-header__right {
+  display: flex;
+  align-items: center;
+}
+
+.site-header__button {
+  border: 1px solid #57606a;
+  border-radius: 6px;
+  background: transparent;
+  color: #ffffff;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.site-header__button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #8b949e;
+}
+
+.site-header__button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
 }
 
 /* Secondary header - white bar */
@@ -47,12 +86,6 @@
   color: #0f172a;
 }
 
-.secondary-header__actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
 .secondary-header__label {
   color: #64748b;
   font-weight: 500;
@@ -71,29 +104,6 @@
 .secondary-header__status {
   color: #6366f1;
   font-weight: 500;
-}
-
-.secondary-header__button {
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #0f172a;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-  white-space: nowrap;
-}
-
-.secondary-header__button:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-.secondary-header__button:focus-visible {
-  outline: 2px solid #6366f1;
-  outline-offset: 2px;
 }
 
 /* Main report content area */
@@ -913,74 +923,149 @@
 .upload-page {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 24px;
+  gap: 24px;
+  padding: 48px 24px 32px;
+  background: #f6f8fa;
 }
 
-.upload-content {
-  max-width: 480px;
+.upload-screen {
+  max-width: 760px;
   width: 100%;
   text-align: center;
-}
-
-.upload-content__title {
-  margin: 0 0 8px;
-  font-size: 24px;
-  color: #0f172a;
-}
-
-.upload-content__description {
-  margin: 0 0 24px;
-  color: #475569;
-  font-size: 15px;
-}
-
-/* Dropzone */
-.dropzone {
-  position: relative;
-  border: 2px dashed #cbd5e1;
-  border-radius: 12px;
   background: #ffffff;
-  padding: 48px 32px;
+  border: 1px solid #d0d7de;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(31, 35, 40, 0.08);
+  padding: 48px 40px;
+}
+
+.upload-screen__logo {
+  display: block;
+  margin: 0 auto 16px;
+}
+
+.upload-screen__title {
+  margin: 0 0 12px;
+  font-size: 32px;
+  line-height: 1.2;
+  color: #24292f;
+}
+
+.upload-screen__subtitle {
+  margin: 0 auto;
+  max-width: 640px;
+  color: #57606a;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.upload-screen__subtitle--spaced {
+  margin-bottom: 32px;
+}
+
+.upload-zone {
+  position: relative;
+  border: 2px dashed #d0d7de;
+  border-radius: 16px;
+  background: #f6f8fa;
+  padding: 40px 32px;
   text-align: center;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
   cursor: pointer;
 }
 
-.dropzone--active {
-  border-color: #6366f1;
-  background: #eef2ff;
+.upload-zone--active {
+  border-color: #0969da;
+  background: #ddf4ff;
 }
 
-.dropzone:hover {
-  border-color: #94a3b8;
+.upload-zone:hover {
+  border-color: #8c959f;
+  background: #f3f4f6;
 }
 
-.dropzone__content {
+.upload-zone:focus-visible {
+  outline: 2px solid #0969da;
+  outline-offset: 4px;
+}
+
+.upload-zone__content {
   pointer-events: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
 }
 
-.dropzone__icon {
-  font-size: 40px;
-  margin-bottom: 8px;
+.upload-zone__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #d8dee4;
+  margin-bottom: 4px;
 }
 
-.dropzone__title {
+.upload-zone__title {
   margin: 0;
   font-weight: 600;
-  color: #0f172a;
-  font-size: 16px;
+  color: #24292f;
+  font-size: 20px;
 }
 
-.dropzone__hint {
+.upload-zone__hint {
   margin: 0;
-  color: #64748b;
+  color: #57606a;
   font-size: 14px;
+}
+
+.upload-accepted {
+  margin: 16px 0 0;
+  color: #57606a;
+  font-size: 13px;
+}
+
+.security-notice {
+  margin-top: 24px;
+  padding: 20px 24px;
+  text-align: left;
+  border: 1px solid #d8dee4;
+  border-radius: 12px;
+  background: #f6f8fa;
+}
+
+.security-notice__title {
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  color: #24292f;
+}
+
+.security-notice__list {
+  margin: 0;
+  padding-left: 20px;
+  color: #57606a;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.site-footer {
+  text-align: center;
+  color: #57606a;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.site-footer a {
+  color: #636c76;
 }
 
 /* Error */
@@ -1008,12 +1093,21 @@
 
 /* Responsive adjustments */
 @media (max-width: 640px) {
-  .primary-header {
+  .site-header {
     padding: 12px 16px;
   }
   
-  .primary-header__title {
+  .site-header__title {
     font-size: 12px;
+  }
+
+  .site-header__right {
+    width: 100%;
+  }
+
+  .site-header__button {
+    width: 100%;
+    text-align: center;
   }
   
   .secondary-header {
@@ -1033,17 +1127,32 @@
     display: none;
   }
   
-  .secondary-header__button {
-    width: 100%;
-    text-align: center;
-  }
-  
   .report-content {
     padding: 16px;
   }
   
   .charts-grid {
     grid-template-columns: 1fr;
+  }
+
+  .upload-page {
+    padding: 24px 16px;
+  }
+
+  .upload-screen {
+    padding: 32px 20px;
+  }
+
+  .upload-screen__title {
+    font-size: 26px;
+  }
+
+  .upload-zone {
+    padding: 28px 20px;
+  }
+
+  .upload-zone__title {
+    font-size: 18px;
   }
 
   .sidebar {
