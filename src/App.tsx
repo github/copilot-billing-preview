@@ -133,7 +133,7 @@ function BillingComparisonCard({
         <div className="billing-comparison__row">
           <span className="billing-comparison__label">Difference</span>
           <span className={`billing-comparison__value ${same ? '' : aicCheaper ? 'billing-comparison__value--savings' : 'billing-comparison__value--overspend'}`}>
-            {same ? '$0.00' : `${aicCheaper ? '−' : '+'}${formatUsd(absDiff)}`}
+            {same ? formatUsd(0) : `${aicCheaper ? '−' : '+'}${formatUsd(absDiff)}`}
             {!same && currentValue !== 0 && (
               <span className="billing-comparison__pct">
                 {` (${Math.abs(pctChange).toFixed(1)}%)`}
@@ -306,6 +306,10 @@ function App() {
       : 0
   const aicDiscount = aicDiscountRate * overviewTotals.aiuGrossAmount
   const aicNetCost = Math.max(overviewTotals.aiuGrossAmount - aicDiscount, 0)
+  const selectedModelAicDiscount = selectedModelTotals ? aicDiscountRate * selectedModelTotals.aiuGrossAmount : 0
+  const selectedModelAicNetCost = selectedModelTotals
+    ? Math.max(selectedModelTotals.aiuGrossAmount - selectedModelAicDiscount, 0)
+    : 0
 
   return (
     <div className={`app ${hasReport ? 'app--review' : ''}`}>
@@ -583,13 +587,13 @@ function App() {
                             <div className="per-model__summary-row">
                               <span className="per-model__summary-label">AIC Discount</span>
                               <span className="per-model__summary-value per-model__summary-value--muted">
-                                {formatUsd(0)}
+                                {formatUsd(selectedModelAicDiscount)}
                               </span>
                             </div>
                             <div className="per-model__summary-row per-model__summary-row--highlight">
                               <span className="per-model__summary-label">Net Cost</span>
                               <span className="per-model__summary-value per-model__summary-value--bold">
-                                {formatUsd(selectedModelTotals.aiuGrossAmount)}
+                                {formatUsd(selectedModelAicNetCost)}
                               </span>
                             </div>
                           </div>
@@ -608,7 +612,7 @@ function App() {
                             currentLabel="Current (PRU net)"
                             currentValue={selectedModelTotals.netAmount}
                             aicLabel="AIC (net)"
-                            aicValue={selectedModelTotals.aiuGrossAmount}
+                            aicValue={selectedModelAicNetCost}
                             savingsText="AIC net billing is cheaper for this model"
                             overspendText="AIC net billing is more expensive for this model"
                           />
