@@ -39,6 +39,11 @@ export function DualAxisLineChart({
   series,
   height = 320,
 }: DualAxisLineChartProps) {
+  const usesSecondaryAxis = series.some((dataset) => dataset.yAxisID === 'y1')
+  const sharedAxisColor = '#475569'
+  const primaryAxisTitle = usesSecondaryAxis ? series[0].label : `${series[0].label} / ${series[1].label}`
+  const primaryAxisColor = usesSecondaryAxis ? series[0].color : sharedAxisColor
+
   const chartData = {
     labels,
     datasets: series.map((s) => ({
@@ -93,18 +98,19 @@ export function DualAxisLineChart({
         beginAtZero: true,
         title: {
           display: true,
-          text: series[0].label,
+          text: primaryAxisTitle,
           font: { size: 11, weight: 500 },
-          color: series[0].color,
+          color: primaryAxisColor,
         },
         grid: { color: '#e2e8f0' },
         ticks: {
           font: { size: 11 },
-          color: series[0].color,
+          color: primaryAxisColor,
           callback: (value) => (typeof value === 'number' ? formatTick(value) : value),
         },
       },
       y1: {
+        display: usesSecondaryAxis,
         type: 'linear',
         position: 'right',
         beginAtZero: true,
