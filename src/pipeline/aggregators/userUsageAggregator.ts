@@ -21,6 +21,7 @@ export type UserDailyUsage = {
 
 export type UserUsage = {
   username: string
+  totalMonthlyQuota: number
   daily: Record<string, UserDailyUsage>
   totals: Omit<UserDailyUsage, 'date' | 'models'> & {
     distinctModels: number
@@ -33,6 +34,7 @@ export type UserUsageResult = {
 
 type UserUsageInternal = {
   username: string
+  totalMonthlyQuota: number
   daily: Map<string, UserDailyUsage>
   distinctModels: Set<string>
   totals: {
@@ -96,6 +98,7 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
     if (!user) {
       user = {
         username,
+        totalMonthlyQuota: record.total_monthly_quota,
         daily: new Map(),
         distinctModels: new Set(),
         totals: {
@@ -107,6 +110,10 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
         },
       }
       this.byUser.set(username, user)
+    }
+
+    if (record.total_monthly_quota > user.totalMonthlyQuota) {
+      user.totalMonthlyQuota = record.total_monthly_quota
     }
 
     const { requests, grossAmount, discountAmount, netAmount, aiuQuantity } = getUsageMetrics(record)
@@ -144,6 +151,7 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
 
         return {
           username: user.username,
+          totalMonthlyQuota: user.totalMonthlyQuota,
           daily,
           totals: {
             ...user.totals,
