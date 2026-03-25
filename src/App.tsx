@@ -100,7 +100,7 @@ function App() {
     setStatus('processing')
     setError(null)
     setQuickStats(null)
-      setReportContext(null)
+    setReportContext(null)
     setDailyUsageData([])
     setUserUsage(null)
     setModelUsage(null)
