@@ -381,7 +381,7 @@ function App() {
                         href="https://docs.github.com/billing/managing-your-copilot-usage"
                         className="context-banner__link"
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                       >
                         Learn more about token-based billing &rarr;
                       </a>
