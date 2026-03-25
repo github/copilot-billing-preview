@@ -7,7 +7,7 @@ import { UserDetailsView } from './views/UserDetailsView'
 import { CostCentersView } from './views/CostCentersView'
 import { OrganizationsView } from './views/OrganizationsView'
 import { QuickStatsAggregator, type QuickStatsResult } from './pipeline/aggregators/quickStatsAggregator'
-import { ReportContextAggregator } from './pipeline/aggregators/reportContextAggregator'
+import { ReportContextAggregator, type ReportContextResult } from './pipeline/aggregators/reportContextAggregator'
 import { DailyUsageAggregator, type DailyUsageData } from './pipeline/aggregators/dailyUsageAggregator'
 import { ModelUsageAggregator, type ModelDailyUsageData, type ModelUsageResult } from './pipeline/aggregators/modelUsageAggregator'
 import { CostCenterAggregator, type CostCenterResult } from './pipeline/aggregators/costCenterAggregator'
@@ -82,7 +82,7 @@ function createEmptyModelDailyUsage(date: string): ModelDailyUsageData {
 function App() {
   const [status, setStatus] = useState<Status>('idle')
   const [quickStats, setQuickStats] = useState<QuickStatsResult | null>(null)
-  const [reportRange, setReportRange] = useState<{ startDate: string | null; endDate: string | null } | null>(null)
+  const [reportContext, setReportContext] = useState<ReportContextResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
@@ -100,7 +100,7 @@ function App() {
     setStatus('processing')
     setError(null)
     setQuickStats(null)
-    setReportRange(null)
+    setReportContext(null)
     setDailyUsageData([])
     setUserUsage(null)
     setModelUsage(null)
@@ -131,7 +131,7 @@ function App() {
       ])
 
       setQuickStats(statsAggregator.result())
-      setReportRange(contextAggregator.result())
+      setReportContext(contextAggregator.result())
       setDailyUsageData(dailyAggregator.result().dailyData)
 
       const nextModelUsage = modelAggregator.result()
@@ -192,8 +192,8 @@ function App() {
   }
 
   const hasReport = fileName !== null || status === 'processing'
-  const rangeStart = reportRange?.startDate ?? null
-  const rangeEnd = reportRange?.endDate ?? null
+  const rangeStart = reportContext?.startDate ?? null
+  const rangeEnd = reportContext?.endDate ?? null
 
   const filledDailyUsageData = fillDataForRange(dailyUsageData, rangeStart, rangeEnd, createEmptyDailyUsage)
   const perModelDailyData = selectedModel && modelUsage ? (modelUsage.byModel[selectedModel] ?? []) : []
@@ -239,12 +239,12 @@ function App() {
             <div className="secondary-header__info">
               <span className="secondary-header__label">File:</span>
               <span className="secondary-header__value">{fileName ?? 'Processing…'}</span>
-              {reportRange && (reportRange.startDate || reportRange.endDate) && (
+              {reportContext && (reportContext.startDate || reportContext.endDate) && (
                 <>
                   <span className="secondary-header__separator">|</span>
                   <span className="secondary-header__label">Report window:</span>
                   <span className="secondary-header__value">
-                    {reportRange.startDate ?? '—'} to {reportRange.endDate ?? '—'}
+                    {reportContext.startDate ?? '—'} to {reportContext.endDate ?? '—'}
                   </span>
                 </>
               )}

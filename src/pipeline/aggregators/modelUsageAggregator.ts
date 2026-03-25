@@ -1,5 +1,5 @@
 import type { Aggregator } from './base'
-import type { TokenUsageHeader, TokenUsageRecord } from '../parser'
+import { getUsageMetrics, type TokenUsageHeader, type TokenUsageRecord } from '../parser'
 
 export type ModelDailyUsageData = {
   date: string
@@ -77,12 +77,7 @@ export class ModelUsageAggregator implements Aggregator<TokenUsageRecord, ModelU
       this.byModel.set(modelName, model)
     }
 
-    const requests = record.quantity || 0
-    const aiuQuantity = record.aiu_quantity || 0
-    const grossAmount = record.gross_amount || 0
-    const aiuGrossAmount = record.aiu_gross_amount || 0
-    const discountAmount = record.discount_amount || 0
-    const netAmount = record.net_amount || 0
+    const { requests, aiuQuantity, grossAmount, aiuGrossAmount, discountAmount, netAmount } = getUsageMetrics(record)
 
     const day = ensureDay(model, date)
     day.requests += requests

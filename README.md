@@ -69,10 +69,10 @@ The application expects CSV files with the following primary columns:
 - `date` - ISO date (YYYY-MM-DD)
 - `username` - GitHub username
 - `product` - Product name (for example `copilot` or `spark`)
-- `sku` - SKU identifier
+- `sku` - SKU identifier (for example `copilot_premium_request`, `coding_agent_premium_request`, `copilot_ai_unit`, `coding_agent_ai_unit`, or `spark_ai_unit`)
 - `model` - AI model name (for example `Claude Sonnet 4.5`, `GPT-5.2`)
 - `quantity` - Number of billable units for the row
-- `unit_type` - Unit basis for billing (`requests` today, later `credits` after cutover)
+- `unit_type` - Unit basis for billing (`requests` or `ai-units` in current reports)
 - `applied_cost_per_quantity` - Unit price applied to the row
 - `gross_amount` - Gross charge before discounts
 - `discount_amount` - Discount applied to the row
@@ -83,7 +83,7 @@ The application expects CSV files with the following primary columns:
 - `cost_center_name` - Optional cost center identifier
 - `aiu_quantity` - AI Credits for the same usage row
 
-The viewer currently ignores `aiu_gross_amount`. Legacy token columns may still appear in older exports, but they are no longer used by the app.
+The viewer now supports both billing units. On `requests` rows, `quantity` and `applied_cost_per_quantity` drive PRU-based calculations, while `aiu_quantity` and `aiu_gross_amount` remain comparison values and stay `0` when those AI Credit fields are absent. On `ai-units` rows, Premium Requests and generic PRU gross/discount/net totals are counted as `0`; AI Credits are counted from the AI-specific credit fields (`aiu_quantity`, falling back to `quantity` only when the AI field is absent) and AI Credit gross cost comes from `aiu_gross_amount` (falling back to `gross_amount` only when the AI field is absent). Legacy token columns may still appear in older exports, but they are no longer used by the app.
 
 See [docs/report-format.md](docs/report-format.md) for detailed format specifications.
 

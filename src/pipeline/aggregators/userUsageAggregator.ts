@@ -1,5 +1,5 @@
 import type { Aggregator } from './base'
-import type { TokenUsageHeader, TokenUsageRecord } from '../parser'
+import { getUsageMetrics, type TokenUsageHeader, type TokenUsageRecord } from '../parser'
 
 export type UserModelDailyUsage = {
   requests: number
@@ -109,11 +109,7 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
       this.byUser.set(username, user)
     }
 
-    const requests = record.quantity || 0
-    const grossAmount = record.gross_amount || 0
-    const discountAmount = record.discount_amount || 0
-    const netAmount = record.net_amount || 0
-    const aiuQuantity = record.aiu_quantity || 0
+    const { requests, grossAmount, discountAmount, netAmount, aiuQuantity } = getUsageMetrics(record)
 
     user.distinctModels.add(model)
     user.totals.requests += requests

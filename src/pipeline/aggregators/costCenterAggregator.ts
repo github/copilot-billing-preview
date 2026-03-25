@@ -1,5 +1,5 @@
 import type { Aggregator } from './base'
-import type { TokenUsageHeader, TokenUsageRecord } from '../parser'
+import { getUsageMetrics, type TokenUsageHeader, type TokenUsageRecord } from '../parser'
 
 export type CostTotals = {
   grossAmount: number
@@ -87,10 +87,7 @@ export class CostCenterAggregator implements Aggregator<TokenUsageRecord, CostCe
 
     if (username) costCenter.users.add(username)
 
-    const grossAmount = record.gross_amount || 0
-    const discountAmount = record.discount_amount || 0
-    const netAmount = record.net_amount || 0
-    const aiuQuantity = record.aiu_quantity || 0
+    const { grossAmount, discountAmount, netAmount, aiuQuantity } = getUsageMetrics(record)
 
     costCenter.totals.grossAmount += grossAmount
     costCenter.totals.discountAmount += discountAmount

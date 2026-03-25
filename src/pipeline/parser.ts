@@ -1,3 +1,13 @@
+export const KNOWN_PRODUCTS = ['copilot', 'spark'] as const
+export const KNOWN_SKUS = [
+  'copilot_premium_request',
+  'coding_agent_premium_request',
+  'copilot_ai_unit',
+  'coding_agent_ai_unit',
+  'spark_ai_unit',
+] as const
+export const KNOWN_UNIT_TYPES = ['requests', 'ai-units'] as const
+
 export type TokenUsageRecord = {
   date: string
   username: string
@@ -16,11 +26,60 @@ export type TokenUsageRecord = {
   cost_center_name: string | null
   aiu_quantity: number
   aiu_gross_amount: number
+  has_aiu_quantity: boolean
+  has_aiu_gross_amount: boolean
 }
 
 export type TokenUsageHeader = {
   columns: string[]
   index: Record<string, number>
+}
+
+export function isRequestUsageRecord(unitType: string): boolean {
+  return unitType === 'requests'
+}
+
+export function isAiUnitUsageRecord(unitType: string): boolean {
+  return unitType === 'ai-units'
+}
+
+export type UsageMetrics = {
+  requests: number
+  aiuQuantity: number
+  grossAmount: number
+  aiuGrossAmount: number
+  discountAmount: number
+  netAmount: number
+}
+
+export function getUsageMetrics(record: TokenUsageRecord): UsageMetrics {
+  const quantity = record.quantity
+  const grossAmount = record.gross_amount
+  const discountAmount = record.discount_amount
+  const netAmount = record.net_amount
+
+  if (isAiUnitUsageRecord(record.unit_type)) {
+    const aiuQuantity = record.has_aiu_quantity ? record.aiu_quantity : quantity
+    const aiuGrossAmount = record.has_aiu_gross_amount ? record.aiu_gross_amount : grossAmount
+
+    return {
+      requests: 0,
+      aiuQuantity,
+      grossAmount: 0,
+      aiuGrossAmount,
+      discountAmount: 0,
+      netAmount: 0,
+    }
+  }
+
+  return {
+    requests: quantity,
+    aiuQuantity: record.aiu_quantity,
+    grossAmount,
+    aiuGrossAmount: record.aiu_gross_amount,
+    discountAmount,
+    netAmount,
+  }
 }
 
 function stripBom(s: string): string {
@@ -100,6 +159,8 @@ function getNullableString(row: string[], i: number | undefined): string | null 
 
 export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): TokenUsageRecord {
   const row = parseCsvRow(line)
+  const aiuQuantityRaw = getString(row, header.index['aiu_quantity']).trim()
+  const aiuGrossAmountRaw = getString(row, header.index['aiu_gross_amount']).trim()
 
   return {
     date: getString(row, header.index['date']).trim(),
@@ -119,5 +180,7 @@ export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): T
     cost_center_name: getNullableString(row, header.index['cost_center_name']),
     aiu_quantity: getNumber(row, header.index['aiu_quantity']),
     aiu_gross_amount: getNumber(row, header.index['aiu_gross_amount']),
+    has_aiu_quantity: aiuQuantityRaw !== '',
+    has_aiu_gross_amount: aiuGrossAmountRaw !== '',
   }
 }
