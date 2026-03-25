@@ -7,12 +7,14 @@ export interface CostBreakdownItem {
 }
 
 export interface CostBreakdownCardProps {
+  title?: string
   items: CostBreakdownItem[]
 }
 
-export function CostBreakdownCard({ items }: CostBreakdownCardProps) {
+export function CostBreakdownCard({ title, items }: CostBreakdownCardProps) {
   return (
     <div className="cost-breakdown-card">
+      {title && <h4 className="cost-breakdown-card__title">{title}</h4>}
       {items.map((item, index) => {
         const isHighlight = item.variant === 'highlight'
         const isMuted = item.variant === 'muted'

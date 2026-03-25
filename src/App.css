@@ -332,6 +332,15 @@
   max-width: 300px;
 }
 
+.cost-breakdown-card__title {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .cost-breakdown-card__row {
   display: flex;
   justify-content: space-between;
