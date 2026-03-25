@@ -1,8 +1,5 @@
 import type { OrganizationResult } from '../pipeline/aggregators/organizationAggregator'
-
-function formatUsd(n: number): string {
-  return `$ ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
+import { formatUsd } from '../utils/format'
 
 function formatAiu(n: number): string {
   return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })

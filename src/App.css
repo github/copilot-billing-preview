@@ -1320,6 +1320,18 @@
 
 /* Responsive adjustments */
 @media (max-width: 640px) {
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .next-steps__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .next-steps__grid > .next-steps__card:last-child {
+    grid-column: auto;
+  }
+
   .site-header {
     padding: 12px 16px;
   }

@@ -15,15 +15,12 @@ import { CostCenterAggregator, type CostCenterResult } from './pipeline/aggregat
 import { OrganizationAggregator, type OrganizationResult } from './pipeline/aggregators/organizationAggregator'
 import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregators/userUsageAggregator'
 import { runPipeline } from './pipeline/runPipeline'
+import { formatUsd } from './utils/format'
 
 type Status = 'idle' | 'processing' | 'done'
 
 type DatedMetric = {
   date: string
-}
-
-function formatUsd(n: number): string {
-  return `$ ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function formatAiu(n: number): string {
@@ -289,7 +286,7 @@ function App() {
                   className={`sidebar__item ${activeView === 'overview' ? 'sidebar__item--active' : ''}`}
                   onClick={() => setActiveView('overview')}
                 >
-                  <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                     <rect x="3" y="3" width="7" height="7" rx="1" />
                     <rect x="14" y="3" width="7" height="7" rx="1" />
                     <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -304,7 +301,7 @@ function App() {
                   disabled={!userUsage}
                   onClick={() => setActiveView('users')}
                 >
-                  <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                     <circle cx="12" cy="8" r="4" />
                     <path d="M20 21a8 8 0 1 0-16 0" />
                   </svg>
@@ -317,7 +314,7 @@ function App() {
                     className={`sidebar__item ${activeView === 'models' ? 'sidebar__item--active' : ''}`}
                     onClick={() => setActiveView('models')}
                   >
-                    <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                       <path d="M12 2L2 7l10 5 10-5-10-5Z" />
                       <path d="M2 17l10 5 10-5" />
                       <path d="M2 12l10 5 10-5" />
@@ -332,7 +329,7 @@ function App() {
                     className={`sidebar__item ${activeView === 'orgs' ? 'sidebar__item--active' : ''}`}
                     onClick={() => setActiveView('orgs')}
                   >
-                    <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                       <rect x="4" y="3" width="16" height="18" rx="1" />
                       <path d="M9 7h2M9 11h2M9 15h2M13 7h2M13 11h2M13 15h2" />
                     </svg>
@@ -346,7 +343,7 @@ function App() {
                     className={`sidebar__item ${activeView === 'costCenters' ? 'sidebar__item--active' : ''}`}
                     onClick={() => setActiveView('costCenters')}
                   >
-                    <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                       <path d="M12 3C8.5 3 6 5 6 7c0 2 2.5 4 6 4s6-2 6-4c0-2-2.5-4-6-4Z" />
                       <path d="M6 7v4c0 2 2.5 4 6 4s6-2 6-4V7" />
                       <path d="M6 11v4c0 2 2.5 4 6 4s6-2 6-4v-4" />
