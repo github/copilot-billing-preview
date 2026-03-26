@@ -1707,3 +1707,44 @@ td.cost-centers-view__num {
   line-height: 1.5;
   margin: 0;
 }
+
+/* ── FAQ View ────────────────────────────────────────────────── */
+.faq {
+  max-width: 960px;
+}
+
+.faq__heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 1.5rem;
+}
+
+.faq__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+.faq__item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+}
+
+.faq__question {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.75rem;
+}
+
+.faq__answer {
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.65;
+  margin: 0;
+}

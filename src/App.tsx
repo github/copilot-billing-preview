@@ -8,6 +8,7 @@ import { CostCentersView } from './views/CostCentersView'
 import { OrganizationsView } from './views/OrganizationsView'
 import { ModelsView } from './views/ModelsView'
 import { ReportGuideView } from './views/ReportGuideView'
+import { FaqView } from './views/FaqView'
 import { QuickStatsAggregator, type QuickStatsResult } from './pipeline/aggregators/quickStatsAggregator'
 import { ReportContextAggregator, type ReportContextResult } from './pipeline/aggregators/reportContextAggregator'
 import { DailyUsageAggregator, type DailyUsageData } from './pipeline/aggregators/dailyUsageAggregator'
@@ -54,7 +55,7 @@ function App() {
   const [fileName, setFileName] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [dailyUsageData, setDailyUsageData] = useState<DailyUsageData[]>([])
-  const [activeView, setActiveView] = useState<'overview' | 'users' | 'userDetails' | 'costCenters' | 'orgs' | 'models' | 'guide'>('overview')
+  const [activeView, setActiveView] = useState<'overview' | 'users' | 'userDetails' | 'costCenters' | 'orgs' | 'models' | 'guide' | 'faq'>('overview')
   const [userUsage, setUserUsage] = useState<UserUsageResult | null>(null)
   const [modelUsage, setModelUsage] = useState<ModelUsageResult | null>(null)
   const [selectedUsername, setSelectedUsername] = useState<string>('')
@@ -330,6 +331,19 @@ function App() {
                     <path d="M12 16v-4M12 8h.01" />
                   </svg>
                   <span className="sidebar__label">Report Format</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`sidebar__item ${activeView === 'faq' ? 'sidebar__item--active' : ''}`}
+                  onClick={() => setActiveView('faq')}
+                >
+                  <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <circle cx="12" cy="17" r="0.5" fill="currentColor" />
+                  </svg>
+                  <span className="sidebar__label">FAQ</span>
                 </button>
               </nav>
             </aside>
