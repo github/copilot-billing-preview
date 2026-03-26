@@ -25,6 +25,7 @@ export interface DualAxisLineChartProps {
   labels: string[]
   series: [LineSeries, LineSeries]
   height?: number
+  formatYAsCurrency?: boolean
 }
 
 function formatTick(value: number): string {
@@ -33,12 +34,19 @@ function formatTick(value: number): string {
   return value.toString()
 }
 
+function formatUsdTick(value: number): string {
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`
+  return `$${value.toFixed(2)}`
+}
+
 export function DualAxisLineChart({
   title,
   labels,
   series,
   height = 320,
+  formatYAsCurrency = false,
 }: DualAxisLineChartProps) {
+  const tickFormatter = formatYAsCurrency ? formatUsdTick : formatTick
   const usesSecondaryAxis = series.some((dataset) => dataset.yAxisID === 'y1')
   const sharedAxisColor = '#475569'
   const primaryAxisTitle = usesSecondaryAxis ? series[0].label : `${series[0].label} / ${series[1].label}`
@@ -82,7 +90,8 @@ export function DualAxisLineChart({
         callbacks: {
           label: (context) => {
             const value = context.parsed.y ?? 0
-            return `${context.dataset.label}: ${value.toLocaleString()}`
+            const formatted = formatYAsCurrency ? formatUsdTick(value) : value.toLocaleString()
+            return `${context.dataset.label}: ${formatted}`
           },
         },
       },
@@ -106,7 +115,7 @@ export function DualAxisLineChart({
         ticks: {
           font: { size: 11 },
           color: primaryAxisColor,
-          callback: (value) => (typeof value === 'number' ? formatTick(value) : value),
+          callback: (value) => (typeof value === 'number' ? tickFormatter(value) : value),
         },
       },
       y1: {
@@ -124,7 +133,7 @@ export function DualAxisLineChart({
         ticks: {
           font: { size: 11 },
           color: series[1].color,
-          callback: (value) => (typeof value === 'number' ? formatTick(value) : value),
+          callback: (value) => (typeof value === 'number' ? tickFormatter(value) : value),
         },
       },
     },
