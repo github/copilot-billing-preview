@@ -31,6 +31,7 @@ function createEmptyDailyUsage(date: string): DailyUsageData {
     aiuQuantity: 0,
     grossAmount: 0,
     aiuGrossAmount: 0,
+    aicNetAmount: 0,
     discountAmount: 0,
     netAmount: 0,
   }
@@ -183,7 +184,7 @@ function App() {
       totals.netAmount += day.netAmount
       return totals
     },
-    { requests: 0, aiuQuantity: 0, grossAmount: 0, aiuGrossAmount: 0, discountAmount: 0, netAmount: 0 },
+    { requests: 0, aiuQuantity: 0, grossAmount: 0, aiuGrossAmount: 0, aicNetAmount: 0, discountAmount: 0, netAmount: 0 },
   )
 
   const pooledAicCredits = (userUsage?.users ?? []).reduce((sum, user) => sum + getIncludedAicCredits(user.totalMonthlyQuota), 0)
@@ -193,7 +194,7 @@ function App() {
       ? Math.min(pooledAicCredits / overviewTotals.aiuQuantity, 1)
       : 0
   const aicDiscount = aicDiscountRate * overviewTotals.aiuGrossAmount
-  const aicNetCost = Math.max(overviewTotals.aiuGrossAmount - aicDiscount, 0)
+  const aicNetAmount = Math.max(overviewTotals.aiuGrossAmount - aicDiscount, 0)
 
   return (
     <div className={`app ${hasReport ? 'app--review' : ''}`}>
@@ -402,7 +403,7 @@ function App() {
                     </div>
 
                     {(() => {
-                      const savings = overviewTotals.netAmount - aicNetCost
+                      const savings = overviewTotals.netAmount - aicNetAmount
                       const periodLabel = rangeStart
                         ? new Date(rangeStart + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric' })
                         : null
@@ -437,7 +438,7 @@ function App() {
                       </div>
                       <div className="card comparison-card">
                         <div className="comparison-card__label">Token-based billing (AICs)</div>
-                        <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatUsd(aicNetCost)}</div>
+                        <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatUsd(aicNetAmount)}</div>
                         <div className="comparison-card__period">{formatAiu(overviewTotals.aiuQuantity)} AICs</div>
                         <div className="comparison-card__rate">1 AIC = $0.01</div>
                         <div className="comparison-card__breakdown">
@@ -451,7 +452,7 @@ function App() {
                           </div>
                           <div className="comparison-card__breakdown-row comparison-card__breakdown-row--total">
                             <span>Net cost</span>
-                            <span>{formatUsd(aicNetCost)}</span>
+                            <span>{formatUsd(aicNetAmount)}</span>
                           </div>
                         </div>
                       </div>

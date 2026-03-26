@@ -6,6 +6,7 @@ export type ProductUsageTotals = {
   aiuQuantity: number
   grossAmount: number
   aiuGrossAmount: number
+  aicNetAmount: number
 }
 
 export type ProductUsage = {
@@ -24,6 +25,7 @@ function createTotals(): ProductUsageTotals {
     aiuQuantity: 0,
     grossAmount: 0,
     aiuGrossAmount: 0,
+    aicNetAmount: 0,
   }
 }
 
@@ -55,11 +57,12 @@ export class ProductUsageAggregator implements Aggregator<TokenUsageRecord, Prod
       this.byProduct.set(product, productUsage)
     }
 
-    const { requests, aiuQuantity, grossAmount, aiuGrossAmount } = getUsageMetrics(record)
+    const { requests, aiuQuantity, grossAmount, aiuGrossAmount, aicNetAmount } = getUsageMetrics(record)
     productUsage.totals.requests += requests
     productUsage.totals.aiuQuantity += aiuQuantity
     productUsage.totals.grossAmount += grossAmount
     productUsage.totals.aiuGrossAmount += aiuGrossAmount
+    productUsage.totals.aicNetAmount += aicNetAmount
 
     let modelTotals = productUsage.models.get(model)
     if (!modelTotals) {
@@ -71,6 +74,7 @@ export class ProductUsageAggregator implements Aggregator<TokenUsageRecord, Prod
     modelTotals.aiuQuantity += aiuQuantity
     modelTotals.grossAmount += grossAmount
     modelTotals.aiuGrossAmount += aiuGrossAmount
+    modelTotals.aicNetAmount += aicNetAmount
   }
 
   result(): ProductUsageResult {
