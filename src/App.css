@@ -1598,6 +1598,7 @@ td.cost-centers-view__num {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 1.25rem 1.5rem 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .report-guide__example-title {

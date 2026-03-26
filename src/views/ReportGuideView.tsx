@@ -38,11 +38,70 @@ const SAMPLE_ROW_1 = [
   '0.031073950000000003',
 ]
 
+const SAMPLE_ROW_2 = [
+  '2026-03-11',
+  'mona',
+  'copilot',
+  'copilot_premium_request',
+  'GPT-4.1',
+  '24.9364',
+  'requests',
+  '0',
+  '0',
+  '0',
+  '0',
+  'False',
+  '1000',
+  'octodemo',
+  'Octocats',
+  '24.9364',
+  '0.24936400000000003',
+]
+
+const SAMPLE_ROW_2_ANNOTATIONS: { index: number; label: string; note: string }[] = [
+  {
+    index: 4,
+    label: 'model',
+    note: '"GPT-4.1" — a Base Model with a 0× PRU Multiplier. Requests to Base Models were not included in billing reports before token-based billing, but now appear because every model consumes AI Credits (AICs).',
+  },
+  {
+    index: 5,
+    label: 'quantity',
+    note: '≈ 24.9 requests made to GPT-4.1 on this day.',
+  },
+  { index: 6, label: 'unit_type', note: '"requests" — billed in Premium Request units, but the 0× multiplier makes the PRU cost zero.' },
+  {
+    index: 7,
+    label: 'applied_cost_per_quantity',
+    note: '$0 per PRU — GPT-4.1 is a Base Model with a 0× PRU Multiplier, so no PRU cost is charged.',
+  },
+  {
+    index: 8,
+    label: 'gross_amount',
+    note: '$0 gross PRU cost (24.9 requests × $0). No PRU charge applies to this Base Model.',
+  },
+  {
+    index: 9,
+    label: 'discount_amount',
+    note: '$0 — there is no PRU cost to discount.',
+  },
+  {
+    index: 15,
+    label: 'aiu_quantity',
+    note: '≈ 24.9 AICs consumed. Under token-based billing, even Base Models consume AI Credits proportional to actual token usage.',
+  },
+  {
+    index: 16,
+    label: 'aiu_gross_amount',
+    note: '≈ $0.249 (24.9 AICs × $0.01). This is what the same usage would cost under token-based billing.',
+  },
+]
+
 const SAMPLE_ROW_1_ANNOTATIONS: { index: number; label: string; note: string }[] = [
   { index: 0, label: 'date', note: 'Usage date: March 1, 2026.' },
   { index: 1, label: 'username', note: 'The GitHub user who generated the request.' },
   { index: 2, label: 'product', note: '"copilot" — the Copilot product family.' },
-  { index: 3, label: 'sku', note: '"copilot_premium_request" — one Premium Request billed in PRUs (as opposed to AI Units).' },
+  { index: 3, label: 'sku', note: '"copilot_premium_request" — one Premium Request billed in PRUs (as opposed to AI Credits).' },
   {
     index: 4,
     label: 'model',
@@ -53,7 +112,7 @@ const SAMPLE_ROW_1_ANNOTATIONS: { index: number; label: string; note: string }[]
     label: 'quantity',
     note: '≈ 0.9 PRUs. 1 Premium Request × 0.9 (Auto-mode 10% discount) = 0.9 PRUs.',
   },
-  { index: 6, label: 'unit_type', note: '"requests" — this row is billed in Premium Requests (PRUs), not AI Units.' },
+  { index: 6, label: 'unit_type', note: '"requests" — this row is billed in Premium Requests (PRUs), not AI Credits.' },
   { index: 7, label: 'applied_cost_per_quantity', note: '$0.04 per PRU — the standard PRU rate.' },
   {
     index: 8,
@@ -77,12 +136,12 @@ const SAMPLE_ROW_1_ANNOTATIONS: { index: number; label: string; note: string }[]
   {
     index: 15,
     label: 'aiu_quantity',
-    note: '≈ 3.107 AIUs — the token-based billing equivalent of this request. AIUs represent the actual tokens consumed.',
+    note: '≈ 3.107 AICs — the token-based billing equivalent of this request. AICs represent the actual tokens consumed.',
   },
   {
     index: 16,
     label: 'aiu_gross_amount',
-    note: '≈ $0.031 (3.107 AIUs × $0.01). Under token-based billing this request would cost roughly $0.03.',
+    note: '≈ $0.031 (3.107 AICs × $0.01). Under token-based billing this request would cost roughly $0.03.',
   },
 ]
 
@@ -143,11 +202,24 @@ export function ReportGuideView() {
           <strong>Claude Haiku 4.5</strong> in <strong>Auto</strong> mode. Auto-mode selection applies a 10% PRU
           discount, so 0.9 PRUs were billed at $0.04 each — a gross PRU cost of <strong>$0.036</strong>. The user's
           1,000 PRU/month entitlement covers this in full, so the net PRU charge is <strong>$0.00</strong>. Under
-          token-based billing, the same request would cost approximately <strong>$0.031</strong> (≈ 3.1 AIUs at $0.01
+          token-based billing, the same request would cost approximately <strong>$0.031</strong> (≈ 3.1 AICs at $0.01
           each).
         </p>
 
         <AnnotatedRow header={HEADER} values={SAMPLE_ROW_1} annotations={SAMPLE_ROW_1_ANNOTATIONS} />
+      </div>
+
+      <div className="report-guide__example">
+        <h3 className="report-guide__example-title">Example: Base Model request (0× PRU Multiplier)</h3>
+        <p className="report-guide__example-summary">
+          On <strong>11 March 2026</strong>, user <strong>mona</strong> made <strong>≈ 25 requests</strong> to{' '}
+          <strong>GPT-4.1</strong>, a Base Model. Because Base Models carry a <strong>0× PRU Multiplier</strong>, the
+          gross PRU cost is <strong>$0.00</strong> and this usage would not have appeared in the billing report under
+          the old model. Under token-based billing, however, the same usage consumed <strong>≈ 24.9 AICs</strong> at
+          $0.01 each, producing a token-based cost of approximately <strong>$0.249</strong>.
+        </p>
+
+        <AnnotatedRow header={HEADER} values={SAMPLE_ROW_2} annotations={SAMPLE_ROW_2_ANNOTATIONS} />
       </div>
     </section>
   )
