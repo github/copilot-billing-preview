@@ -364,7 +364,7 @@ function App() {
                     <div className="context-banner">
                       <h2 className="context-banner__title">GitHub Copilot is moving to token-based billing</h2>
                       <p className="context-banner__body">
-                        Starting May 1, Copilot usage will be measured in AI Credits (AICs) instead of Premium Requests (PRUs). <strong className="aiu-callout">1 AIC = $0.01.</strong> This preview shows what your usage would look like under the new pricing.
+                        Starting May 1, 2026, Copilot usage will be measured in AI Credits (AICs) instead of Premium Requests (PRUs). <strong className="aiu-callout">1 AIC = $0.01.</strong> This preview shows what your usage would look like under the new pricing.
                       </p>
                       {fileName && (
                         <p className="context-banner__note">
