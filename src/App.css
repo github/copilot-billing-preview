@@ -212,6 +212,41 @@
   width: 100%;
 }
 
+/* Shared data table */
+.data-table-wrap {
+  background: #ffffff;
+  border: 1px solid #d1d9e0;
+  border-radius: 6px;
+  overflow: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f6f8fa;
+  white-space: nowrap;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #636c76;
+  background: #ffffff;
+}
+
 /* Users view */
 .users-view {
   display: flex;
@@ -258,35 +293,8 @@
   color: #636c76;
 }
 
-.orgs-view__tableWrap {
-  background: #ffffff;
-  border: 1px solid #d1d9e0;
-  border-radius: 6px;
-  overflow: auto;
-}
-
-.orgs-view__table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.orgs-view__table th,
-.orgs-view__table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #f6f8fa;
-  white-space: nowrap;
-}
-
-.orgs-view__table th {
-  text-align: left;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #636c76;
-  background: #f6f8fa;
-  position: sticky;
-  top: 0;
+.orgs-view__table th.orgs-view__num {
+  text-align: right;
 }
 
 .orgs-view__num {
@@ -799,9 +807,6 @@
 }
 
 .cost-centers-view__tableWrap {
-  background: #ffffff;
-  border: 1px solid #d1d9e0;
-  border-radius: 6px;
   overflow: hidden;
 }
 
@@ -814,33 +819,6 @@
   text-transform: uppercase;
   color: #636c76;
   background: #f6f8fa;
-}
-
-.cost-centers-view__table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.cost-centers-view__table th,
-.cost-centers-view__table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f6f8fa;
-  white-space: nowrap;
-}
-
-.cost-centers-view__table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.cost-centers-view__table th {
-  text-align: left;
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  font-weight: 600;
-  color: #636c76;
-  background: #ffffff;
 }
 
 .cost-centers-view__num {
@@ -880,10 +858,9 @@ td.cost-centers-view__num {
 
 /* Per-model breakdown */
 .per-model {
-  background: #ffffff;
-  border: 1px solid #d1d9e0;
-  border-radius: 6px;
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .per-model__header {
@@ -1000,6 +977,239 @@ td.cost-centers-view__num {
   outline-offset: 2px;
 }
 
+.products-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.products-view__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.products-view__titleGroup {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.products-view__heading {
+  margin: 0;
+  font-size: 18px;
+  color: #1f2328;
+}
+
+.products-view__count {
+  font-size: 13px;
+  color: #636c76;
+}
+
+.products-view__rateNote {
+  font-size: 13px;
+  color: #636c76;
+}
+
+.products-view__card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
+
+.products-view__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 11px;
+  color: #636c76;
+}
+
+.products-view__legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.products-view__legendSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.products-view__legendSwatch--pru {
+  background: #cf222e;
+  opacity: 0.7;
+}
+
+.products-view__legendSwatch--aiu {
+  background: #54aeff;
+}
+
+.products-view__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.products-view__barRow {
+  display: grid;
+  grid-template-columns: minmax(140px, 180px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.products-view__barLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.products-view__barDot,
+.products-view__tableDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.products-view__barName,
+.products-view__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2328;
+}
+
+.products-view__barValues {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.products-view__barStack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.products-view__barTrack {
+  flex: 1;
+  height: 14px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #eaeef2;
+}
+
+.products-view__barFill {
+  height: 100%;
+  border-radius: 4px;
+  min-width: 0;
+}
+
+.products-view__barFill--pru {
+  background: rgba(207, 34, 46, 0.7);
+}
+
+.products-view__barFill--aiu {
+  background: #54aeff;
+}
+
+.products-view__barValue {
+  min-width: 72px;
+  font-size: 10px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.products-view__barValue--pru {
+  color: #cf222e;
+}
+
+.products-view__barValue--aiu {
+  color: #0969da;
+}
+
+.products-view__table th.products-view__num {
+  text-align: right;
+}
+
+.products-view__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.products-view__nameCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.products-view__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.products-view__toggle:hover .products-view__name {
+  color: #0969da;
+}
+
+.products-view__toggle:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.products-view__chevron {
+  width: 12px;
+  color: #636c76;
+  font-size: 9px;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.products-view__chevron--expanded {
+  transform: rotate(90deg);
+}
+
+.products-view__productRow:hover td {
+  background: #fcfdff;
+}
+
+.products-view__modelRow td {
+  color: #57606a;
+  background: #ffffff;
+}
+
+.products-view__modelCell {
+  padding-left: 44px !important;
+  font-size: 12px;
+  color: #57606a;
+}
+
+.products-view__empty {
+  background: #ffffff;
+  border: 1px solid #d1d9e0;
+  border-radius: 6px;
+  padding: 16px;
+  color: #636c76;
+}
+
 .users-view__title {
   display: flex;
   align-items: baseline;
@@ -1033,26 +1243,6 @@ td.cost-centers-view__num {
   outline-offset: 2px;
 }
 
-.users-view__tableWrap {
-  background: #ffffff;
-  border: 1px solid #d1d9e0;
-  border-radius: 6px;
-  overflow: auto;
-}
-
-.users-view__table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.users-view__table th,
-.users-view__table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #f6f8fa;
-  white-space: nowrap;
-}
-
 .users-view__row--clickable {
   cursor: pointer;
 }
@@ -1066,15 +1256,8 @@ td.cost-centers-view__num {
   outline-offset: -2px;
 }
 
-.users-view__table th {
-  text-align: left;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #636c76;
-  background: #f6f8fa;
-  position: sticky;
-  top: 0;
+.users-view__table th.users-view__num {
+  text-align: right;
 }
 
 .users-view__num {
@@ -1165,35 +1348,8 @@ td.cost-centers-view__num {
   color: #636c76;
 }
 
-.user-details__tableWrap {
-  background: #ffffff;
-  border: 1px solid #d1d9e0;
-  border-radius: 6px;
-  overflow: auto;
-}
-
-.user-details__table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.user-details__table th,
-.user-details__table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #f6f8fa;
-  white-space: nowrap;
-}
-
-.user-details__table th {
-  text-align: left;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #636c76;
-  background: #f6f8fa;
-  position: sticky;
-  top: 0;
+.user-details__table th.user-details__num {
+  text-align: right;
 }
 
 .user-details__num {
@@ -1410,6 +1566,15 @@ td.cost-centers-view__num {
     grid-template-columns: 1fr;
   }
 
+  .products-view__barRow {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .products-view__card {
+    padding: 16px;
+  }
+
   .next-steps__grid {
     grid-template-columns: 1fr;
   }
@@ -1561,6 +1726,12 @@ td.cost-centers-view__num {
 .sidebar__item:focus-visible {
   outline: 2px solid #6366f1;
   outline-offset: -2px;
+}
+
+.sidebar__divider {
+  border: none;
+  border-top: 1px solid #d1d9e0;
+  margin: 6px 0;
 }
 
 .sidebar__icon {

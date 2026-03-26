@@ -9,10 +9,12 @@ import { OrganizationsView } from './views/OrganizationsView'
 import { ModelsView } from './views/ModelsView'
 import { ReportGuideView } from './views/ReportGuideView'
 import { FaqView } from './views/FaqView'
+import { ProductsView } from './views/ProductsView'
 import { QuickStatsAggregator, type QuickStatsResult } from './pipeline/aggregators/quickStatsAggregator'
 import { ReportContextAggregator, type ReportContextResult } from './pipeline/aggregators/reportContextAggregator'
 import { DailyUsageAggregator, type DailyUsageData } from './pipeline/aggregators/dailyUsageAggregator'
 import { ModelUsageAggregator, type ModelUsageResult } from './pipeline/aggregators/modelUsageAggregator'
+import { ProductUsageAggregator, type ProductUsageResult } from './pipeline/aggregators/productUsageAggregator'
 import { CostCenterAggregator, type CostCenterResult } from './pipeline/aggregators/costCenterAggregator'
 import { OrganizationAggregator, type OrganizationResult } from './pipeline/aggregators/organizationAggregator'
 import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregators/userUsageAggregator'
@@ -55,9 +57,10 @@ function App() {
   const [fileName, setFileName] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [dailyUsageData, setDailyUsageData] = useState<DailyUsageData[]>([])
-  const [activeView, setActiveView] = useState<'overview' | 'users' | 'userDetails' | 'costCenters' | 'orgs' | 'models' | 'guide' | 'faq'>('overview')
+  const [activeView, setActiveView] = useState<'overview' | 'users' | 'userDetails' | 'costCenters' | 'orgs' | 'models' | 'products' | 'guide' | 'faq'>('overview')
   const [userUsage, setUserUsage] = useState<UserUsageResult | null>(null)
   const [modelUsage, setModelUsage] = useState<ModelUsageResult | null>(null)
+  const [productUsage, setProductUsage] = useState<ProductUsageResult | null>(null)
   const [selectedUsername, setSelectedUsername] = useState<string>('')
   const [costCenters, setCostCenters] = useState<CostCenterResult | null>(null)
   const [orgs, setOrgs] = useState<OrganizationResult | null>(null)
@@ -71,6 +74,7 @@ function App() {
     setDailyUsageData([])
     setUserUsage(null)
     setModelUsage(null)
+    setProductUsage(null)
     setSelectedUsername('')
     setCostCenters(null)
     setOrgs(null)
@@ -82,6 +86,7 @@ function App() {
       const contextAggregator = new ReportContextAggregator()
       const dailyAggregator = new DailyUsageAggregator()
       const modelAggregator = new ModelUsageAggregator()
+      const productAggregator = new ProductUsageAggregator()
       const costCenterAggregator = new CostCenterAggregator()
       const orgAggregator = new OrganizationAggregator()
       const userAggregator = new UserUsageAggregator()
@@ -91,6 +96,7 @@ function App() {
         contextAggregator,
         dailyAggregator,
         modelAggregator,
+        productAggregator,
         costCenterAggregator,
         orgAggregator,
         userAggregator,
@@ -102,6 +108,7 @@ function App() {
 
       const nextModelUsage = modelAggregator.result()
       setModelUsage(nextModelUsage)
+  setProductUsage(productAggregator.result())
 
       setCostCenters(costCenterAggregator.result())
       setOrgs(orgAggregator.result())
@@ -292,6 +299,17 @@ function App() {
                   </button>
                 )}
 
+                <button
+                  type="button"
+                  className={`sidebar__item ${activeView === 'products' ? 'sidebar__item--active' : ''}`}
+                  onClick={() => setActiveView('products')}
+                >
+                  <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                    <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+                  </svg>
+                  <span className="sidebar__label">Products</span>
+                </button>
+
                 {orgs && orgs.organizations.length > 0 && (
                   <button
                     type="button"
@@ -320,6 +338,8 @@ function App() {
                     <span className="sidebar__label">Cost Centers</span>
                   </button>
                 )}
+
+                <hr className="sidebar__divider" />
 
                 <button
                   type="button"
@@ -553,6 +573,10 @@ function App() {
             ) : activeView === 'costCenters' ? (
               <div className="view-content">
                 <CostCentersView data={costCenters ?? { costCenters: [] }} rangeStart={rangeStart} />
+              </div>
+            ) : activeView === 'products' ? (
+              <div className="view-content">
+                <ProductsView data={productUsage ?? { products: [] }} />
               </div>
             ) : activeView === 'guide' ? (
               <div className="view-content">

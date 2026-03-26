@@ -56,8 +56,8 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
         aria-label="Search users"
       />
 
-      <div className="users-view__tableWrap">
-        <table className="users-view__table">
+      <div className="users-view__tableWrap data-table-wrap">
+        <table className="users-view__table data-table">
           <thead>
             <tr>
               <th>User</th>

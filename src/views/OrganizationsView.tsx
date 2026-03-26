@@ -20,8 +20,8 @@ export function OrganizationsView({ data }: { data: OrganizationResult }) {
         </div>
       </div>
 
-      <div className="orgs-view__tableWrap">
-        <table className="orgs-view__table">
+      <div className="orgs-view__tableWrap data-table-wrap">
+        <table className="orgs-view__table data-table">
           <thead>
             <tr>
               <th>Organization</th>
