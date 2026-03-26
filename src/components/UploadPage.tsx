@@ -26,7 +26,7 @@ export function UploadPage({
         <h1 className="upload-screen__title">Copilot Billing Preview</h1>
         <p className="upload-screen__subtitle">
           GitHub is moving to <strong>token-based billing</strong> for Copilot. Starting May 2026, usage
-          will be measured in AI Units (AIUs) instead of Premium Requests (PRUs). This tool helps you
+          will be measured in AI Credits (AICs) instead of Premium Requests (PRUs). This tool helps you
           understand how the change will impact your bill.
         </p>
         <p className="upload-screen__subtitle upload-screen__subtitle--spaced">

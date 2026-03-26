@@ -350,7 +350,7 @@ function App() {
                     <div className="context-banner">
                       <h2 className="context-banner__title">GitHub Copilot is moving to token-based billing</h2>
                       <p className="context-banner__body">
-                        Starting May 1, Copilot usage will be measured in AI Units (AIUs) instead of Premium Requests (PRUs). <strong className="aiu-callout">1 AIU = $0.01.</strong> This preview shows what your usage would look like under the new pricing.
+                        Starting May 1, Copilot usage will be measured in AI Credits (AICs) instead of Premium Requests (PRUs). <strong className="aiu-callout">1 AIC = $0.01.</strong> This preview shows what your usage would look like under the new pricing.
                       </p>
                       {fileName && (
                         <p className="context-banner__note">
@@ -402,10 +402,10 @@ function App() {
                         </div>
                       </div>
                       <div className="card comparison-card">
-                        <div className="comparison-card__label">Token-based billing (AIUs)</div>
+                        <div className="comparison-card__label">Token-based billing (AICs)</div>
                         <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatUsd(aicNetCost)}</div>
-                        <div className="comparison-card__period">{formatAiu(overviewTotals.aiuQuantity)} AIUs</div>
-                        <div className="comparison-card__rate">1 AIU = $0.01</div>
+                        <div className="comparison-card__period">{formatAiu(overviewTotals.aiuQuantity)} AICs</div>
+                        <div className="comparison-card__rate">1 AIC = $0.01</div>
                         <div className="comparison-card__breakdown">
                           <div className="comparison-card__breakdown-row">
                             <span>Gross cost</span>
@@ -444,7 +444,7 @@ function App() {
                         height={320}
                       />
                       <DualAxisLineChart
-                        title="Daily cost: PRU cost vs AIU cost"
+                        title="Daily cost: PRU cost vs AIC cost"
                         labels={filledDailyUsageData.map((day) => day.date)}
                         series={[
                           {
@@ -454,7 +454,7 @@ function App() {
                             yAxisID: 'y',
                           },
                           {
-                            label: 'AIU Gross Cost',
+                            label: 'AIC Gross Cost',
                             color: '#54aeff',
                             data: filledDailyUsageData.map((day) => day.aiuGrossAmount),
                             yAxisID: 'y',
@@ -543,6 +543,10 @@ function App() {
             ) : activeView === 'guide' ? (
               <div className="view-content">
                 <ReportGuideView />
+              </div>
+            ) : activeView === 'faq' ? (
+              <div className="view-content">
+                <FaqView />
               </div>
             ) : (
               <div className="view-content">

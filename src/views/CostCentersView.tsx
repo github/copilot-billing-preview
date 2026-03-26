@@ -100,10 +100,10 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
               </div>
             </div>
             <div className="card comparison-card">
-              <div className="comparison-card__label">Token-based billing (AIUs)</div>
+              <div className="comparison-card__label">Token-based billing (AICs)</div>
               <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatUsd(totals.aiuGrossAmount)}</div>
-              <div className="comparison-card__period">{formatAiu(totals.aiuQuantity)} AIUs</div>
-              <div className="comparison-card__rate">1 AIU = $0.01</div>
+              <div className="comparison-card__period">{formatAiu(totals.aiuQuantity)} AICs</div>
+              <div className="comparison-card__rate">1 AIC = $0.01</div>
               <div className="comparison-card__breakdown">
                 <div className="comparison-card__breakdown-row comparison-card__breakdown-row--total">
                   <span>Gross cost</span>
@@ -141,8 +141,8 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
                 <th>Model</th>
                 <th className="cost-centers-view__num">PRUs</th>
                 <th className="cost-centers-view__num">PRU Cost</th>
-                <th className="cost-centers-view__num">AIUs</th>
-                <th className="cost-centers-view__num">AIU Cost</th>
+                <th className="cost-centers-view__num">AICs</th>
+                <th className="cost-centers-view__num">AIC Cost</th>
                 <th className="cost-centers-view__num">Difference</th>
               </tr>
             </thead>
@@ -174,8 +174,8 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
                 <th>User</th>
                 <th className="cost-centers-view__num">PRUs</th>
                 <th className="cost-centers-view__num">PRU Cost</th>
-                <th className="cost-centers-view__num">AIUs</th>
-                <th className="cost-centers-view__num">AIU Cost</th>
+                <th className="cost-centers-view__num">AICs</th>
+                <th className="cost-centers-view__num">AIC Cost</th>
                 <th className="cost-centers-view__num">Difference</th>
               </tr>
             </thead>
