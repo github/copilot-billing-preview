@@ -133,9 +133,9 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
       </div>
 
       <div className="cost-centers-view__tables">
-        <div className="cost-centers-view__tableWrap">
+          <div className="cost-centers-view__tableWrap data-table-wrap">
           <div className="cost-centers-view__tableTitle">Per model</div>
-          <table className="cost-centers-view__table">
+          <table className="cost-centers-view__table data-table">
             <thead>
               <tr>
                 <th>Model</th>
@@ -166,9 +166,9 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
           </table>
         </div>
 
-        <div className="cost-centers-view__tableWrap">
+          <div className="cost-centers-view__tableWrap data-table-wrap">
           <div className="cost-centers-view__tableTitle">Per user</div>
-          <table className="cost-centers-view__table">
+          <table className="cost-centers-view__table data-table">
             <thead>
               <tr>
                 <th>User</th>

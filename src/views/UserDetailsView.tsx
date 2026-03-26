@@ -161,8 +161,8 @@ export function UserDetailsView({ user }: UserDetailsViewProps) {
             <MultiSeriesStackedBarChart title="Daily AI Credits by Model" labels={labels} series={aiuSeries} height={340} />
           </div>
 
-          <div className="user-details__tableWrap">
-            <table className="user-details__table">
+          <div className="user-details__tableWrap data-table-wrap">
+            <table className="user-details__table data-table">
               <thead>
                 <tr>
                   <th>Date</th>
