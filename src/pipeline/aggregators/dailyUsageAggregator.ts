@@ -7,6 +7,7 @@ export interface DailyUsageData {
   aiuQuantity: number
   grossAmount: number
   aiuGrossAmount: number
+  aicNetAmount: number
   discountAmount: number
   netAmount: number
 }
@@ -24,13 +25,14 @@ export class DailyUsageAggregator implements Aggregator<TokenUsageRecord, DailyU
 
     const existing = this.dataByDate.get(date)
 
-    const { requests, aiuQuantity, grossAmount, aiuGrossAmount, discountAmount, netAmount } = getUsageMetrics(record)
+    const { requests, aiuQuantity, grossAmount, aiuGrossAmount, aicNetAmount, discountAmount, netAmount } = getUsageMetrics(record)
 
     if (existing) {
       existing.requests += requests
       existing.aiuQuantity += aiuQuantity
       existing.grossAmount += grossAmount
       existing.aiuGrossAmount += aiuGrossAmount
+      existing.aicNetAmount += aicNetAmount
       existing.discountAmount += discountAmount
       existing.netAmount += netAmount
       return
@@ -42,6 +44,7 @@ export class DailyUsageAggregator implements Aggregator<TokenUsageRecord, DailyU
       aiuQuantity,
       grossAmount,
       aiuGrossAmount,
+      aicNetAmount,
       discountAmount,
       netAmount,
     })

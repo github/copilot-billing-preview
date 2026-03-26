@@ -7,6 +7,7 @@ export type UserModelDailyUsage = {
   discountAmount: number
   netAmount: number
   aiuQuantity: number
+  aicNetAmount: number
 }
 
 export type UserDailyUsage = {
@@ -16,6 +17,7 @@ export type UserDailyUsage = {
   discountAmount: number
   netAmount: number
   aiuQuantity: number
+  aicNetAmount: number
   models: Record<string, UserModelDailyUsage>
 }
 
@@ -43,6 +45,7 @@ type UserUsageInternal = {
     discountAmount: number
     netAmount: number
     aiuQuantity: number
+    aicNetAmount: number
   }
 }
 
@@ -56,6 +59,7 @@ function ensureModel(day: UserDailyUsage, model: string): UserModelDailyUsage {
     discountAmount: 0,
     netAmount: 0,
     aiuQuantity: 0,
+    aicNetAmount: 0,
   }
   day.models[model] = created
   return created
@@ -72,6 +76,7 @@ function ensureDay(user: UserUsageInternal, date: string): UserDailyUsage {
     discountAmount: 0,
     netAmount: 0,
     aiuQuantity: 0,
+    aicNetAmount: 0,
     models: {},
   }
   user.daily.set(date, created)
@@ -107,6 +112,7 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
           discountAmount: 0,
           netAmount: 0,
           aiuQuantity: 0,
+          aicNetAmount: 0,
         },
       }
       this.byUser.set(username, user)
@@ -116,7 +122,7 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
       user.totalMonthlyQuota = record.total_monthly_quota
     }
 
-    const { requests, grossAmount, discountAmount, netAmount, aiuQuantity } = getUsageMetrics(record)
+    const { requests, grossAmount, discountAmount, netAmount, aiuQuantity, aicNetAmount } = getUsageMetrics(record)
 
     user.distinctModels.add(model)
     user.totals.requests += requests
@@ -124,6 +130,7 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
     user.totals.discountAmount += discountAmount
     user.totals.netAmount += netAmount
     user.totals.aiuQuantity += aiuQuantity
+    user.totals.aicNetAmount += aicNetAmount
 
     const day = ensureDay(user, date)
     day.requests += requests
@@ -131,6 +138,7 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
     day.discountAmount += discountAmount
     day.netAmount += netAmount
     day.aiuQuantity += aiuQuantity
+    day.aicNetAmount += aicNetAmount
 
     const dayModel = ensureModel(day, model)
     dayModel.requests += requests
@@ -138,6 +146,7 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
     dayModel.discountAmount += discountAmount
     dayModel.netAmount += netAmount
     dayModel.aiuQuantity += aiuQuantity
+    dayModel.aicNetAmount += aicNetAmount
   }
 
   result(): UserUsageResult {

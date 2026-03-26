@@ -7,6 +7,7 @@ export type ModelDailyUsageData = {
   aiuQuantity: number
   grossAmount: number
   aiuGrossAmount: number
+  aicNetAmount: number
   discountAmount: number
   netAmount: number
 }
@@ -16,6 +17,7 @@ export type ModelUsageTotals = {
   aiuQuantity: number
   grossAmount: number
   aiuGrossAmount: number
+  aicNetAmount: number
   discountAmount: number
   netAmount: number
 }
@@ -41,6 +43,7 @@ function ensureDay(model: ModelInternal, date: string): ModelDailyUsageData {
     aiuQuantity: 0,
     grossAmount: 0,
     aiuGrossAmount: 0,
+    aicNetAmount: 0,
     discountAmount: 0,
     netAmount: 0,
   }
@@ -70,6 +73,7 @@ export class ModelUsageAggregator implements Aggregator<TokenUsageRecord, ModelU
           aiuQuantity: 0,
           grossAmount: 0,
           aiuGrossAmount: 0,
+          aicNetAmount: 0,
           discountAmount: 0,
           netAmount: 0,
         },
@@ -77,13 +81,14 @@ export class ModelUsageAggregator implements Aggregator<TokenUsageRecord, ModelU
       this.byModel.set(modelName, model)
     }
 
-    const { requests, aiuQuantity, grossAmount, aiuGrossAmount, discountAmount, netAmount } = getUsageMetrics(record)
+    const { requests, aiuQuantity, grossAmount, aiuGrossAmount, aicNetAmount, discountAmount, netAmount } = getUsageMetrics(record)
 
     const day = ensureDay(model, date)
     day.requests += requests
     day.aiuQuantity += aiuQuantity
     day.grossAmount += grossAmount
     day.aiuGrossAmount += aiuGrossAmount
+    day.aicNetAmount += aicNetAmount
     day.discountAmount += discountAmount
     day.netAmount += netAmount
 
@@ -91,6 +96,7 @@ export class ModelUsageAggregator implements Aggregator<TokenUsageRecord, ModelU
     model.totals.aiuQuantity += aiuQuantity
     model.totals.grossAmount += grossAmount
     model.totals.aiuGrossAmount += aiuGrossAmount
+    model.totals.aicNetAmount += aicNetAmount
     model.totals.discountAmount += discountAmount
     model.totals.netAmount += netAmount
   }

@@ -11,6 +11,7 @@ function createEmptyModelDailyUsage(date: string): ModelDailyUsageData {
     aiuQuantity: 0,
     grossAmount: 0,
     aiuGrossAmount: 0,
+    aicNetAmount: 0,
     discountAmount: 0,
     netAmount: 0,
   }
@@ -37,7 +38,7 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
   }, [selectedModel, modelUsage, rangeStart, rangeEnd])
 
   const selectedModelAicDiscount = selectedModelTotals ? aicDiscountRate * selectedModelTotals.aiuGrossAmount : 0
-  const selectedModelAicNetCost = selectedModelTotals
+  const selectedModelAicNetAmount = selectedModelTotals
     ? Math.max(selectedModelTotals.aiuGrossAmount - selectedModelAicDiscount, 0)
     : 0
 
@@ -68,7 +69,7 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
       </div>
 
       {selectedModelTotals && (() => {
-        const savings = selectedModelTotals.netAmount - selectedModelAicNetCost
+        const savings = selectedModelTotals.netAmount - selectedModelAicNetAmount
         return (
           <>
             {periodLabel && (
@@ -106,7 +107,7 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
               </div>
               <div className="card comparison-card">
                 <div className="comparison-card__label">Token-based billing (AICs)</div>
-                <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatUsd(selectedModelAicNetCost)}</div>
+                <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatUsd(selectedModelAicNetAmount)}</div>
                 <div className="comparison-card__period">{formatAiu(selectedModelTotals.aiuQuantity)} AICs</div>
                 <div className="comparison-card__rate">1 AIC = $0.01</div>
                 <div className="comparison-card__breakdown">
@@ -120,7 +121,7 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
                   </div>
                   <div className="comparison-card__breakdown-row comparison-card__breakdown-row--total">
                     <span>Net cost</span>
-                    <span>{formatUsd(selectedModelAicNetCost)}</span>
+                    <span>{formatUsd(selectedModelAicNetAmount)}</span>
                   </div>
                 </div>
               </div>

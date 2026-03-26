@@ -8,6 +8,7 @@ export type CostTotals = {
   netAmount: number
   aiuQuantity: number
   aiuGrossAmount: number
+  aicNetAmount: number
 }
 
 export type CostCenterUserTotals = {
@@ -16,6 +17,7 @@ export type CostCenterUserTotals = {
   netAmount: number
   aiuQuantity: number
   aiuGrossAmount: number
+  aicNetAmount: number
 }
 
 export type CostCenterUsage = {
@@ -47,6 +49,7 @@ function createCostTotals(): CostTotals {
     netAmount: 0,
     aiuQuantity: 0,
     aiuGrossAmount: 0,
+    aicNetAmount: 0,
   }
 }
 
@@ -61,7 +64,7 @@ function ensureTotals(map: Map<string, CostTotals>, key: string): CostTotals {
 function ensureUserTotals(map: Map<string, CostCenterUserTotals>, key: string): CostCenterUserTotals {
   const existing = map.get(key)
   if (existing) return existing
-  const created: CostCenterUserTotals = { requests: 0, grossAmount: 0, netAmount: 0, aiuQuantity: 0, aiuGrossAmount: 0 }
+  const created: CostCenterUserTotals = { requests: 0, grossAmount: 0, netAmount: 0, aiuQuantity: 0, aiuGrossAmount: 0, aicNetAmount: 0 }
   map.set(key, created)
   return created
 }
@@ -94,7 +97,7 @@ export class CostCenterAggregator implements Aggregator<TokenUsageRecord, CostCe
 
     if (username) costCenter.users.add(username)
 
-    const { requests, grossAmount, discountAmount, netAmount, aiuQuantity, aiuGrossAmount } = getUsageMetrics(record)
+    const { requests, grossAmount, discountAmount, netAmount, aiuQuantity, aiuGrossAmount, aicNetAmount } = getUsageMetrics(record)
 
     costCenter.totals.requests += requests
     costCenter.totals.grossAmount += grossAmount
@@ -102,6 +105,7 @@ export class CostCenterAggregator implements Aggregator<TokenUsageRecord, CostCe
     costCenter.totals.netAmount += netAmount
     costCenter.totals.aiuQuantity += aiuQuantity
     costCenter.totals.aiuGrossAmount += aiuGrossAmount
+    costCenter.totals.aicNetAmount += aicNetAmount
 
     const byModel = ensureTotals(costCenter.totalsByModel, model)
     byModel.requests += requests
@@ -110,6 +114,7 @@ export class CostCenterAggregator implements Aggregator<TokenUsageRecord, CostCe
     byModel.netAmount += netAmount
     byModel.aiuQuantity += aiuQuantity
     byModel.aiuGrossAmount += aiuGrossAmount
+    byModel.aicNetAmount += aicNetAmount
 
     if (username) {
       const byUser = ensureUserTotals(costCenter.totalsByUser, username)
@@ -118,6 +123,7 @@ export class CostCenterAggregator implements Aggregator<TokenUsageRecord, CostCe
       byUser.netAmount += netAmount
       byUser.aiuQuantity += aiuQuantity
       byUser.aiuGrossAmount += aiuGrossAmount
+      byUser.aicNetAmount += aicNetAmount
     }
   }
 

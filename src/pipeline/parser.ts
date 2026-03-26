@@ -26,6 +26,7 @@ export type TokenUsageRecord = {
   cost_center_name: string | null
   aiu_quantity: number
   aiu_gross_amount: number
+  aic_net_amount: number
   has_aiu_quantity: boolean
   has_aiu_gross_amount: boolean
 }
@@ -48,8 +49,23 @@ export type UsageMetrics = {
   aiuQuantity: number
   grossAmount: number
   aiuGrossAmount: number
+  aicNetAmount: number
   discountAmount: number
   netAmount: number
+}
+
+export function getAicUsageMetrics(record: TokenUsageRecord): Pick<UsageMetrics, 'aiuQuantity' | 'aiuGrossAmount'> {
+  if (isAiUnitUsageRecord(record.unit_type)) {
+    return {
+      aiuQuantity: record.has_aiu_quantity ? record.aiu_quantity : record.quantity,
+      aiuGrossAmount: record.has_aiu_gross_amount ? record.aiu_gross_amount : record.gross_amount,
+    }
+  }
+
+  return {
+    aiuQuantity: record.aiu_quantity,
+    aiuGrossAmount: record.aiu_gross_amount,
+  }
 }
 
 export function getUsageMetrics(record: TokenUsageRecord): UsageMetrics {
@@ -57,16 +73,15 @@ export function getUsageMetrics(record: TokenUsageRecord): UsageMetrics {
   const grossAmount = record.gross_amount
   const discountAmount = record.discount_amount
   const netAmount = record.net_amount
+  const { aiuQuantity, aiuGrossAmount } = getAicUsageMetrics(record)
 
   if (isAiUnitUsageRecord(record.unit_type)) {
-    const aiuQuantity = record.has_aiu_quantity ? record.aiu_quantity : quantity
-    const aiuGrossAmount = record.has_aiu_gross_amount ? record.aiu_gross_amount : grossAmount
-
     return {
       requests: 0,
       aiuQuantity,
       grossAmount: 0,
       aiuGrossAmount,
+      aicNetAmount: record.aic_net_amount,
       discountAmount: 0,
       netAmount: 0,
     }
@@ -74,9 +89,10 @@ export function getUsageMetrics(record: TokenUsageRecord): UsageMetrics {
 
   return {
     requests: quantity,
-    aiuQuantity: record.aiu_quantity,
+    aiuQuantity,
     grossAmount,
-    aiuGrossAmount: record.aiu_gross_amount,
+    aiuGrossAmount,
+    aicNetAmount: record.aic_net_amount,
     discountAmount,
     netAmount,
   }
@@ -162,7 +178,7 @@ export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): T
   const aiuQuantityRaw = getString(row, header.index['aiu_quantity']).trim()
   const aiuGrossAmountRaw = getString(row, header.index['aiu_gross_amount']).trim()
 
-  return {
+  const record: TokenUsageRecord = {
     date: getString(row, header.index['date']).trim(),
     username: getString(row, header.index['username']).trim(),
     product: getString(row, header.index['product']).trim(),
@@ -180,7 +196,11 @@ export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): T
     cost_center_name: getNullableString(row, header.index['cost_center_name']),
     aiu_quantity: getNumber(row, header.index['aiu_quantity']),
     aiu_gross_amount: getNumber(row, header.index['aiu_gross_amount']),
+    aic_net_amount: 0,
     has_aiu_quantity: aiuQuantityRaw !== '',
     has_aiu_gross_amount: aiuGrossAmountRaw !== '',
   }
+
+  record.aic_net_amount = getAicUsageMetrics(record).aiuGrossAmount
+  return record
 }

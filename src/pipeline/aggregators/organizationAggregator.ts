@@ -9,6 +9,7 @@ export type OrganizationUsage = {
   discountAmount: number
   netAmount: number
   aiuQuantity: number
+  aicNetAmount: number
 }
 
 export type OrganizationResult = {
@@ -23,6 +24,7 @@ type OrgInternal = {
   discountAmount: number
   netAmount: number
   aiuQuantity: number
+  aicNetAmount: number
 }
 
 export class OrganizationAggregator implements Aggregator<TokenUsageRecord, OrganizationResult, TokenUsageHeader> {
@@ -49,6 +51,7 @@ export class OrganizationAggregator implements Aggregator<TokenUsageRecord, Orga
         discountAmount: 0,
         netAmount: 0,
         aiuQuantity: 0,
+        aicNetAmount: 0,
       }
       this.byOrg.set(organization, org)
     }
@@ -56,12 +59,13 @@ export class OrganizationAggregator implements Aggregator<TokenUsageRecord, Orga
     if (username) org.users.add(username)
     org.models.add(model)
 
-    const { grossAmount, discountAmount, netAmount, aiuQuantity } = getUsageMetrics(record)
+    const { grossAmount, discountAmount, netAmount, aiuQuantity, aicNetAmount } = getUsageMetrics(record)
 
     org.grossAmount += grossAmount
     org.discountAmount += discountAmount
     org.netAmount += netAmount
     org.aiuQuantity += aiuQuantity
+    org.aicNetAmount += aicNetAmount
   }
 
   result(): OrganizationResult {
@@ -74,6 +78,7 @@ export class OrganizationAggregator implements Aggregator<TokenUsageRecord, Orga
         discountAmount: org.discountAmount,
         netAmount: org.netAmount,
         aiuQuantity: org.aiuQuantity,
+        aicNetAmount: org.aicNetAmount,
       }))
       .sort((a, b) => a.organization.localeCompare(b.organization))
 
