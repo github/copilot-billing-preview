@@ -148,12 +148,12 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
             </thead>
             <tbody>
               {modelRows.map((row) => {
-                const diff = row.totals.grossAmount - row.totals.aiuGrossAmount
+                const diff = row.totals.netAmount - row.totals.aiuGrossAmount
                 return (
                   <tr key={row.model}>
                     <td className="cost-centers-view__name">{row.model}</td>
                     <td className="cost-centers-view__num">{row.totals.requests.toLocaleString()}</td>
-                    <td className="cost-centers-view__num">{formatUsd(row.totals.grossAmount)}</td>
+                    <td className="cost-centers-view__num">{formatUsd(row.totals.netAmount)}</td>
                     <td className="cost-centers-view__num">{formatAiu(row.totals.aiuQuantity)}</td>
                     <td className="cost-centers-view__num">{formatUsd(row.totals.aiuGrossAmount)}</td>
                     <td className={`cost-centers-view__num cost-centers-view__diff${diff > 0 ? '--positive' : diff < 0 ? '--negative' : ''}`}>
@@ -181,12 +181,12 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
             </thead>
             <tbody>
               {userRows.map((row) => {
-                const diff = row.totals.grossAmount - row.totals.aiuGrossAmount
+                const diff = row.totals.netAmount - row.totals.aiuGrossAmount
                 return (
                   <tr key={row.username}>
                     <td className="cost-centers-view__name">{row.username}</td>
                     <td className="cost-centers-view__num">{row.totals.requests.toLocaleString()}</td>
-                    <td className="cost-centers-view__num">{formatUsd(row.totals.grossAmount)}</td>
+                    <td className="cost-centers-view__num">{formatUsd(row.totals.netAmount)}</td>
                     <td className="cost-centers-view__num">{formatAiu(row.totals.aiuQuantity)}</td>
                     <td className="cost-centers-view__num">{formatUsd(row.totals.aiuGrossAmount)}</td>
                     <td className={`cost-centers-view__num cost-centers-view__diff${diff > 0 ? '--positive' : diff < 0 ? '--negative' : ''}`}>
