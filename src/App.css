@@ -1574,3 +1574,135 @@ td.cost-centers-view__num {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ── Report Guide View ───────────────────────────────────────── */
+.report-guide {
+  max-width: 960px;
+}
+
+.report-guide__heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 0.5rem;
+}
+
+.report-guide__intro {
+  color: #475569;
+  font-size: 0.9rem;
+  margin: 0 0 1.75rem;
+}
+
+.report-guide__example {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.report-guide__example-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.5rem;
+}
+
+.report-guide__example-summary {
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0 0 1.25rem;
+}
+
+/* Scrollable CSV table */
+.report-guide__csv-scroll {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  margin-bottom: 1.25rem;
+}
+
+.report-guide__csv-table {
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.report-guide__csv-th {
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.report-guide__csv-th:last-child {
+  border-right: none;
+}
+
+.report-guide__csv-td {
+  padding: 0.35rem 0.65rem;
+  border-right: 1px solid #f1f5f9;
+  color: #1e293b;
+  background: #fff;
+}
+
+.report-guide__csv-td:last-child {
+  border-right: none;
+}
+
+/* Annotation list */
+.report-guide__annotation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.report-guide__annotation-row {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.report-guide__annotation-row:last-child {
+  border-bottom: none;
+}
+
+.report-guide__annotation-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.report-guide__annotation-code {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6366f1;
+  background: #eef2ff;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.report-guide__annotation-value {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-size: 0.75rem;
+  color: #64748b;
+  word-break: break-all;
+}
+
+.report-guide__annotation-note {
+  font-size: 0.85rem;
+  color: #334155;
+  line-height: 1.5;
+  margin: 0;
+}
