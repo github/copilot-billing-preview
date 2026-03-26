@@ -90,7 +90,8 @@ export function DualAxisLineChart({
         callbacks: {
           label: (context) => {
             const value = context.parsed.y ?? 0
-            return `${context.dataset.label}: ${value.toLocaleString()}`
+            const formatted = formatYAsCurrency ? formatUsdTick(value) : value.toLocaleString()
+            return `${context.dataset.label}: ${formatted}`
           },
         },
       },
