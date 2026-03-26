@@ -50,7 +50,7 @@ const SAMPLE_ROW_2 = [
   '0',
   '0',
   '0',
-  'False',
+  'FALSE',
   '1000',
   'octodemo',
   'Octocats',
