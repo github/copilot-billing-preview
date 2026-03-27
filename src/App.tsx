@@ -567,11 +567,15 @@ function App() {
                   }}
                 />
               </div>
-            ) : activeView === 'userDetails' ? (
-              <div className="view-content">
-                <UserDetailsView user={selectedUser} />
-              </div>
-            ) : activeView === 'costCenters' ? (
+              ) : activeView === 'userDetails' ? (
+                <div className="view-content">
+                  <UserDetailsView
+                    user={selectedUser}
+                    rangeStart={rangeStart}
+                    onBackToUsers={() => setActiveView('users')}
+                  />
+                </div>
+              ) : activeView === 'costCenters' ? (
               <div className="view-content">
                 <CostCentersView data={costCenters ?? { costCenters: [] }} rangeStart={rangeStart} />
               </div>

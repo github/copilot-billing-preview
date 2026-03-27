@@ -7,6 +7,7 @@ export type UserModelDailyUsage = {
   discountAmount: number
   netAmount: number
   aiuQuantity: number
+  aiuGrossAmount: number
   aicNetAmount: number
 }
 
@@ -17,6 +18,7 @@ export type UserDailyUsage = {
   discountAmount: number
   netAmount: number
   aiuQuantity: number
+  aiuGrossAmount: number
   aicNetAmount: number
   models: Record<string, UserModelDailyUsage>
 }
@@ -24,6 +26,8 @@ export type UserDailyUsage = {
 export type UserUsage = {
   username: string
   totalMonthlyQuota: number
+  organizations: string[]
+  costCenters: string[]
   daily: Record<string, UserDailyUsage>
   totals: Omit<UserDailyUsage, 'date' | 'models'> & {
     distinctModels: number
@@ -37,6 +41,8 @@ export type UserUsageResult = {
 type UserUsageInternal = {
   username: string
   totalMonthlyQuota: number
+  organizations: Set<string>
+  costCenters: Set<string>
   daily: Map<string, UserDailyUsage>
   distinctModels: Set<string>
   totals: {
@@ -45,6 +51,7 @@ type UserUsageInternal = {
     discountAmount: number
     netAmount: number
     aiuQuantity: number
+    aiuGrossAmount: number
     aicNetAmount: number
   }
 }
@@ -59,6 +66,7 @@ function ensureModel(day: UserDailyUsage, model: string): UserModelDailyUsage {
     discountAmount: 0,
     netAmount: 0,
     aiuQuantity: 0,
+    aiuGrossAmount: 0,
     aicNetAmount: 0,
   }
   day.models[model] = created
@@ -76,6 +84,7 @@ function ensureDay(user: UserUsageInternal, date: string): UserDailyUsage {
     discountAmount: 0,
     netAmount: 0,
     aiuQuantity: 0,
+    aiuGrossAmount: 0,
     aicNetAmount: 0,
     models: {},
   }
@@ -104,6 +113,8 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
       user = {
         username,
         totalMonthlyQuota: record.total_monthly_quota,
+        organizations: new Set(),
+        costCenters: new Set(),
         daily: new Map(),
         distinctModels: new Set(),
         totals: {
@@ -112,6 +123,7 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
           discountAmount: 0,
           netAmount: 0,
           aiuQuantity: 0,
+          aiuGrossAmount: 0,
           aicNetAmount: 0,
         },
       }
@@ -122,7 +134,17 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
       user.totalMonthlyQuota = record.total_monthly_quota
     }
 
-    const { requests, grossAmount, discountAmount, netAmount, aiuQuantity, aicNetAmount } = getUsageMetrics(record)
+    const organization = record.organization.trim()
+    if (organization) {
+      user.organizations.add(organization)
+    }
+
+    const costCenter = record.cost_center_name?.trim() ?? ''
+    if (costCenter) {
+      user.costCenters.add(costCenter)
+    }
+
+    const { requests, grossAmount, discountAmount, netAmount, aiuQuantity, aiuGrossAmount, aicNetAmount } = getUsageMetrics(record)
 
     user.distinctModels.add(model)
     user.totals.requests += requests
@@ -130,6 +152,7 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
     user.totals.discountAmount += discountAmount
     user.totals.netAmount += netAmount
     user.totals.aiuQuantity += aiuQuantity
+    user.totals.aiuGrossAmount += aiuGrossAmount
     user.totals.aicNetAmount += aicNetAmount
 
     const day = ensureDay(user, date)
@@ -138,6 +161,7 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
     day.discountAmount += discountAmount
     day.netAmount += netAmount
     day.aiuQuantity += aiuQuantity
+    day.aiuGrossAmount += aiuGrossAmount
     day.aicNetAmount += aicNetAmount
 
     const dayModel = ensureModel(day, model)
@@ -146,6 +170,7 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
     dayModel.discountAmount += discountAmount
     dayModel.netAmount += netAmount
     dayModel.aiuQuantity += aiuQuantity
+    dayModel.aiuGrossAmount += aiuGrossAmount
     dayModel.aicNetAmount += aicNetAmount
   }
 
@@ -161,6 +186,8 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
         return {
           username: user.username,
           totalMonthlyQuota: user.totalMonthlyQuota,
+          organizations: Array.from(user.organizations).sort((a, b) => a.localeCompare(b)),
+          costCenters: Array.from(user.costCenters).sort((a, b) => a.localeCompare(b)),
           daily,
           totals: {
             ...user.totals,
