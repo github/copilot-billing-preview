@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { MultiSeriesStackedBarChart } from '../components'
 import type { UserUsage } from '../pipeline/aggregators/userUsageAggregator'
-import { formatAiu, formatUsd } from '../utils/format'
+import { formatAiu } from '../utils/format'
 
 type DailySummaryModelRow = {
   model: string
@@ -158,12 +158,12 @@ export function UserDetailsView({ user, rangeStart, onBackToUsers }: UserDetails
               {savings > 0 ? (
                 <>
                   <strong>{user.username}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
-                  <strong>{formatUsd(savings)} less</strong> under token-based pricing
+                  <strong>{formatCost(savings)} less</strong> under token-based pricing
                 </>
               ) : savings < 0 ? (
                 <>
                   <strong>{user.username}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
-                  <strong>{formatUsd(Math.abs(savings))} more</strong> under token-based pricing
+                  <strong>{formatCost(Math.abs(savings))} more</strong> under token-based pricing
                 </>
               ) : (
                 <>
@@ -176,41 +176,41 @@ export function UserDetailsView({ user, rangeStart, onBackToUsers }: UserDetails
           <div className="comparison-grid">
             <div className="card comparison-card">
               <div className="comparison-card__label">Current billing (PRUs)</div>
-              <div className="comparison-card__big-number">{formatUsd(user.totals.netAmount)}</div>
+              <div className="comparison-card__big-number">{formatCost(user.totals.netAmount)}</div>
               <div className="comparison-card__period">{user.totals.requests.toLocaleString()} PRUs</div>
               <div className="comparison-card__rate">1 PRU = $0.04</div>
               <div className="comparison-card__breakdown">
                 <div className="comparison-card__breakdown-row">
                   <span>Gross cost</span>
-                  <span>{formatUsd(user.totals.grossAmount)}</span>
+                  <span>{formatCost(user.totals.grossAmount)}</span>
                 </div>
                 <div className="comparison-card__breakdown-row comparison-card__breakdown-row--muted">
                   <span>Discounts</span>
-                  <span>-{formatUsd(user.totals.discountAmount)}</span>
+                  <span>−{formatCost(user.totals.discountAmount)}</span>
                 </div>
                 <div className="comparison-card__breakdown-row comparison-card__breakdown-row--total">
                   <span>Net cost</span>
-                  <span>{formatUsd(user.totals.netAmount)}</span>
+                  <span>{formatCost(user.totals.netAmount)}</span>
                 </div>
               </div>
             </div>
             <div className="card comparison-card">
               <div className="comparison-card__label">Token-based billing (AICs)</div>
-              <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatUsd(user.totals.aicNetAmount)}</div>
+              <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatCost(user.totals.aicNetAmount)}</div>
               <div className="comparison-card__period">{formatAiu(user.totals.aiuQuantity)} AICs</div>
               <div className="comparison-card__rate">1 AIC = $0.01</div>
               <div className="comparison-card__breakdown">
                 <div className="comparison-card__breakdown-row">
                   <span>Gross cost</span>
-                  <span>{formatUsd(user.totals.aiuGrossAmount)}</span>
+                  <span>{formatCost(user.totals.aiuGrossAmount)}</span>
                 </div>
                 <div className="comparison-card__breakdown-row comparison-card__breakdown-row--muted">
                   <span>Included credits discount</span>
-                  <span>-{formatUsd(aicDiscountAmount)}</span>
+                  <span>−{formatCost(aicDiscountAmount)}</span>
                 </div>
                 <div className="comparison-card__breakdown-row comparison-card__breakdown-row--total">
                   <span>Net cost</span>
-                  <span>{formatUsd(user.totals.aicNetAmount)}</span>
+                  <span>{formatCost(user.totals.aicNetAmount)}</span>
                 </div>
               </div>
             </div>
@@ -256,12 +256,12 @@ export function UserDetailsView({ user, rangeStart, onBackToUsers }: UserDetails
                         <td className="user-details__num">{formatCost(row.discountAmount)}</td>
                         <td className="user-details__num">{formatCost(row.netAmount)}</td>
                         <td className="user-details__num">{formatAiu(row.aiuQuantity)}</td>
-                        <td className="user-details__num">{formatUsd(row.aiuGrossAmount)}</td>
-                        <td className="user-details__num">{formatUsd(row.aicDiscountAmount)}</td>
-                        <td className="user-details__num">{formatUsd(row.aicNetAmount)}</td>
+                        <td className="user-details__num">{formatCost(row.aiuGrossAmount)}</td>
+                        <td className="user-details__num">{formatCost(row.aicDiscountAmount)}</td>
+                        <td className="user-details__num">{formatCost(row.aicNetAmount)}</td>
                         <td className={`user-details__num ${diff > 0 ? 'user-details__diff--positive' : diff < 0 ? 'user-details__diff--negative' : 'user-details__diff--neutral'}`}>
-                          {diff > 0 ? '-' : diff < 0 ? '+' : ''}
-                          {formatUsd(Math.abs(diff))}
+                          {diff > 0 ? '−' : diff < 0 ? '+' : ''}
+                          {formatCost(Math.abs(diff))}
                         </td>
                       </tr>
                     )
