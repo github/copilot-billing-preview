@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { MultiSeriesStackedBarChart } from '../components'
 import type { UserUsage } from '../pipeline/aggregators/userUsageAggregator'
-import { formatAiu } from '../utils/format'
+import { formatAiu, formatUsd } from '../utils/format'
 
 type DailySummaryModelRow = {
   model: string
@@ -10,6 +10,9 @@ type DailySummaryModelRow = {
   grossAmount: number
   discountAmount: number
   netAmount: number
+  aiuGrossAmount: number
+  aicDiscountAmount: number
+  aicNetAmount: number
 }
 
 type DailySummaryGroup = {
@@ -40,11 +43,17 @@ function formatCost(n: number): string {
   return `${sign}$${absValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-export interface UserDetailsViewProps {
-  user: UserUsage | null
+function joinValues(values: string[]): string {
+  return values.join(', ')
 }
 
-export function UserDetailsView({ user }: UserDetailsViewProps) {
+export interface UserDetailsViewProps {
+  user: UserUsage | null
+  rangeStart?: string | null
+  onBackToUsers?: () => void
+}
+
+export function UserDetailsView({ user, rangeStart, onBackToUsers }: UserDetailsViewProps) {
   const dailyEntries = useMemo(() => {
     if (!user) return []
     return Object.values(user.daily).sort((a, b) => a.date.localeCompare(b.date))
@@ -93,6 +102,9 @@ export function UserDetailsView({ user }: UserDetailsViewProps) {
           grossAmount: usage.grossAmount,
           discountAmount: usage.discountAmount,
           netAmount: usage.netAmount,
+          aiuGrossAmount: usage.aiuGrossAmount,
+          aicDiscountAmount: usage.aiuGrossAmount - usage.aicNetAmount,
+          aicNetAmount: usage.aicNetAmount,
         })
       }
 
@@ -101,6 +113,13 @@ export function UserDetailsView({ user }: UserDetailsViewProps) {
 
     return groups
   }, [dailyEntries])
+
+  const periodLabel = rangeStart
+    ? new Date(rangeStart + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric' })
+    : null
+
+  const aicDiscountAmount = user ? user.totals.aiuGrossAmount - user.totals.aicNetAmount : 0
+  const savings = user ? user.totals.netAmount - user.totals.aicNetAmount : 0
 
   if (!user) {
     return (
@@ -115,47 +134,88 @@ export function UserDetailsView({ user }: UserDetailsViewProps) {
 
   return (
     <section className="user-details">
-      <div className="user-details__header">
-        <div className="user-details__title">
-          <h2 className="user-details__heading">{user.username}</h2>
-        </div>
-      </div>
+      {onBackToUsers && (
+        <button type="button" className="next-steps__cta next-steps__cta--primary user-details__backButton" onClick={onBackToUsers}>
+          Back to users
+        </button>
+      )}
 
-      <div className="user-details__summaryWrap">
-        <table className="user-details__summaryTable" aria-label="User summary">
-          <tbody>
-            <tr>
-              <th>Days Active</th>
-              <td>{formatInt(dailyEntries.length)}</td>
-            </tr>
-            <tr>
-              <th>Models Used</th>
-              <td>{formatInt(modelNames.length)}</td>
-            </tr>
-            <tr>
-              <th>Requests</th>
-              <td>{formatInt(user.totals.requests)}</td>
-            </tr>
-            <tr>
-              <th>AI Credits</th>
-              <td>{formatAiu(user.totals.aiuQuantity)}</td>
-            </tr>
-            <tr>
-              <th>Gross Cost</th>
-              <td>{formatCost(user.totals.grossAmount)}</td>
-            </tr>
-            <tr>
-              <th>Net Cost</th>
-              <td>{formatCost(user.totals.netAmount)}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div className="user-details__header">
+        <div className="user-details__title user-details__title--meta">
+          <h2 className="user-details__heading">Username: {user.username}</h2>
+          {user.organizations.length > 0 && <span className="user-details__meta">Organizations: {joinValues(user.organizations)}</span>}
+          {user.costCenters.length > 0 && <span className="user-details__meta">Cost Centers: {joinValues(user.costCenters)}</span>}
+          <span className="user-details__meta">Days Active: {formatInt(dailyEntries.length)}</span>
+        </div>
       </div>
 
       {labels.length === 0 ? (
         <div className="user-details__empty">No usage data for this user.</div>
       ) : (
         <>
+          {periodLabel && (
+            <p className="comparison-framing">
+              {savings > 0 ? (
+                <>
+                  <strong>{user.username}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
+                  <strong>{formatUsd(savings)} less</strong> under token-based pricing
+                </>
+              ) : savings < 0 ? (
+                <>
+                  <strong>{user.username}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
+                  <strong>{formatUsd(Math.abs(savings))} more</strong> under token-based pricing
+                </>
+              ) : (
+                <>
+                  <strong>{user.username}</strong>'s <strong>{periodLabel}</strong> usage cost would be the same under token-based pricing
+                </>
+              )}
+            </p>
+          )}
+
+          <div className="comparison-grid">
+            <div className="card comparison-card">
+              <div className="comparison-card__label">Current billing (PRUs)</div>
+              <div className="comparison-card__big-number">{formatUsd(user.totals.netAmount)}</div>
+              <div className="comparison-card__period">{user.totals.requests.toLocaleString()} PRUs</div>
+              <div className="comparison-card__rate">1 PRU = $0.04</div>
+              <div className="comparison-card__breakdown">
+                <div className="comparison-card__breakdown-row">
+                  <span>Gross cost</span>
+                  <span>{formatUsd(user.totals.grossAmount)}</span>
+                </div>
+                <div className="comparison-card__breakdown-row comparison-card__breakdown-row--muted">
+                  <span>Discounts</span>
+                  <span>-{formatUsd(user.totals.discountAmount)}</span>
+                </div>
+                <div className="comparison-card__breakdown-row comparison-card__breakdown-row--total">
+                  <span>Net cost</span>
+                  <span>{formatUsd(user.totals.netAmount)}</span>
+                </div>
+              </div>
+            </div>
+            <div className="card comparison-card">
+              <div className="comparison-card__label">Token-based billing (AICs)</div>
+              <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatUsd(user.totals.aicNetAmount)}</div>
+              <div className="comparison-card__period">{formatAiu(user.totals.aiuQuantity)} AICs</div>
+              <div className="comparison-card__rate">1 AIC = $0.01</div>
+              <div className="comparison-card__breakdown">
+                <div className="comparison-card__breakdown-row">
+                  <span>Gross cost</span>
+                  <span>{formatUsd(user.totals.aiuGrossAmount)}</span>
+                </div>
+                <div className="comparison-card__breakdown-row comparison-card__breakdown-row--muted">
+                  <span>Included credits discount</span>
+                  <span>-{formatUsd(aicDiscountAmount)}</span>
+                </div>
+                <div className="comparison-card__breakdown-row comparison-card__breakdown-row--total">
+                  <span>Net cost</span>
+                  <span>{formatUsd(user.totals.aicNetAmount)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="charts-grid">
             <MultiSeriesStackedBarChart title="Daily Requests by Model" labels={labels} series={requestSeries} height={340} />
             <MultiSeriesStackedBarChart title="Daily AI Credits by Model" labels={labels} series={aiuSeries} height={340} />
@@ -168,29 +228,44 @@ export function UserDetailsView({ user }: UserDetailsViewProps) {
                   <th>Date</th>
                   <th>Model</th>
                   <th className="user-details__num">Requests</th>
-                  <th className="user-details__num">AI Credits</th>
-                  <th className="user-details__num">Gross Cost</th>
-                  <th className="user-details__num">Discounts</th>
-                  <th className="user-details__num">Net Cost</th>
+                  <th className="user-details__num">Gross Cost (PRU)</th>
+                  <th className="user-details__num">Discounts (PRU)</th>
+                  <th className="user-details__num">Net Cost (PRU)</th>
+                  <th className="user-details__num">AICs</th>
+                  <th className="user-details__num">Gross Cost (AIC)</th>
+                  <th className="user-details__num">Discounts (AIC)</th>
+                  <th className="user-details__num">Net Cost (AIC)</th>
+                  <th className="user-details__num">Difference</th>
                 </tr>
               </thead>
               <tbody>
                 {dailySummaryGroups.flatMap((group) =>
-                  group.rows.map((row, rowIndex) => (
-                    <tr key={`${group.date}-${row.model}`}>
-                      {rowIndex === 0 && (
-                        <td rowSpan={group.rows.length} className="user-details__date">
-                          {group.date}
+                  group.rows.map((row, rowIndex) => {
+                    const diff = row.netAmount - row.aicNetAmount
+
+                    return (
+                      <tr key={`${group.date}-${row.model}`}>
+                        {rowIndex === 0 && (
+                          <td rowSpan={group.rows.length} className="user-details__date">
+                            {group.date}
+                          </td>
+                        )}
+                        <td className="user-details__model">{`- ${row.model}`}</td>
+                        <td className="user-details__num">{formatInt(row.requests)}</td>
+                        <td className="user-details__num">{formatCost(row.grossAmount)}</td>
+                        <td className="user-details__num">{formatCost(row.discountAmount)}</td>
+                        <td className="user-details__num">{formatCost(row.netAmount)}</td>
+                        <td className="user-details__num">{formatAiu(row.aiuQuantity)}</td>
+                        <td className="user-details__num">{formatUsd(row.aiuGrossAmount)}</td>
+                        <td className="user-details__num">{formatUsd(row.aicDiscountAmount)}</td>
+                        <td className="user-details__num">{formatUsd(row.aicNetAmount)}</td>
+                        <td className={`user-details__num ${diff > 0 ? 'user-details__diff--positive' : diff < 0 ? 'user-details__diff--negative' : 'user-details__diff--neutral'}`}>
+                          {diff > 0 ? '-' : diff < 0 ? '+' : ''}
+                          {formatUsd(Math.abs(diff))}
                         </td>
-                      )}
-                      <td className="user-details__model">{`- ${row.model}`}</td>
-                      <td className="user-details__num">{formatInt(row.requests)}</td>
-                      <td className="user-details__num">{formatAiu(row.aiuQuantity)}</td>
-                      <td className="user-details__num">{formatCost(row.grossAmount)}</td>
-                      <td className="user-details__num">{formatCost(row.discountAmount)}</td>
-                      <td className="user-details__num">{formatCost(row.netAmount)}</td>
-                    </tr>
-                  )),
+                      </tr>
+                    )
+                  }),
                 )}
               </tbody>
             </table>
