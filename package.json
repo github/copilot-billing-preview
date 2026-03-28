@@ -1,5 +1,5 @@
 {
-  "name": "github-copilot-token-based-billing-report-viewer",
+  "name": "copilot-billing-preview",
   "private": true,
   "version": "0.0.0",
   "type": "module",
