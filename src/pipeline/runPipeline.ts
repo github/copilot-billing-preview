@@ -3,10 +3,21 @@ import { calculateAicEntitlementPool, PooledAicEntitlementAllocator } from './ai
 import { parseTokenUsageHeader, parseTokenUsageRecord, type TokenUsageHeader, type TokenUsageRecord } from './parser'
 import { streamLines } from './streamer'
 
+export interface PipelineProgress {
+  rowsProcessed: number
+}
+
+export interface PipelineOptions {
+  progressResolution?: number
+  onProgress?: (progress: PipelineProgress) => void
+}
+
 export async function runPipeline(
   file: File,
   aggregators: Aggregator<TokenUsageRecord, unknown, TokenUsageHeader>[],
+  options?: PipelineOptions,
 ): Promise<void> {
+  const { progressResolution = 500, onProgress } = options ?? {}
   const totalAicEntitlements = await calculateAicEntitlementPool(file)
   const aicEntitlementAllocator = new PooledAicEntitlementAllocator(totalAicEntitlements)
   let header: TokenUsageHeader | null = null
@@ -26,5 +37,13 @@ export async function runPipeline(
     const record = aicEntitlementAllocator.apply(parseTokenUsageRecord(trimmed, header))
     aggregators.forEach((aggregator) => aggregator.accumulate(record, rowIndex))
     rowIndex += 1
+
+    if (onProgress && progressResolution > 0 && rowIndex % progressResolution === 0) {
+      onProgress({ rowsProcessed: rowIndex })
+    }
+  }
+
+  if (onProgress && rowIndex > 0) {
+    onProgress({ rowsProcessed: rowIndex })
   }
 }
