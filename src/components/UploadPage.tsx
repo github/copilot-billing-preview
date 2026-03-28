@@ -56,6 +56,8 @@ export function UploadPage({
           tabIndex={isProcessing ? -1 : 0}
           onKeyDown={isProcessing ? undefined : onKeyDown}
           aria-label={isProcessing ? 'Processing CSV file' : 'Upload CSV file'}
+          aria-disabled={isProcessing || undefined}
+          aria-busy={isProcessing || undefined}
         >
           <div className="upload-zone__content">
             {isProcessing ? (
@@ -65,7 +67,14 @@ export function UploadPage({
                 </div>
                 <div className="upload-zone__progress-info">
                   <h3 className="upload-zone__title">Processing file…</h3>
-                  <div className="upload-zone__progress-track">
+                  <div
+                    className="upload-zone__progress-track"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={progress}
+                    aria-valuetext={rowsProcessed > 0 ? `${rowsProcessed.toLocaleString()} rows processed` : undefined}
+                  >
                     <div
                       className="upload-zone__progress-fill"
                       style={{ width: `${progress}%` }}

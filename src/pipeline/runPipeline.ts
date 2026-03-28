@@ -22,6 +22,7 @@ export async function runPipeline(
   const aicEntitlementAllocator = new PooledAicEntitlementAllocator(totalAicEntitlements)
   let header: TokenUsageHeader | null = null
   let rowIndex = 0
+  let lastEmittedRows = 0
 
   for await (const line of streamLines(file)) {
     const trimmed = line.trimEnd()
@@ -40,10 +41,11 @@ export async function runPipeline(
 
     if (onProgress && progressResolution > 0 && rowIndex % progressResolution === 0) {
       onProgress({ rowsProcessed: rowIndex })
+      lastEmittedRows = rowIndex
     }
   }
 
-  if (onProgress && rowIndex > 0) {
+  if (onProgress && progressResolution > 0 && rowIndex > lastEmittedRows) {
     onProgress({ rowsProcessed: rowIndex })
   }
 }
