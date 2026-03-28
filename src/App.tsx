@@ -65,6 +65,8 @@ function App() {
   const [selectedUsername, setSelectedUsername] = useState<string>('')
   const [costCenters, setCostCenters] = useState<CostCenterResult | null>(null)
   const [orgs, setOrgs] = useState<OrganizationResult | null>(null)
+  const [progress, setProgress] = useState(0)
+  const [rowsProcessed, setRowsProcessed] = useState(0)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleProcess = useCallback(async (file: File) => {
@@ -81,6 +83,8 @@ function App() {
     setOrgs(null)
     setActiveView('overview')
     setFileName(file.name)
+    setProgress(0)
+    setRowsProcessed(0)
 
     try {
       const statsAggregator = new QuickStatsAggregator()
@@ -101,8 +105,15 @@ function App() {
         costCenterAggregator,
         orgAggregator,
         userAggregator,
-      ])
+      ], {
+        progressResolution: 500,
+        onProgress: (progressInfo) => {
+          setRowsProcessed(progressInfo.rowsProcessed)
+          setProgress((prev) => Math.min(prev + 5, 90))
+        },
+      })
 
+      setProgress(100)
       setQuickStats(statsAggregator.result())
       setReportContext(contextAggregator.result())
       setDailyUsageData(dailyAggregator.result().dailyData)
@@ -118,6 +129,8 @@ function App() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process the report.')
       setStatus('idle')
+      setProgress(0)
+      setRowsProcessed(0)
     }
   }, [])
 
@@ -164,7 +177,7 @@ function App() {
     }
   }
 
-  const hasReport = fileName !== null || status === 'processing'
+  const hasReport = status === 'done' && fileName !== null
   const rangeStart = reportContext?.startDate ?? null
   const rangeEnd = reportContext?.endDate ?? null
 
@@ -244,12 +257,6 @@ function App() {
                   <span className="secondary-header__separator">|</span>
                   <span className="secondary-header__label">Total rows:</span>
                   <span className="secondary-header__value">{quickStats.lineCount.toLocaleString()}</span>
-                </>
-              )}
-              {status === 'processing' && (
-                <>
-                  <span className="secondary-header__separator">|</span>
-                  <span className="secondary-header__status">Processing…</span>
                 </>
               )}
             </div>
@@ -602,6 +609,10 @@ function App() {
       ) : (
         <UploadPage
           dragActive={dragActive}
+          isProcessing={status === 'processing'}
+          progress={progress}
+          rowsProcessed={rowsProcessed}
+          error={error}
           onDrop={onDrop}
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}

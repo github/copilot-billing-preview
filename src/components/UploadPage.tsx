@@ -2,6 +2,10 @@ import type { DragEvent, KeyboardEvent, MouseEvent } from 'react'
 
 export interface UploadPageProps {
   dragActive: boolean
+  isProcessing: boolean
+  progress: number
+  rowsProcessed: number
+  error: string | null
   onDrop: (event: DragEvent<HTMLDivElement>) => void
   onDragOver: (event: DragEvent<HTMLDivElement>) => void
   onDragLeave: (event: DragEvent<HTMLDivElement>) => void
@@ -11,6 +15,10 @@ export interface UploadPageProps {
 
 export function UploadPage({
   dragActive,
+  isProcessing,
+  progress,
+  rowsProcessed,
+  error,
   onDrop,
   onDragOver,
   onDragLeave,
@@ -33,26 +41,55 @@ export function UploadPage({
           Upload your token usage report to preview what your billing would look like under the new
           pricing. Download the report from <strong>Settings → Billing → Premium request usage</strong>.
         </p>
+        {error && (
+          <div className="upload-screen__error" role="alert">
+            ⚠️ {error}
+          </div>
+        )}
         <section
-          className={`upload-zone ${dragActive ? 'upload-zone--active' : ''}`}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          onClick={onClickDropzone}
+          className={`upload-zone ${dragActive ? 'upload-zone--active' : ''} ${isProcessing ? 'upload-zone--processing' : ''}`}
+          onDrop={isProcessing ? undefined : onDrop}
+          onDragOver={isProcessing ? undefined : onDragOver}
+          onDragLeave={isProcessing ? undefined : onDragLeave}
+          onClick={isProcessing ? undefined : onClickDropzone}
           role="button"
-          tabIndex={0}
-          onKeyDown={onKeyDown}
-          aria-label="Upload CSV file"
+          tabIndex={isProcessing ? -1 : 0}
+          onKeyDown={isProcessing ? undefined : onKeyDown}
+          aria-label={isProcessing ? 'Processing CSV file' : 'Upload CSV file'}
         >
           <div className="upload-zone__content">
-            <div className="upload-zone__icon" aria-hidden="true">
-              <svg width="40" height="40" viewBox="0 0 16 16" fill="#636c76">
-                <path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z" />
-                <path d="M11.78 4.72a.749.749 0 1 1-1.06 1.06L8.75 3.811V9.5a.75.75 0 0 1-1.5 0V3.811L5.28 5.78a.749.749 0 1 1-1.06-1.06l3.25-3.25a.749.749 0 0 1 1.06 0l3.25 3.25Z" />
-              </svg>
-            </div>
-            <h3 className="upload-zone__title">Drop your CSV here or click to browse</h3>
-            <p className="upload-zone__hint">tokenUsageReport*.csv</p>
+            {isProcessing ? (
+              <>
+                <div className="upload-zone__icon" aria-hidden="true">
+                  <div className="upload-zone__spinner" />
+                </div>
+                <div className="upload-zone__progress-info">
+                  <h3 className="upload-zone__title">Processing file…</h3>
+                  <div className="upload-zone__progress-track">
+                    <div
+                      className="upload-zone__progress-fill"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  {rowsProcessed > 0 && (
+                    <p className="upload-zone__hint">
+                      {rowsProcessed.toLocaleString()} rows processed
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="upload-zone__icon" aria-hidden="true">
+                  <svg width="40" height="40" viewBox="0 0 16 16" fill="#636c76">
+                    <path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z" />
+                    <path d="M11.78 4.72a.749.749 0 1 1-1.06 1.06L8.75 3.811V9.5a.75.75 0 0 1-1.5 0V3.811L5.28 5.78a.749.749 0 1 1-1.06-1.06l3.25-3.25a.749.749 0 0 1 1.06 0l3.25 3.25Z" />
+                  </svg>
+                </div>
+                <h3 className="upload-zone__title">Drop your CSV here or click to browse</h3>
+                <p className="upload-zone__hint">tokenUsageReport*.csv</p>
+              </>
+            )}
           </div>
         </section>
         <p className="upload-accepted">Accepted: .csv files from the Premium Request Usage report</p>
