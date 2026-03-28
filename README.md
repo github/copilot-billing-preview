@@ -1,6 +1,6 @@
-# GitHub Copilot Usage Billing Report Viewer
+# GitHub Copilot Billing Preview
 
-A web application for analyzing and visualizing GitHub Copilot usage billing reports. Upload your CSV billing reports and explore requests, costs, AI Credits, and trends across users, organizations, models, and cost centers.
+A web application for previewing and comparing your future GitHub Copilot bills as you transition to the new AI Credits-based billing model. Upload your CSV billing reports to explore requests, costs, AI Credits, and trends across users, organizations, models, and cost centers.
 
 ## Features
 
@@ -57,8 +57,8 @@ npm run preview
 
 1. Launch the application
 2. Upload a GitHub Copilot usage billing CSV report (drag-and-drop or click to browse)
-3. The app will parse and analyze the report
-4. Explore the visualizations and data views
+3. The app will parse the report and compare request-based and AI Credits-based billing signals
+4. Explore the visualizations and data views to preview how future bills may look after the AI Credits transition
 
 Sample reports are available in the `examples/` directory. Older examples without `aiu_quantity` still load, but AI Credits will remain `0` for those rows.
 
