@@ -1,4 +1,9 @@
 /* App container */
+:root {
+  --sidebar-width: 200px;
+  --content-max-width: 1280px;
+}
+
 .app {
   min-height: 100vh;
   display: flex;
@@ -115,7 +120,7 @@
 }
 
 .overview-page {
-  max-width: 960px;
+  max-width: var(--content-max-width);
   width: 100%;
   margin: 0 auto;
   padding: 32px 24px 48px;
@@ -125,7 +130,7 @@
 }
 
 .view-content {
-  max-width: 960px;
+  max-width: var(--content-max-width);
   width: 100%;
   margin: 0 auto;
   padding: 32px 24px 48px;
@@ -305,6 +310,21 @@
 .orgs-view__name {
   font-weight: 600;
   color: #1f2328;
+}
+
+.orgs-view__diff--positive {
+  color: #2da44e;
+  font-weight: 600;
+}
+
+.orgs-view__diff--negative {
+  color: #cf222e;
+  font-weight: 600;
+}
+
+.orgs-view__diff--neutral {
+  color: #8b949e;
+  font-weight: 600;
 }
 
 .orgs-view__empty {
@@ -1196,6 +1216,21 @@ td.cost-centers-view__num {
   background: #ffffff;
 }
 
+.products-view__diff--positive {
+  color: #2da44e;
+  font-weight: 600;
+}
+
+.products-view__diff--negative {
+  color: #cf222e;
+  font-weight: 600;
+}
+
+.products-view__diff--neutral {
+  color: #8b949e;
+  font-weight: 600;
+}
+
 .products-view__modelCell {
   padding-left: 44px !important;
   font-size: 12px;
@@ -1663,6 +1698,11 @@ td.cost-centers-view__num {
   .report-content {
     padding: 16px;
   }
+
+    .overview-page,
+    .view-content {
+      transform: none;
+    }
   
   .charts-grid {
     grid-template-columns: 1fr;
@@ -1711,11 +1751,18 @@ td.cost-centers-view__num {
 
 /* Sidebar */
 .sidebar {
-  width: 200px;
+  width: var(--sidebar-width);
   flex-shrink: 0;
   background: #ffffff;
   border-right: 1px solid #d1d9e0;
   padding: 12px 0;
+}
+
+@media (min-width: 1440px) {
+  .overview-page,
+  .view-content {
+    transform: translateX(calc(var(--sidebar-width) / -2));
+  }
 }
 
 .sidebar__nav {

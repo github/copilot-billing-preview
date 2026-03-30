@@ -5,6 +5,7 @@ export type ProductUsageTotals = {
   requests: number
   aiuQuantity: number
   grossAmount: number
+  netAmount: number
   aiuGrossAmount: number
   aicNetAmount: number
 }
@@ -24,6 +25,7 @@ function createTotals(): ProductUsageTotals {
     requests: 0,
     aiuQuantity: 0,
     grossAmount: 0,
+    netAmount: 0,
     aiuGrossAmount: 0,
     aicNetAmount: 0,
   }
@@ -57,10 +59,11 @@ export class ProductUsageAggregator implements Aggregator<TokenUsageRecord, Prod
       this.byProduct.set(product, productUsage)
     }
 
-    const { requests, aiuQuantity, grossAmount, aiuGrossAmount, aicNetAmount } = getUsageMetrics(record)
+    const { requests, aiuQuantity, grossAmount, netAmount, aiuGrossAmount, aicNetAmount } = getUsageMetrics(record)
     productUsage.totals.requests += requests
     productUsage.totals.aiuQuantity += aiuQuantity
     productUsage.totals.grossAmount += grossAmount
+    productUsage.totals.netAmount += netAmount
     productUsage.totals.aiuGrossAmount += aiuGrossAmount
     productUsage.totals.aicNetAmount += aicNetAmount
 
@@ -73,6 +76,7 @@ export class ProductUsageAggregator implements Aggregator<TokenUsageRecord, Prod
     modelTotals.requests += requests
     modelTotals.aiuQuantity += aiuQuantity
     modelTotals.grossAmount += grossAmount
+    modelTotals.netAmount += netAmount
     modelTotals.aiuGrossAmount += aiuGrossAmount
     modelTotals.aicNetAmount += aicNetAmount
   }
@@ -83,10 +87,10 @@ export class ProductUsageAggregator implements Aggregator<TokenUsageRecord, Prod
         product,
         totals: usage.totals,
         models: Object.fromEntries(
-          Array.from(usage.models.entries()).sort((a, b) => b[1].grossAmount - a[1].grossAmount),
+          Array.from(usage.models.entries()).sort((a, b) => b[1].netAmount - a[1].netAmount),
         ),
       }))
-      .sort((a, b) => b.totals.grossAmount - a.totals.grossAmount)
+      .sort((a, b) => b.totals.netAmount - a.totals.netAmount)
 
     return { products }
   }
