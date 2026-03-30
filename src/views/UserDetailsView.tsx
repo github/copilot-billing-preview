@@ -145,15 +145,24 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
 
   return (
     <section className="user-details">
-      {onBackToUsers && (
-        <button type="button" className="next-steps__cta next-steps__cta--primary user-details__backButton" onClick={onBackToUsers}>
-          Back to users
-        </button>
-      )}
-
       <div className="user-details__header">
-        <div className="user-details__title user-details__title--meta">
-          <h2 className="user-details__heading">Username: {user.username}</h2>
+        <div className="user-details__titleGroup">
+          <nav className="user-details__breadcrumbs" aria-label="Breadcrumb">
+            {onBackToUsers ? (
+              <button type="button" className="user-details__breadcrumb user-details__breadcrumb--link" onClick={onBackToUsers}>
+                users
+              </button>
+            ) : (
+              <span className="user-details__breadcrumb">users</span>
+            )}
+            <span className="user-details__breadcrumb-separator" aria-hidden="true">
+              /
+            </span>
+            <h2 className="user-details__heading">{user.username}</h2>
+          </nav>
+        </div>
+
+        <div className="user-details__metaRow">
           {user.organizations.length > 0 && <span className="user-details__meta">Organizations: {joinValues(user.organizations)}</span>}
           {user.costCenters.length > 0 && <span className="user-details__meta">Cost Centers: {joinValues(user.costCenters)}</span>}
           <span className="user-details__meta">Days Active: {formatInt(activeDailyEntries.length)}</span>
