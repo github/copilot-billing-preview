@@ -1329,12 +1329,29 @@ td.cost-centers-view__num {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.user-details__breadcrumbItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-details__breadcrumbItem:not(:last-child)::after {
+  content: '/';
+  font-size: 18px;
+  font-weight: 600;
+  color: #8c959f;
 }
 
 .user-details__breadcrumb {
+  font: inherit;
   font-size: 18px;
   font-weight: 600;
-  color: #0969da;
+  color: #57606a;
   background: transparent;
   border: none;
   padding: 0;
@@ -1343,6 +1360,7 @@ td.cost-centers-view__num {
 }
 
 .user-details__breadcrumb--link {
+  color: #0969da;
   cursor: pointer;
 }
 
@@ -1356,10 +1374,12 @@ td.cost-centers-view__num {
   border-radius: 4px;
 }
 
-.user-details__breadcrumb-separator {
-  font-size: 18px;
-  font-weight: 600;
-  color: #8c959f;
+.user-details__breadcrumbItem--current {
+  color: #1f2328;
+}
+
+.user-details__breadcrumbItem--current .user-details__heading {
+  color: inherit;
 }
 
 .user-details__heading {

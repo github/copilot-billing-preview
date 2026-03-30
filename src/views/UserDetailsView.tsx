@@ -147,18 +147,21 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
     <section className="user-details">
       <div className="user-details__header">
         <div className="user-details__titleGroup">
-          <nav className="user-details__breadcrumbs" aria-label="Breadcrumb">
-            {onBackToUsers ? (
-              <button type="button" className="user-details__breadcrumb user-details__breadcrumb--link" onClick={onBackToUsers}>
-                users
-              </button>
-            ) : (
-              <span className="user-details__breadcrumb">users</span>
-            )}
-            <span className="user-details__breadcrumb-separator" aria-hidden="true">
-              /
-            </span>
-            <h2 className="user-details__heading">{user.username}</h2>
+          <nav aria-label="Breadcrumb">
+            <ol className="user-details__breadcrumbs">
+              <li className="user-details__breadcrumbItem">
+                {onBackToUsers ? (
+                  <button type="button" className="user-details__breadcrumb user-details__breadcrumb--link" onClick={onBackToUsers}>
+                    users
+                  </button>
+                ) : (
+                  <span className="user-details__breadcrumb">users</span>
+                )}
+              </li>
+              <li className="user-details__breadcrumbItem user-details__breadcrumbItem--current" aria-current="page">
+                <h2 className="user-details__heading">{user.username}</h2>
+              </li>
+            </ol>
           </nav>
         </div>
 
