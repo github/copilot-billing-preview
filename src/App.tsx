@@ -539,7 +539,7 @@ function App() {
                         </div>
                         <div className="next-steps__card">
                           <h3 className="next-steps__card-title">Set product-level budgets</h3>
-                          <p className="next-steps__card-body">Your usage breakdown shows cost by product. Set budgets per product (e.g., Coding Agent, Copilot Chat) to control spending where it matters most.</p>
+                          <p className="next-steps__card-body">Your usage breakdown shows cost by product. Set budgets per product (e.g., Copilot Cloud Agent, Copilot Chat) to control spending where it matters most.</p>
                           <a href="https://github.com/settings/billing/budgets" className="next-steps__cta" target="_blank" rel="noopener noreferrer">Set product budgets &rarr;</a>
                         </div>
                         <div className="next-steps__card">

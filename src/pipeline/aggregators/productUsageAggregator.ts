@@ -35,7 +35,7 @@ function getFriendlyProductName(record: TokenUsageRecord): string {
   const model = record.model.trim()
 
   if (model === 'Code Review model') return 'Code Review'
-  if (model === 'Coding Agent model') return 'Coding Agent'
+  if (model === 'Coding Agent model') return 'Copilot Cloud Agent'
   return 'Copilot'
 }
 
