@@ -1,10 +1,5 @@
 import type { OrganizationResult } from '../pipeline/aggregators/organizationAggregator'
-import { formatAiu, formatUsd } from '../utils/format'
-
-function formatDifference(diff: number): string {
-  if (diff === 0) return formatUsd(0)
-  return `${diff > 0 ? '−' : '+'}${formatUsd(Math.abs(diff))}`
-}
+import { formatAiu, formatDifference, formatUsd } from '../utils/format'
 
 export function OrganizationsView({ data }: { data: OrganizationResult }) {
   if (data.organizations.length === 0) {

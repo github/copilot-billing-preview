@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { ProductUsage, ProductUsageResult } from '../pipeline/aggregators/productUsageAggregator'
-import { formatAiu, formatUsd } from '../utils/format'
+import { formatAiu, formatDifference, formatUsd } from '../utils/format'
 
 const PRODUCT_COLORS = ['#2da44e', '#8b5cf6', '#d4a72c', '#54aeff', '#cf222e', '#fd8c73', '#8b949e']
 
@@ -10,11 +10,6 @@ type ProductsViewProps = {
 
 function formatInt(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
-}
-
-function formatDifference(diff: number): string {
-  if (diff === 0) return formatUsd(0)
-  return `${diff > 0 ? '−' : '+'}${formatUsd(Math.abs(diff))}`
 }
 
 export function ProductsView({ data }: ProductsViewProps) {
@@ -125,9 +120,9 @@ export function ProductsView({ data }: ProductsViewProps) {
               <tr>
                 <th>Product</th>
                 <th className="products-view__num">PRUs</th>
-                <th className="products-view__num">PRU Cost</th>
+                <th className="products-view__num">PRU net cost</th>
                 <th className="products-view__num">AICs</th>
-                <th className="products-view__num">AIC Cost</th>
+                <th className="products-view__num">AIC net cost</th>
                 <th className="products-view__num">Difference</th>
               </tr>
             </thead>
