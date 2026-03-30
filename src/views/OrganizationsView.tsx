@@ -1,5 +1,5 @@
 import type { OrganizationResult } from '../pipeline/aggregators/organizationAggregator'
-import { formatAiu, formatUsd } from '../utils/format'
+import { formatAiu, formatDifference, formatUsd } from '../utils/format'
 
 export function OrganizationsView({ data }: { data: OrganizationResult }) {
   if (data.organizations.length === 0) {
@@ -26,25 +26,33 @@ export function OrganizationsView({ data }: { data: OrganizationResult }) {
             <tr>
               <th>Organization</th>
               <th className="orgs-view__num">Users</th>
-              <th className="orgs-view__num">Models</th>
+              <th className="orgs-view__num">Requests</th>
               <th className="orgs-view__num">AI Credits</th>
-              <th className="orgs-view__num">Gross Cost</th>
-              <th className="orgs-view__num">Discounts</th>
-              <th className="orgs-view__num">Net Cost</th>
+              <th className="orgs-view__num">Net Cost (PRU)</th>
+              <th className="orgs-view__num">Net Cost (AIC)</th>
+              <th className="orgs-view__num">Difference</th>
             </tr>
           </thead>
           <tbody>
-            {data.organizations.map((organization) => (
-              <tr key={organization.organization}>
-                <td className="orgs-view__name">{organization.organization}</td>
-                <td className="orgs-view__num">{organization.userCount.toLocaleString()}</td>
-                <td className="orgs-view__num">{organization.modelCount.toLocaleString()}</td>
-                <td className="orgs-view__num">{formatAiu(organization.aiuQuantity)}</td>
-                <td className="orgs-view__num">{formatUsd(organization.grossAmount)}</td>
-                <td className="orgs-view__num">{formatUsd(organization.discountAmount)}</td>
-                <td className="orgs-view__num">{formatUsd(organization.netAmount)}</td>
-              </tr>
-            ))}
+            {data.organizations.map((organization) => {
+              const difference = organization.netAmount - organization.aicNetAmount
+
+              return (
+                <tr key={organization.organization}>
+                  <td className="orgs-view__name">{organization.organization}</td>
+                  <td className="orgs-view__num">{organization.userCount.toLocaleString()}</td>
+                  <td className="orgs-view__num">{organization.requests.toLocaleString()}</td>
+                  <td className="orgs-view__num">{formatAiu(organization.aiuQuantity)}</td>
+                  <td className="orgs-view__num">{formatUsd(organization.netAmount)}</td>
+                  <td className="orgs-view__num">{formatUsd(organization.aicNetAmount)}</td>
+                  <td
+                    className={`orgs-view__num ${difference > 0 ? 'orgs-view__diff--positive' : difference < 0 ? 'orgs-view__diff--negative' : 'orgs-view__diff--neutral'}`}
+                  >
+                    {formatDifference(difference)}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

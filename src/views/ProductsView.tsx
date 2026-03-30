@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { ProductUsage, ProductUsageResult } from '../pipeline/aggregators/productUsageAggregator'
-import { formatAiu, formatUsd } from '../utils/format'
+import { formatAiu, formatDifference, formatUsd } from '../utils/format'
 
 const PRODUCT_COLORS = ['#2da44e', '#8b5cf6', '#d4a72c', '#54aeff', '#cf222e', '#fd8c73', '#8b949e']
 
@@ -18,14 +18,14 @@ export function ProductsView({ data }: ProductsViewProps) {
   )
 
   const maxCost = data.products.reduce((value, product) => {
-    return Math.max(value, product.totals.grossAmount, product.totals.aiuGrossAmount)
+    return Math.max(value, product.totals.netAmount, product.totals.aicNetAmount)
   }, 0)
 
   const modelRowsByProduct = useMemo(() => {
     const entries = data.products.map((product) => {
       const modelRows = Object.entries(product.models)
         .map(([model, totals]) => ({ model, totals }))
-        .sort((a, b) => b.totals.grossAmount - a.totals.grossAmount)
+        .sort((a, b) => b.totals.netAmount - a.totals.netAmount)
 
       return [product.product, modelRows] as const
     })
@@ -68,18 +68,18 @@ export function ProductsView({ data }: ProductsViewProps) {
         <div className="products-view__legend" aria-hidden="true">
           <span className="products-view__legendItem">
             <span className="products-view__legendSwatch products-view__legendSwatch--pru" />
-            PRU cost
+            PRU net cost
           </span>
           <span className="products-view__legendItem">
             <span className="products-view__legendSwatch products-view__legendSwatch--aiu" />
-            AIC cost
+            AIC net cost
           </span>
         </div>
 
         <div className="products-view__bars" role="presentation">
           {data.products.map((product, index) => {
-            const pruWidth = maxCost > 0 ? (product.totals.grossAmount / maxCost) * 100 : 0
-            const aiuWidth = maxCost > 0 ? (product.totals.aiuGrossAmount / maxCost) * 100 : 0
+            const pruWidth = maxCost > 0 ? (product.totals.netAmount / maxCost) * 100 : 0
+            const aiuWidth = maxCost > 0 ? (product.totals.aicNetAmount / maxCost) * 100 : 0
 
             return (
               <div key={product.product} className="products-view__barRow">
@@ -97,14 +97,14 @@ export function ProductsView({ data }: ProductsViewProps) {
                     <div className="products-view__barTrack products-view__barTrack--pru">
                       <div className="products-view__barFill products-view__barFill--pru" style={{ width: `${pruWidth}%` }} />
                     </div>
-                    <span className="products-view__barValue products-view__barValue--pru">{formatUsd(product.totals.grossAmount)}</span>
+                    <span className="products-view__barValue products-view__barValue--pru">{formatUsd(product.totals.netAmount)}</span>
                   </div>
 
                   <div className="products-view__barValues">
                     <div className="products-view__barTrack products-view__barTrack--aiu">
                       <div className="products-view__barFill products-view__barFill--aiu" style={{ width: `${aiuWidth}%` }} />
                     </div>
-                    <span className="products-view__barValue products-view__barValue--aiu">{formatUsd(product.totals.aiuGrossAmount)}</span>
+                    <span className="products-view__barValue products-view__barValue--aiu">{formatUsd(product.totals.aicNetAmount)}</span>
                   </div>
                 </div>
               </div>
@@ -120,9 +120,10 @@ export function ProductsView({ data }: ProductsViewProps) {
               <tr>
                 <th>Product</th>
                 <th className="products-view__num">PRUs</th>
-                <th className="products-view__num">PRU Cost</th>
+                <th className="products-view__num">PRU net cost</th>
                 <th className="products-view__num">AICs</th>
-                <th className="products-view__num">AIC Cost</th>
+                <th className="products-view__num">AIC net cost</th>
+                <th className="products-view__num">Difference</th>
               </tr>
             </thead>
             <tbody>
@@ -159,6 +160,7 @@ type ProductRowsProps = {
 
 function ProductRows({ product, productIndex, isExpanded, modelRows, onToggle }: ProductRowsProps) {
   const color = PRODUCT_COLORS[productIndex % PRODUCT_COLORS.length]
+  const productDiff = product.totals.netAmount - product.totals.aicNetAmount
 
   return (
     <>
@@ -178,21 +180,35 @@ function ProductRows({ product, productIndex, isExpanded, modelRows, onToggle }:
           </button>
         </td>
         <td className="products-view__num">{formatInt(product.totals.requests)}</td>
-        <td className="products-view__num">{formatUsd(product.totals.grossAmount)}</td>
+        <td className="products-view__num">{formatUsd(product.totals.netAmount)}</td>
         <td className="products-view__num">{formatAiu(product.totals.aiuQuantity)}</td>
-        <td className="products-view__num">{formatUsd(product.totals.aiuGrossAmount)}</td>
+        <td className="products-view__num">{formatUsd(product.totals.aicNetAmount)}</td>
+        <td
+          className={`products-view__num ${productDiff > 0 ? 'products-view__diff--positive' : productDiff < 0 ? 'products-view__diff--negative' : 'products-view__diff--neutral'}`}
+        >
+          {formatDifference(productDiff)}
+        </td>
       </tr>
 
       {isExpanded &&
-        modelRows.map((row) => (
-          <tr key={`${product.product}-${row.model}`} className="products-view__modelRow">
-            <td className="products-view__modelCell">{row.model}</td>
-            <td className="products-view__num">{formatInt(row.totals.requests)}</td>
-            <td className="products-view__num">{formatUsd(row.totals.grossAmount)}</td>
-            <td className="products-view__num">{formatAiu(row.totals.aiuQuantity)}</td>
-            <td className="products-view__num">{formatUsd(row.totals.aiuGrossAmount)}</td>
-          </tr>
-        ))}
+        modelRows.map((row) => {
+          const modelDiff = row.totals.netAmount - row.totals.aicNetAmount
+
+          return (
+            <tr key={`${product.product}-${row.model}`} className="products-view__modelRow">
+              <td className="products-view__modelCell">{row.model}</td>
+              <td className="products-view__num">{formatInt(row.totals.requests)}</td>
+              <td className="products-view__num">{formatUsd(row.totals.netAmount)}</td>
+              <td className="products-view__num">{formatAiu(row.totals.aiuQuantity)}</td>
+              <td className="products-view__num">{formatUsd(row.totals.aicNetAmount)}</td>
+              <td
+                className={`products-view__num ${modelDiff > 0 ? 'products-view__diff--positive' : modelDiff < 0 ? 'products-view__diff--negative' : 'products-view__diff--neutral'}`}
+              >
+                {formatDifference(modelDiff)}
+              </td>
+            </tr>
+          )
+        })}
     </>
   )
 }
