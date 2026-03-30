@@ -579,6 +579,7 @@ function App() {
                   <UserDetailsView
                     user={selectedUser}
                     rangeStart={rangeStart}
+                    rangeEnd={rangeEnd}
                     onBackToUsers={() => setActiveView('users')}
                   />
                 </div>

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { MultiSeriesStackedBarChart } from '../components'
-import type { UserUsage } from '../pipeline/aggregators/userUsageAggregator'
+import type { UserDailyUsage, UserUsage } from '../pipeline/aggregators/userUsageAggregator'
+import { fillDataForRange } from '../utils/fillDataForRange'
 import { formatAiu } from '../utils/format'
 
 type DailySummaryModelRow = {
@@ -47,49 +48,59 @@ function joinValues(values: string[]): string {
   return values.join(', ')
 }
 
+function createEmptyUserDaily(date: string): UserDailyUsage {
+  return { date, requests: 0, grossAmount: 0, discountAmount: 0, netAmount: 0, aiuQuantity: 0, aiuGrossAmount: 0, aicNetAmount: 0, models: {} }
+}
+
 export interface UserDetailsViewProps {
   user: UserUsage | null
   rangeStart?: string | null
+  rangeEnd?: string | null
   onBackToUsers?: () => void
 }
 
-export function UserDetailsView({ user, rangeStart, onBackToUsers }: UserDetailsViewProps) {
-  const dailyEntries = useMemo(() => {
+export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: UserDetailsViewProps) {
+  const activeDailyEntries = useMemo(() => {
     if (!user) return []
     return Object.values(user.daily).sort((a, b) => a.date.localeCompare(b.date))
   }, [user])
 
+  const chartDailyEntries = useMemo(
+    () => fillDataForRange(activeDailyEntries, rangeStart ?? null, rangeEnd ?? null, createEmptyUserDaily),
+    [activeDailyEntries, rangeStart, rangeEnd],
+  )
+
   const modelNames = useMemo(() => {
     const names = new Set<string>()
-    for (const day of dailyEntries) {
+    for (const day of activeDailyEntries) {
       for (const model of Object.keys(day.models)) {
         names.add(model)
       }
     }
     return Array.from(names).sort((a, b) => a.localeCompare(b))
-  }, [dailyEntries])
+  }, [activeDailyEntries])
 
-  const labels = useMemo(() => dailyEntries.map((day) => day.date), [dailyEntries])
+  const labels = useMemo(() => chartDailyEntries.map((day) => day.date), [chartDailyEntries])
 
   const requestSeries = useMemo(() => {
     return modelNames.map((model, index) => ({
       label: model,
       color: MODEL_COLORS[index % MODEL_COLORS.length],
-      data: dailyEntries.map((day) => day.models[model]?.requests ?? 0),
+      data: chartDailyEntries.map((day) => day.models[model]?.requests ?? 0),
     }))
-  }, [dailyEntries, modelNames])
+  }, [chartDailyEntries, modelNames])
 
   const aiuSeries = useMemo(() => {
     return modelNames.map((model, index) => ({
       label: model,
       color: MODEL_COLORS[index % MODEL_COLORS.length],
-      data: dailyEntries.map((day) => day.models[model]?.aiuQuantity ?? 0),
+      data: chartDailyEntries.map((day) => day.models[model]?.aiuQuantity ?? 0),
     }))
-  }, [dailyEntries, modelNames])
+  }, [chartDailyEntries, modelNames])
 
   const dailySummaryGroups = useMemo(() => {
     const groups: DailySummaryGroup[] = []
-    for (const day of dailyEntries) {
+    for (const day of activeDailyEntries) {
       const dayModelNames = Object.keys(day.models).sort((a, b) => a.localeCompare(b))
       const rows: DailySummaryModelRow[] = []
 
@@ -112,7 +123,7 @@ export function UserDetailsView({ user, rangeStart, onBackToUsers }: UserDetails
     }
 
     return groups
-  }, [dailyEntries])
+  }, [activeDailyEntries])
 
   const periodLabel = rangeStart
     ? new Date(rangeStart + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric' })
@@ -145,7 +156,7 @@ export function UserDetailsView({ user, rangeStart, onBackToUsers }: UserDetails
           <h2 className="user-details__heading">Username: {user.username}</h2>
           {user.organizations.length > 0 && <span className="user-details__meta">Organizations: {joinValues(user.organizations)}</span>}
           {user.costCenters.length > 0 && <span className="user-details__meta">Cost Centers: {joinValues(user.costCenters)}</span>}
-          <span className="user-details__meta">Days Active: {formatInt(dailyEntries.length)}</span>
+          <span className="user-details__meta">Days Active: {formatInt(activeDailyEntries.length)}</span>
         </div>
       </div>
 
