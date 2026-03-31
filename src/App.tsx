@@ -414,10 +414,23 @@ function App() {
                       const periodLabel = rangeStart
                         ? new Date(rangeStart + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric' })
                         : null
-                      return savings > 0 && periodLabel ? (
+                      return periodLabel ? (
                         <p className="comparison-framing">
-                          Your <strong>{periodLabel}</strong> usage would cost{' '}
-                          <strong>{formatUsd(savings)} less</strong> under token-based pricing
+                          {savings > 0 ? (
+                            <>
+                              Your <strong>{periodLabel}</strong> usage would cost{' '}
+                              <strong>{formatUsd(savings)} less</strong> under token-based pricing
+                            </>
+                          ) : savings < 0 ? (
+                            <>
+                              Your <strong>{periodLabel}</strong> usage would cost{' '}
+                              <strong>{formatUsd(Math.abs(savings))} more</strong> under token-based pricing
+                            </>
+                          ) : (
+                            <>
+                              Your <strong>{periodLabel}</strong> usage cost would be the same under token-based pricing
+                            </>
+                          )}
                         </p>
                       ) : null
                     })()}
