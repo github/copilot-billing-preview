@@ -22,7 +22,7 @@ A web application for previewing and comparing your future GitHub Copilot bills 
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20+
 - npm or yarn
 
 ### Installation
@@ -47,6 +47,12 @@ npm run build
 
 The production build will be created in the `dist/` directory.
 
+### Test
+
+```bash
+npm run test
+```
+
 ### Preview Production Build
 
 ```bash
@@ -60,7 +66,7 @@ npm run preview
 3. The app will parse the report and compare request-based and AI Credits-based billing signals
 4. Explore the visualizations and data views to preview how future bills may look after the AI Credits transition
 
-Sample reports are available in the `examples/` directory. Older examples without `aic_quantity` still load, but AI Credits will remain `0` for those rows.
+Sample reports are available in the `examples/` directory. The current app expects the current CSV format, including `aic_quantity` and `aic_gross_amount`.
 
 ## CSV Report Format
 
@@ -81,8 +87,6 @@ The application expects CSV files with the following required columns:
 - `total_monthly_quota` - Monthly quota amount
 - `organization` - Organization slug
 - `cost_center_name` - Optional cost center identifier
-
-Newer exports may also include these AI Credit columns:
 
 - `aic_quantity` - AI Credits for the same usage row
 - `aic_gross_amount` - AI Credit gross cost for the same usage row
