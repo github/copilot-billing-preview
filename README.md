@@ -66,7 +66,7 @@ npm run preview
 3. The app will parse the report and compare request-based and AI Credits-based billing signals
 4. Explore the visualizations and data views to preview how future bills may look after the AI Credits transition
 
-Sample reports are available in the `examples/` directory. The current app expects the current CSV format, including `aic_quantity` and `aic_gross_amount`.
+If you don't have your own data yet, you can use any GitHub Copilot billing CSV export that matches the current format, including the `aic_quantity` and `aic_gross_amount` columns.
 
 ## CSV Report Format
 
