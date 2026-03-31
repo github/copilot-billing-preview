@@ -113,8 +113,7 @@ export function ProductsView({ data }: ProductsViewProps) {
         </div>
       </div>
 
-      <div className="products-view__card card">
-        <div className="products-view__tableWrap data-table-wrap">
+      <div className="products-view__tableWrap data-table-wrap">
           <table className="products-view__table data-table">
             <thead>
               <tr>
@@ -145,7 +144,6 @@ export function ProductsView({ data }: ProductsViewProps) {
             </tbody>
           </table>
         </div>
-      </div>
     </section>
   )
 }

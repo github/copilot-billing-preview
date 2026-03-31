@@ -1785,6 +1785,7 @@ td.cost-centers-view__num {
 
   .sidebar {
     width: 48px;
+    padding-left: 4px;
   }
 
   .sidebar__label {
@@ -1808,9 +1809,12 @@ td.cost-centers-view__num {
 .sidebar {
   width: var(--sidebar-width);
   flex-shrink: 0;
-  background: #ffffff;
-  border-right: 1px solid #d1d9e0;
-  padding: 12px 0;
+  padding: 16px 0 16px 16px;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 @media (min-width: 1440px) {
@@ -1821,6 +1825,10 @@ td.cost-centers-view__num {
 }
 
 .sidebar__nav {
+  background: #ffffff;
+  border: 1px solid #d1d9e0;
+  border-radius: 8px;
+  padding: 6px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1831,8 +1839,9 @@ td.cost-centers-view__num {
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 10px 16px;
+  padding: 10px 12px;
   border: none;
+  border-radius: 6px;
   background: transparent;
   color: #636c76;
   font-size: 13px;
