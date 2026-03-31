@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
 import { MultiSeriesStackedBarChart } from '../components'
 import type { UserDailyUsage, UserUsage } from '../pipeline/aggregators/userUsageAggregator'
+import { calculateAicDiscountAmount, calculateSavingsDifference } from '../utils/billingComparison'
 import { fillDataForRange } from '../utils/fillDataForRange'
 import { formatAic } from '../utils/format'
-import { calculateAicDiscountAmount, calculateSavingsDifference } from './billingComparison'
 
 type DailySummaryModelRow = {
   model: string

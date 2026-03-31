@@ -1,6 +1,6 @@
 import type { OrganizationResult } from '../pipeline/aggregators/organizationAggregator'
 import { formatAic, formatDifference, formatUsd } from '../utils/format'
-import { calculateSavingsDifference } from './billingComparison'
+import { calculateSavingsDifference } from '../utils/billingComparison'
 
 export function OrganizationsView({ data }: { data: OrganizationResult }) {
   if (data.organizations.length === 0) {

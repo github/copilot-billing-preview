@@ -103,6 +103,10 @@ function sumNumbers(values: number[]): number {
   return values.reduce((total, value) => total + value, 0)
 }
 
+function expectCloseMoney(actual: number, expected: number): void {
+  expect(actual).toBeCloseTo(expected)
+}
+
 function expectNetEquation(totals: { grossAmount: number; discountAmount: number; netAmount: number }): void {
   expect(totals.grossAmount - totals.discountAmount).toBeCloseTo(totals.netAmount)
 }
@@ -180,15 +184,12 @@ describe('PRU gross/net/discount aggregation', () => {
       dailyDiscount: userDiscount,
     })
 
-    expect(result.organizations.organizations).toEqual([
-      expect.objectContaining({
-        organization: 'octo',
-        requests: 23,
-        grossAmount: 7,
-        discountAmount: 1.7,
-        netAmount: 5.3,
-      }),
-    ])
+    const organization = result.organizations.organizations[0]
+    expect(organization.organization).toBe('octo')
+    expect(organization.requests).toBe(23)
+    expectCloseMoney(organization.grossAmount, 7)
+    expectCloseMoney(organization.discountAmount, 1.7)
+    expectCloseMoney(organization.netAmount, 5.3)
   })
 
   it('keeps cost-center totals aligned with per-model and per-user rollups', () => {
@@ -196,7 +197,10 @@ describe('PRU gross/net/discount aggregation', () => {
     const cats = result.costCenters.costCenters.find((costCenter) => costCenter.costCenterName === 'Cats')
 
     expect(cats).toBeDefined()
-    expect(cats?.totals).toEqual(expect.objectContaining({ requests: 15, grossAmount: 3, discountAmount: 0.7, netAmount: 2.3 }))
+    expect(cats?.totals.requests).toBe(15)
+    expectCloseMoney(cats!.totals.grossAmount, 3)
+    expectCloseMoney(cats!.totals.discountAmount, 0.7)
+    expectCloseMoney(cats!.totals.netAmount, 2.3)
     expect(sumNumbers(Object.values(cats?.totalsByModel ?? {}).map((totals) => totals.grossAmount))).toBeCloseTo(cats!.totals.grossAmount)
     expect(sumNumbers(Object.values(cats?.totalsByModel ?? {}).map((totals) => totals.netAmount))).toBeCloseTo(cats!.totals.netAmount)
     expect(sumNumbers(Object.values(cats?.totalsByUser ?? {}).map((totals) => totals.grossAmount))).toBeCloseTo(cats!.totals.grossAmount)

@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react'
 import type { ModelUsageResult, ModelDailyUsageData } from '../pipeline/aggregators/modelUsageAggregator'
 import { DualAxisLineChart, MultiSeriesStackedBarChart } from '../components'
+import { calculateAicDiscountAmount, calculateSavingsDifference } from '../utils/billingComparison'
 import { fillDataForRange } from '../utils/fillDataForRange'
 import { formatAic, formatUsd } from '../utils/format'
-import { calculateAicDiscountAmount, calculateSavingsDifference } from './billingComparison'
 
 function createEmptyModelDailyUsage(date: string): ModelDailyUsageData {
   return {

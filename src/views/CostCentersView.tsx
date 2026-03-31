@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { CostCenterResult } from '../pipeline/aggregators/costCenterAggregator'
+import { calculateAicDiscountAmount, calculateSavingsDifference } from '../utils/billingComparison'
 import { formatAic, formatDifference, formatUsd } from '../utils/format'
-import { calculateAicDiscountAmount, calculateSavingsDifference } from './billingComparison'
 
 export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; rangeStart?: string | null }) {
   const [selected, setSelected] = useState<string>(data.costCenters[0]?.costCenterName ?? '')

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { TokenUsageRecord } from '../parser'
-import { calculateAicDiscountAmount, calculateSavingsDifference } from '../../views/billingComparison'
+import { calculateAicDiscountAmount, calculateSavingsDifference } from '../../utils/billingComparison'
 import { CostCenterAggregator } from './costCenterAggregator'
 import { DailyUsageAggregator } from './dailyUsageAggregator'
 import { ModelUsageAggregator } from './modelUsageAggregator'
@@ -61,15 +61,12 @@ function sum(values: number[]): number {
 describe('derived AIC discount aggregation', () => {
   it('derives organization AIC discount as gross minus net', () => {
     const result = aggregate([createRecord({ aic_gross_amount: 1.5, aic_net_amount: 0.6 })])
+    const organization = result.organizations.organizations[0]
 
-    expect(result.organizations.organizations).toEqual([
-      expect.objectContaining({
-        organization: 'octo',
-        aicGrossAmount: 1.5,
-        aicNetAmount: 0.6,
-        aicDiscountAmount: 0.9,
-      }),
-    ])
+    expect(organization.organization).toBe('octo')
+    expect(organization.aicGrossAmount).toBeCloseTo(1.5)
+    expect(organization.aicNetAmount).toBeCloseTo(0.6)
+    expect(organization.aicDiscountAmount).toBeCloseTo(0.9)
   })
 
   it('derives cost-center AIC discount from totals gross minus net', () => {
