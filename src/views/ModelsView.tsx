@@ -3,6 +3,7 @@ import type { ModelUsageResult, ModelDailyUsageData } from '../pipeline/aggregat
 import { DualAxisLineChart, MultiSeriesStackedBarChart } from '../components'
 import { fillDataForRange } from '../utils/fillDataForRange'
 import { formatAic, formatUsd } from '../utils/format'
+import { calculateAicDiscountAmount, calculateSavingsDifference } from './billingComparison'
 
 function createEmptyModelDailyUsage(date: string): ModelDailyUsageData {
   return {
@@ -45,7 +46,7 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
     return fillDataForRange(raw, rangeStart, rangeEnd, createEmptyModelDailyUsage)
   }, [selectedModel, modelUsage, rangeStart, rangeEnd])
 
-  const selectedModelAicDiscount = selectedModelTotals ? aicDiscountRate * selectedModelTotals.aicGrossAmount : 0
+  const selectedModelAicDiscount = selectedModelTotals ? calculateAicDiscountAmount(selectedModelTotals.aicGrossAmount, Math.max(selectedModelTotals.aicGrossAmount - (aicDiscountRate * selectedModelTotals.aicGrossAmount), 0)) : 0
   const selectedModelAicNetAmount = selectedModelTotals
     ? Math.max(selectedModelTotals.aicGrossAmount - selectedModelAicDiscount, 0)
     : 0
@@ -90,7 +91,7 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
       </div>
 
       {selectedModelTotals && (() => {
-        const savings = selectedModelTotals.netAmount - selectedModelAicNetAmount
+        const savings = calculateSavingsDifference(selectedModelTotals.netAmount, selectedModelAicNetAmount)
         return (
           <>
             {periodLabel && (

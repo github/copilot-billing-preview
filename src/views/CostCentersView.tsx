@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { CostCenterResult } from '../pipeline/aggregators/costCenterAggregator'
 import { formatAic, formatDifference, formatUsd } from '../utils/format'
+import { calculateAicDiscountAmount, calculateSavingsDifference } from './billingComparison'
 
 export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; rangeStart?: string | null }) {
   const [selected, setSelected] = useState<string>(data.costCenters[0]?.costCenterName ?? '')
@@ -37,8 +38,8 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
   }
 
   const totals = selectedCostCenter?.totals
-  const aicDiscountAmount = totals ? totals.aicGrossAmount - totals.aicNetAmount : 0
-  const savings = totals ? totals.netAmount - totals.aicNetAmount : 0
+  const aicDiscountAmount = totals ? calculateAicDiscountAmount(totals.aicGrossAmount, totals.aicNetAmount) : 0
+  const savings = totals ? calculateSavingsDifference(totals.netAmount, totals.aicNetAmount) : 0
   const hasCosts = totals && (totals.grossAmount > 0 || totals.aicGrossAmount > 0)
 
   return (
@@ -157,7 +158,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
             </thead>
             <tbody>
               {modelRows.map((row) => {
-                const diff = row.totals.netAmount - row.totals.aicNetAmount
+                const diff = calculateSavingsDifference(row.totals.netAmount, row.totals.aicNetAmount)
                 return (
                   <tr key={row.model}>
                     <td className="cost-centers-view__name">{row.model}</td>
@@ -190,7 +191,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
             </thead>
             <tbody>
               {userRows.map((row) => {
-                const diff = row.totals.netAmount - row.totals.aicNetAmount
+                const diff = calculateSavingsDifference(row.totals.netAmount, row.totals.aicNetAmount)
                 return (
                   <tr key={row.username}>
                     <td className="cost-centers-view__name">{row.username}</td>
