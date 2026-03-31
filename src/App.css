@@ -435,7 +435,7 @@
   color: #6366f1;
 }
 
-.aiu-callout {
+.aic-callout {
   font-size: 15px;
   font-weight: 700;
   background: #ffffff;
@@ -659,7 +659,7 @@
   color: #1f2328;
 }
 
-.comparison-card__big-number--aiu {
+.comparison-card__big-number--aic {
   color: #2da44e;
 }
 
@@ -1085,7 +1085,7 @@ td.cost-centers-view__num {
   opacity: 0.7;
 }
 
-.products-view__legendSwatch--aiu {
+.products-view__legendSwatch--aic {
   background: #54aeff;
 }
 
@@ -1156,7 +1156,7 @@ td.cost-centers-view__num {
   background: rgba(207, 34, 46, 0.7);
 }
 
-.products-view__barFill--aiu {
+.products-view__barFill--aic {
   background: #54aeff;
 }
 
@@ -1172,7 +1172,7 @@ td.cost-centers-view__num {
   color: #cf222e;
 }
 
-.products-view__barValue--aiu {
+.products-view__barValue--aic {
   color: #0969da;
 }
 
@@ -1279,6 +1279,24 @@ td.cost-centers-view__num {
 .users-view__count {
   font-size: 13px;
   color: #636c76;
+}
+
+.users-view__summaryWrap {
+  margin-bottom: 16px;
+}
+
+.users-view__summaryTable th.users-view__num {
+  text-align: right;
+}
+
+.users-view__license {
+  font-weight: 500;
+  color: #1f2328;
+}
+
+.users-view__license--total,
+.users-view__num--total {
+  font-weight: 600;
 }
 
 .users-view__search {

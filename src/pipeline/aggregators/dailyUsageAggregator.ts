@@ -4,9 +4,9 @@ import { getUsageMetrics, type TokenUsageRecord } from '../parser'
 export interface DailyUsageData {
   date: string
   requests: number
-  aiuQuantity: number
+  aicQuantity: number
   grossAmount: number
-  aiuGrossAmount: number
+  aicGrossAmount: number
   aicNetAmount: number
   discountAmount: number
   netAmount: number
@@ -25,13 +25,13 @@ export class DailyUsageAggregator implements Aggregator<TokenUsageRecord, DailyU
 
     const existing = this.dataByDate.get(date)
 
-    const { requests, aiuQuantity, grossAmount, aiuGrossAmount, aicNetAmount, discountAmount, netAmount } = getUsageMetrics(record)
+    const { requests, aicQuantity, grossAmount, aicGrossAmount, aicNetAmount, discountAmount, netAmount } = getUsageMetrics(record)
 
     if (existing) {
       existing.requests += requests
-      existing.aiuQuantity += aiuQuantity
+      existing.aicQuantity += aicQuantity
       existing.grossAmount += grossAmount
-      existing.aiuGrossAmount += aiuGrossAmount
+      existing.aicGrossAmount += aicGrossAmount
       existing.aicNetAmount += aicNetAmount
       existing.discountAmount += discountAmount
       existing.netAmount += netAmount
@@ -41,9 +41,9 @@ export class DailyUsageAggregator implements Aggregator<TokenUsageRecord, DailyU
     this.dataByDate.set(date, {
       date,
       requests,
-      aiuQuantity,
+      aicQuantity,
       grossAmount,
-      aiuGrossAmount,
+      aicGrossAmount,
       aicNetAmount,
       discountAmount,
       netAmount,

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import type { UserUsage } from '../pipeline/aggregators/userUsageAggregator'
-import { formatAiu } from '../utils/format'
+import { getAicEntitlementTier, getMonthlyAicEntitlements } from '../pipeline/aicEntitlements'
+import { formatAic } from '../utils/format'
 import { Trie } from '../utils/trie'
 
 function formatInt(n: number): string {
@@ -19,6 +20,37 @@ export interface UsersViewProps {
 
 export function UsersView({ users, onSelectUser }: UsersViewProps) {
   const [query, setQuery] = useState('')
+
+  const licenseSummary = useMemo(() => {
+    const summary = [
+      { label: 'Copilot Business', users: 0, includedAic: 0 },
+      { label: 'Copilot Enterprise', users: 0, includedAic: 0 },
+    ]
+
+    users.forEach((user) => {
+      const tier = getAicEntitlementTier(user.totalMonthlyQuota)
+      const includedAic = getMonthlyAicEntitlements(user.totalMonthlyQuota)
+
+      if (tier === 'business') {
+        summary[0].users += 1
+        summary[0].includedAic += includedAic
+      }
+
+      if (tier === 'enterprise') {
+        summary[1].users += 1
+        summary[1].includedAic += includedAic
+      }
+    })
+
+    const totalUsers = summary.reduce((sum, row) => sum + row.users, 0)
+    const totalIncludedAic = summary.reduce((sum, row) => sum + row.includedAic, 0)
+
+    return {
+      rows: summary,
+      totalUsers,
+      totalIncludedAic,
+    }
+  }, [users])
 
   const sortedUsers = useMemo(() => {
     return [...users].sort((a, b) => a.username.localeCompare(b.username))
@@ -47,6 +79,31 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
       <div className="users-view__title">
         <h2 className="users-view__heading">Users</h2>
         <span className="users-view__count">{filteredUsers.length.toLocaleString()} shown</span>
+      </div>
+      <div className="users-view__summaryWrap data-table-wrap">
+        <table className="users-view__summaryTable data-table">
+          <thead>
+            <tr>
+              <th>License type</th>
+              <th className="users-view__num">Users</th>
+              <th className="users-view__num">Included AICs</th>
+            </tr>
+          </thead>
+          <tbody>
+            {licenseSummary.rows.map((row) => (
+              <tr key={row.label}>
+                <td className="users-view__license">{row.label}</td>
+                <td className="users-view__num">{formatInt(row.users)}</td>
+                <td className="users-view__num">{formatAic(row.includedAic)}</td>
+              </tr>
+            ))}
+            <tr>
+              <td className="users-view__license users-view__license--total">Total AIC pool</td>
+              <td className="users-view__num users-view__num--total">{formatInt(licenseSummary.totalUsers)}</td>
+              <td className="users-view__num users-view__num--total">{formatAic(licenseSummary.totalIncludedAic)}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <input
         className="users-view__search"
@@ -90,7 +147,7 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
               >
                 <td className="users-view__user">{user.username}</td>
                 <td className="users-view__num">{formatInt(user.totals.requests)}</td>
-                <td className="users-view__num">{formatAiu(user.totals.aiuQuantity)}</td>
+                <td className="users-view__num">{formatAic(user.totals.aicQuantity)}</td>
                 <td className="users-view__num">{formatInt(user.totals.distinctModels)}</td>
                 <td className="users-view__num">{formatCost(user.totals.grossAmount)}</td>
                 <td className="users-view__num">{formatCost(user.totals.discountAmount)}</td>

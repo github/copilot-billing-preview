@@ -9,7 +9,7 @@ export type OrganizationUsage = {
   grossAmount: number
   discountAmount: number
   netAmount: number
-  aiuQuantity: number
+  aicQuantity: number
   aicGrossAmount: number
   aicDiscountAmount: number
   aicNetAmount: number
@@ -27,7 +27,7 @@ type OrgInternal = {
   grossAmount: number
   discountAmount: number
   netAmount: number
-  aiuQuantity: number
+  aicQuantity: number
   aicGrossAmount: number
   aicNetAmount: number
 }
@@ -56,7 +56,7 @@ export class OrganizationAggregator implements Aggregator<TokenUsageRecord, Orga
         grossAmount: 0,
         discountAmount: 0,
         netAmount: 0,
-        aiuQuantity: 0,
+        aicQuantity: 0,
         aicGrossAmount: 0,
         aicNetAmount: 0,
       }
@@ -66,14 +66,14 @@ export class OrganizationAggregator implements Aggregator<TokenUsageRecord, Orga
     if (username) org.users.add(username)
     org.models.add(model)
 
-    const { requests, grossAmount, discountAmount, netAmount, aiuQuantity, aiuGrossAmount, aicNetAmount } = getUsageMetrics(record)
+    const { requests, grossAmount, discountAmount, netAmount, aicQuantity, aicGrossAmount, aicNetAmount } = getUsageMetrics(record)
 
     org.requests += requests
     org.grossAmount += grossAmount
     org.discountAmount += discountAmount
     org.netAmount += netAmount
-    org.aiuQuantity += aiuQuantity
-    org.aicGrossAmount += aiuGrossAmount
+    org.aicQuantity += aicQuantity
+    org.aicGrossAmount += aicGrossAmount
     org.aicNetAmount += aicNetAmount
   }
 
@@ -87,7 +87,7 @@ export class OrganizationAggregator implements Aggregator<TokenUsageRecord, Orga
         grossAmount: org.grossAmount,
         discountAmount: org.discountAmount,
         netAmount: org.netAmount,
-        aiuQuantity: org.aiuQuantity,
+        aicQuantity: org.aicQuantity,
         aicGrossAmount: org.aicGrossAmount,
         aicDiscountAmount: org.aicGrossAmount - org.aicNetAmount,
         aicNetAmount: org.aicNetAmount,

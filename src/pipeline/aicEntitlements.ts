@@ -7,15 +7,24 @@ import {
 } from './parser'
 import { streamLines } from './streamer'
 
-const BUSINESS_MONTHLY_QUOTA = 300
-const ENTERPRISE_MONTHLY_QUOTA = 1000
+export const BUSINESS_MONTHLY_QUOTA = 300
+export const ENTERPRISE_MONTHLY_QUOTA = 1000
 
-const BUSINESS_MONTHLY_AIC_ENTITLEMENTS = 3000
-const ENTERPRISE_MONTHLY_AIC_ENTITLEMENTS = 7000
+export const BUSINESS_MONTHLY_AIC_ENTITLEMENTS = 3000
+export const ENTERPRISE_MONTHLY_AIC_ENTITLEMENTS = 7000
+
+export type AicEntitlementTier = 'business' | 'enterprise' | null
+
+export function getAicEntitlementTier(totalMonthlyQuota: number): AicEntitlementTier {
+  if (totalMonthlyQuota >= ENTERPRISE_MONTHLY_QUOTA) return 'enterprise'
+  if (totalMonthlyQuota >= BUSINESS_MONTHLY_QUOTA) return 'business'
+  return null
+}
 
 export function getMonthlyAicEntitlements(totalMonthlyQuota: number): number {
-  if (totalMonthlyQuota === ENTERPRISE_MONTHLY_QUOTA) return ENTERPRISE_MONTHLY_AIC_ENTITLEMENTS
-  if (totalMonthlyQuota === BUSINESS_MONTHLY_QUOTA) return BUSINESS_MONTHLY_AIC_ENTITLEMENTS
+  const tier = getAicEntitlementTier(totalMonthlyQuota)
+  if (tier === 'enterprise') return ENTERPRISE_MONTHLY_AIC_ENTITLEMENTS
+  if (tier === 'business') return BUSINESS_MONTHLY_AIC_ENTITLEMENTS
   return 0
 }
 
@@ -53,23 +62,23 @@ export class PooledAicEntitlementAllocator {
   }
 
   apply(record: TokenUsageRecord): TokenUsageRecord {
-    const { aiuQuantity, aiuGrossAmount } = getAicUsageMetrics(record)
+    const { aicQuantity, aicGrossAmount } = getAicUsageMetrics(record)
 
-    if (aiuQuantity <= 0) {
-      record.aic_net_amount = aiuGrossAmount
+    if (aicQuantity <= 0) {
+      record.aic_net_amount = aicGrossAmount
       return record
     }
 
-    const coveredQuantity = Math.min(aiuQuantity, this.remainingEntitlements)
+    if (aicGrossAmount <= 0) {
+      record.aic_net_amount = aicGrossAmount
+      return record
+    }
+
+    const coveredQuantity = Math.min(aicQuantity, this.remainingEntitlements)
     this.remainingEntitlements = Math.max(this.remainingEntitlements - coveredQuantity, 0)
 
-    if (aiuGrossAmount <= 0) {
-      record.aic_net_amount = aiuGrossAmount
-      return record
-    }
-
-    const uncoveredRatio = Math.max(aiuQuantity - coveredQuantity, 0) / aiuQuantity
-    record.aic_net_amount = aiuGrossAmount * uncoveredRatio
+    const uncoveredRatio = Math.max(aicQuantity - coveredQuantity, 0) / aicQuantity
+    record.aic_net_amount = aicGrossAmount * uncoveredRatio
     return record
   }
 

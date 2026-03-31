@@ -1,5 +1,5 @@
 import type { OrganizationResult } from '../pipeline/aggregators/organizationAggregator'
-import { formatAiu, formatDifference, formatUsd } from '../utils/format'
+import { formatAic, formatDifference, formatUsd } from '../utils/format'
 
 export function OrganizationsView({ data }: { data: OrganizationResult }) {
   if (data.organizations.length === 0) {
@@ -42,7 +42,7 @@ export function OrganizationsView({ data }: { data: OrganizationResult }) {
                   <td className="orgs-view__name">{organization.organization}</td>
                   <td className="orgs-view__num">{organization.userCount.toLocaleString()}</td>
                   <td className="orgs-view__num">{organization.requests.toLocaleString()}</td>
-                  <td className="orgs-view__num">{formatAiu(organization.aiuQuantity)}</td>
+                  <td className="orgs-view__num">{formatAic(organization.aicQuantity)}</td>
                   <td className="orgs-view__num">{formatUsd(organization.netAmount)}</td>
                   <td className="orgs-view__num">{formatUsd(organization.aicNetAmount)}</td>
                   <td

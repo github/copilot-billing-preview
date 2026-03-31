@@ -24,11 +24,11 @@ export type TokenUsageRecord = {
   total_monthly_quota: number
   organization: string
   cost_center_name: string | null
-  aiu_quantity: number
-  aiu_gross_amount: number
+  aic_quantity: number
+  aic_gross_amount: number
   aic_net_amount: number
-  has_aiu_quantity: boolean
-  has_aiu_gross_amount: boolean
+  has_aic_quantity: boolean
+  has_aic_gross_amount: boolean
 }
 
 export type TokenUsageHeader = {
@@ -46,25 +46,25 @@ export function isAiUnitUsageRecord(unitType: string): boolean {
 
 export type UsageMetrics = {
   requests: number
-  aiuQuantity: number
+  aicQuantity: number
   grossAmount: number
-  aiuGrossAmount: number
+  aicGrossAmount: number
   aicNetAmount: number
   discountAmount: number
   netAmount: number
 }
 
-export function getAicUsageMetrics(record: TokenUsageRecord): Pick<UsageMetrics, 'aiuQuantity' | 'aiuGrossAmount'> {
+export function getAicUsageMetrics(record: TokenUsageRecord): Pick<UsageMetrics, 'aicQuantity' | 'aicGrossAmount'> {
   if (isAiUnitUsageRecord(record.unit_type)) {
     return {
-      aiuQuantity: record.has_aiu_quantity ? record.aiu_quantity : record.quantity,
-      aiuGrossAmount: record.has_aiu_gross_amount ? record.aiu_gross_amount : record.gross_amount,
+      aicQuantity: record.has_aic_quantity ? record.aic_quantity : record.quantity,
+      aicGrossAmount: record.has_aic_gross_amount ? record.aic_gross_amount : record.gross_amount,
     }
   }
 
   return {
-    aiuQuantity: record.aiu_quantity,
-    aiuGrossAmount: record.aiu_gross_amount,
+    aicQuantity: record.aic_quantity,
+    aicGrossAmount: record.aic_gross_amount,
   }
 }
 
@@ -73,14 +73,14 @@ export function getUsageMetrics(record: TokenUsageRecord): UsageMetrics {
   const grossAmount = record.gross_amount
   const discountAmount = record.discount_amount
   const netAmount = record.net_amount
-  const { aiuQuantity, aiuGrossAmount } = getAicUsageMetrics(record)
+  const { aicQuantity, aicGrossAmount } = getAicUsageMetrics(record)
 
   if (isAiUnitUsageRecord(record.unit_type)) {
     return {
       requests: 0,
-      aiuQuantity,
+      aicQuantity,
       grossAmount: 0,
-      aiuGrossAmount,
+      aicGrossAmount,
       aicNetAmount: record.aic_net_amount,
       discountAmount: 0,
       netAmount: 0,
@@ -89,9 +89,9 @@ export function getUsageMetrics(record: TokenUsageRecord): UsageMetrics {
 
   return {
     requests: quantity,
-    aiuQuantity,
+    aicQuantity,
     grossAmount,
-    aiuGrossAmount,
+    aicGrossAmount,
     aicNetAmount: record.aic_net_amount,
     discountAmount,
     netAmount,
@@ -175,8 +175,10 @@ function getNullableString(row: string[], i: number | undefined): string | null 
 
 export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): TokenUsageRecord {
   const row = parseCsvRow(line)
-  const aiuQuantityRaw = getString(row, header.index['aiu_quantity']).trim()
-  const aiuGrossAmountRaw = getString(row, header.index['aiu_gross_amount']).trim()
+  const aicQuantityIndex = header.index['aic_quantity']
+  const aicGrossAmountIndex = header.index['aic_gross_amount']
+  const aicQuantityRaw = getString(row, aicQuantityIndex).trim()
+  const aicGrossAmountRaw = getString(row, aicGrossAmountIndex).trim()
 
   const record: TokenUsageRecord = {
     date: getString(row, header.index['date']).trim(),
@@ -194,13 +196,13 @@ export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): T
     total_monthly_quota: getNumber(row, header.index['total_monthly_quota']),
     organization: getString(row, header.index['organization']).trim(),
     cost_center_name: getNullableString(row, header.index['cost_center_name']),
-    aiu_quantity: getNumber(row, header.index['aiu_quantity']),
-    aiu_gross_amount: getNumber(row, header.index['aiu_gross_amount']),
+    aic_quantity: getNumber(row, aicQuantityIndex),
+    aic_gross_amount: getNumber(row, aicGrossAmountIndex),
     aic_net_amount: 0,
-    has_aiu_quantity: aiuQuantityRaw !== '',
-    has_aiu_gross_amount: aiuGrossAmountRaw !== '',
+    has_aic_quantity: aicQuantityRaw !== '',
+    has_aic_gross_amount: aicGrossAmountRaw !== '',
   }
 
-  record.aic_net_amount = getAicUsageMetrics(record).aiuGrossAmount
+  record.aic_net_amount = getAicUsageMetrics(record).aicGrossAmount
   return record
 }

@@ -4,9 +4,9 @@ import { getUsageMetrics, type TokenUsageHeader, type TokenUsageRecord } from '.
 export type ModelDailyUsageData = {
   date: string
   requests: number
-  aiuQuantity: number
+  aicQuantity: number
   grossAmount: number
-  aiuGrossAmount: number
+  aicGrossAmount: number
   aicNetAmount: number
   discountAmount: number
   netAmount: number
@@ -14,9 +14,9 @@ export type ModelDailyUsageData = {
 
 export type ModelUsageTotals = {
   requests: number
-  aiuQuantity: number
+  aicQuantity: number
   grossAmount: number
-  aiuGrossAmount: number
+  aicGrossAmount: number
   aicNetAmount: number
   discountAmount: number
   netAmount: number
@@ -40,9 +40,9 @@ function ensureDay(model: ModelInternal, date: string): ModelDailyUsageData {
   const created: ModelDailyUsageData = {
     date,
     requests: 0,
-    aiuQuantity: 0,
+    aicQuantity: 0,
     grossAmount: 0,
-    aiuGrossAmount: 0,
+    aicGrossAmount: 0,
     aicNetAmount: 0,
     discountAmount: 0,
     netAmount: 0,
@@ -70,9 +70,9 @@ export class ModelUsageAggregator implements Aggregator<TokenUsageRecord, ModelU
         byDate: new Map(),
         totals: {
           requests: 0,
-          aiuQuantity: 0,
+          aicQuantity: 0,
           grossAmount: 0,
-          aiuGrossAmount: 0,
+          aicGrossAmount: 0,
           aicNetAmount: 0,
           discountAmount: 0,
           netAmount: 0,
@@ -81,21 +81,21 @@ export class ModelUsageAggregator implements Aggregator<TokenUsageRecord, ModelU
       this.byModel.set(modelName, model)
     }
 
-    const { requests, aiuQuantity, grossAmount, aiuGrossAmount, aicNetAmount, discountAmount, netAmount } = getUsageMetrics(record)
+    const { requests, aicQuantity, grossAmount, aicGrossAmount, aicNetAmount, discountAmount, netAmount } = getUsageMetrics(record)
 
     const day = ensureDay(model, date)
     day.requests += requests
-    day.aiuQuantity += aiuQuantity
+    day.aicQuantity += aicQuantity
     day.grossAmount += grossAmount
-    day.aiuGrossAmount += aiuGrossAmount
+    day.aicGrossAmount += aicGrossAmount
     day.aicNetAmount += aicNetAmount
     day.discountAmount += discountAmount
     day.netAmount += netAmount
 
     model.totals.requests += requests
-    model.totals.aiuQuantity += aiuQuantity
+    model.totals.aicQuantity += aicQuantity
     model.totals.grossAmount += grossAmount
-    model.totals.aiuGrossAmount += aiuGrossAmount
+    model.totals.aicGrossAmount += aicGrossAmount
     model.totals.aicNetAmount += aicNetAmount
     model.totals.discountAmount += discountAmount
     model.totals.netAmount += netAmount

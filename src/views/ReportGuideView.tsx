@@ -14,8 +14,8 @@ const HEADER = [
   'total_monthly_quota',
   'organization',
   'cost_center_name',
-  'aiu_quantity',
-  'aiu_gross_amount',
+  'aic_quantity',
+  'aic_gross_amount',
 ]
 
 const SAMPLE_ROW_1 = [
@@ -87,12 +87,12 @@ const SAMPLE_ROW_2_ANNOTATIONS: { index: number; label: string; note: string }[]
   },
   {
     index: 15,
-    label: 'aiu_quantity',
+    label: 'aic_quantity',
     note: '≈ 24.9 AICs consumed. Under token-based billing, even Base Models consume AI Credits proportional to actual token usage.',
   },
   {
     index: 16,
-    label: 'aiu_gross_amount',
+    label: 'aic_gross_amount',
     note: '≈ $0.249 (24.9 AICs × $0.01). This is what the same usage would cost under token-based billing.',
   },
 ]
@@ -135,12 +135,12 @@ const SAMPLE_ROW_1_ANNOTATIONS: { index: number; label: string; note: string }[]
   { index: 14, label: 'cost_center_name', note: '"Octocats" — the cost center this user is assigned to.' },
   {
     index: 15,
-    label: 'aiu_quantity',
+    label: 'aic_quantity',
     note: '≈ 3.107 AICs — the token-based billing equivalent of this request. AICs represent the actual tokens consumed.',
   },
   {
     index: 16,
-    label: 'aiu_gross_amount',
+    label: 'aic_gross_amount',
     note: '≈ $0.031 (3.107 AICs × $0.01). Under token-based billing this request would cost roughly $0.03.',
   },
 ]

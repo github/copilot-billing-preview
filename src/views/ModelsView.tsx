@@ -2,15 +2,15 @@ import { useState, useMemo } from 'react'
 import type { ModelUsageResult, ModelDailyUsageData } from '../pipeline/aggregators/modelUsageAggregator'
 import { DualAxisLineChart, MultiSeriesStackedBarChart } from '../components'
 import { fillDataForRange } from '../utils/fillDataForRange'
-import { formatAiu, formatUsd } from '../utils/format'
+import { formatAic, formatUsd } from '../utils/format'
 
 function createEmptyModelDailyUsage(date: string): ModelDailyUsageData {
   return {
     date,
     requests: 0,
-    aiuQuantity: 0,
+    aicQuantity: 0,
     grossAmount: 0,
-    aiuGrossAmount: 0,
+    aicGrossAmount: 0,
     aicNetAmount: 0,
     discountAmount: 0,
     netAmount: 0,
@@ -45,22 +45,22 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
     return fillDataForRange(raw, rangeStart, rangeEnd, createEmptyModelDailyUsage)
   }, [selectedModel, modelUsage, rangeStart, rangeEnd])
 
-  const selectedModelAicDiscount = selectedModelTotals ? aicDiscountRate * selectedModelTotals.aiuGrossAmount : 0
+  const selectedModelAicDiscount = selectedModelTotals ? aicDiscountRate * selectedModelTotals.aicGrossAmount : 0
   const selectedModelAicNetAmount = selectedModelTotals
-    ? Math.max(selectedModelTotals.aiuGrossAmount - selectedModelAicDiscount, 0)
+    ? Math.max(selectedModelTotals.aicGrossAmount - selectedModelAicDiscount, 0)
     : 0
   const dailyAverageAicPerRequest = useMemo(
     () => filledPerModelDailyData.map((day) => ({
       date: day.date,
-      averageAicPerRequest: day.requests > 0 ? roundAverageAicPerRequest(day.aiuQuantity / day.requests) : 0,
+      averageAicPerRequest: day.requests > 0 ? roundAverageAicPerRequest(day.aicQuantity / day.requests) : 0,
     })),
     [filledPerModelDailyData],
   )
   const overallAverageAicPerRequest = selectedModelTotals && selectedModelTotals.requests > 0
-    ? selectedModelTotals.aiuQuantity / selectedModelTotals.requests
+    ? selectedModelTotals.aicQuantity / selectedModelTotals.requests
     : 0
   const overallAverageAicGrossPerRequest = selectedModelTotals && selectedModelTotals.requests > 0
-    ? selectedModelTotals.aiuGrossAmount / selectedModelTotals.requests
+    ? selectedModelTotals.aicGrossAmount / selectedModelTotals.requests
     : 0
 
   const periodLabel = rangeStart
@@ -128,13 +128,13 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
               </div>
               <div className="card comparison-card">
                 <div className="comparison-card__label">Token-based billing (AICs)</div>
-                <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatUsd(selectedModelAicNetAmount)}</div>
-                <div className="comparison-card__period">{formatAiu(selectedModelTotals.aiuQuantity)} AICs</div>
+                <div className="comparison-card__big-number comparison-card__big-number--aic">{formatUsd(selectedModelAicNetAmount)}</div>
+                <div className="comparison-card__period">{formatAic(selectedModelTotals.aicQuantity)} AICs</div>
                 <div className="comparison-card__rate">1 AIC = $0.01</div>
                 <div className="comparison-card__breakdown">
                   <div className="comparison-card__breakdown-row">
                     <span>Gross cost</span>
-                    <span>{formatUsd(selectedModelTotals.aiuGrossAmount)}</span>
+                    <span>{formatUsd(selectedModelTotals.aicGrossAmount)}</span>
                   </div>
                   <div className="comparison-card__breakdown-row comparison-card__breakdown-row--muted">
                     <span>Included credits discount</span>
@@ -185,7 +185,7 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
               {
                 label: 'AI Credits',
                 color: '#22c55e',
-                data: filledPerModelDailyData.map((day) => day.aiuQuantity),
+                data: filledPerModelDailyData.map((day) => day.aicQuantity),
                 yAxisID: 'y1',
               },
             ]}
@@ -204,7 +204,7 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
               {
                 label: 'AIC Gross Cost',
                 color: '#06b6d4',
-                data: filledPerModelDailyData.map((day) => day.aiuGrossAmount),
+                data: filledPerModelDailyData.map((day) => day.aicGrossAmount),
                 yAxisID: 'y',
               },
             ]}
