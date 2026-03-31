@@ -7,15 +7,24 @@ import {
 } from './parser'
 import { streamLines } from './streamer'
 
-const BUSINESS_MONTHLY_QUOTA = 300
-const ENTERPRISE_MONTHLY_QUOTA = 1000
+export const BUSINESS_MONTHLY_QUOTA = 300
+export const ENTERPRISE_MONTHLY_QUOTA = 1000
 
-const BUSINESS_MONTHLY_AIC_ENTITLEMENTS = 3000
-const ENTERPRISE_MONTHLY_AIC_ENTITLEMENTS = 7000
+export const BUSINESS_MONTHLY_AIC_ENTITLEMENTS = 3000
+export const ENTERPRISE_MONTHLY_AIC_ENTITLEMENTS = 7000
+
+export type AicEntitlementTier = 'business' | 'enterprise' | null
+
+export function getAicEntitlementTier(totalMonthlyQuota: number): AicEntitlementTier {
+  if (totalMonthlyQuota >= ENTERPRISE_MONTHLY_QUOTA) return 'enterprise'
+  if (totalMonthlyQuota >= BUSINESS_MONTHLY_QUOTA) return 'business'
+  return null
+}
 
 export function getMonthlyAicEntitlements(totalMonthlyQuota: number): number {
-  if (totalMonthlyQuota === ENTERPRISE_MONTHLY_QUOTA) return ENTERPRISE_MONTHLY_AIC_ENTITLEMENTS
-  if (totalMonthlyQuota === BUSINESS_MONTHLY_QUOTA) return BUSINESS_MONTHLY_AIC_ENTITLEMENTS
+  const tier = getAicEntitlementTier(totalMonthlyQuota)
+  if (tier === 'enterprise') return ENTERPRISE_MONTHLY_AIC_ENTITLEMENTS
+  if (tier === 'business') return BUSINESS_MONTHLY_AIC_ENTITLEMENTS
   return 0
 }
 
@@ -60,13 +69,13 @@ export class PooledAicEntitlementAllocator {
       return record
     }
 
-    const coveredQuantity = Math.min(aicQuantity, this.remainingEntitlements)
-    this.remainingEntitlements = Math.max(this.remainingEntitlements - coveredQuantity, 0)
-
     if (aicGrossAmount <= 0) {
       record.aic_net_amount = aicGrossAmount
       return record
     }
+
+    const coveredQuantity = Math.min(aicQuantity, this.remainingEntitlements)
+    this.remainingEntitlements = Math.max(this.remainingEntitlements - coveredQuantity, 0)
 
     const uncoveredRatio = Math.max(aicQuantity - coveredQuantity, 0) / aicQuantity
     record.aic_net_amount = aicGrossAmount * uncoveredRatio

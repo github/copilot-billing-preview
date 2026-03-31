@@ -2,7 +2,7 @@
 
 Source examples: files in `examples/`. Some existing sample exports still use the older token-oriented schema.
 
-## Primary columns used by the app
+## Required columns used by the app
 
 | Column | Type | Description |
 | --- | --- | --- |
@@ -21,12 +21,11 @@ Source examples: files in `examples/`. Some existing sample exports still use th
 | `total_monthly_quota` | number | Monthly quota for the user or plan applicable to the row. |
 | `organization` | string | Organization slug associated with the usage. |
 | `cost_center_name` | string | Optional cost center or tagging field. |
-| `aic_quantity` | number | Same usage converted to AI Credits. |
-
-## Additional columns
+## Optional AI Credit columns
 
 | Column | Status | Notes |
 | --- | --- | --- |
+| `aic_quantity` | Present in newer previews | Same usage converted to AI Credits. |
 | `aic_gross_amount` | Present in newer previews | Used for AI Credit gross cost when present. |
 | `total_input_tokens` | Legacy / optional | Older token-oriented export field; ignored by the app. |
 | `total_output_tokens` | Legacy / optional | Older token-oriented export field; ignored by the app. |

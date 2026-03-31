@@ -64,7 +64,7 @@ Sample reports are available in the `examples/` directory. Older examples withou
 
 ## CSV Report Format
 
-The application expects CSV files with the following primary columns:
+The application expects CSV files with the following required columns:
 
 - `date` - ISO date (YYYY-MM-DD)
 - `username` - GitHub username
@@ -81,6 +81,9 @@ The application expects CSV files with the following primary columns:
 - `total_monthly_quota` - Monthly quota amount
 - `organization` - Organization slug
 - `cost_center_name` - Optional cost center identifier
+
+Newer exports may also include these AI Credit columns:
+
 - `aic_quantity` - AI Credits for the same usage row
 - `aic_gross_amount` - AI Credit gross cost for the same usage row
 

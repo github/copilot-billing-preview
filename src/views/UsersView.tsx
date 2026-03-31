@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import type { UserUsage } from '../pipeline/aggregators/userUsageAggregator'
-import { getMonthlyAicEntitlements } from '../pipeline/aicEntitlements'
+import { getAicEntitlementTier, getMonthlyAicEntitlements } from '../pipeline/aicEntitlements'
 import { formatAic } from '../utils/format'
 import { Trie } from '../utils/trie'
 
@@ -28,14 +28,15 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
     ]
 
     users.forEach((user) => {
+      const tier = getAicEntitlementTier(user.totalMonthlyQuota)
       const includedAic = getMonthlyAicEntitlements(user.totalMonthlyQuota)
 
-      if (includedAic === 3000) {
+      if (tier === 'business') {
         summary[0].users += 1
         summary[0].includedAic += includedAic
       }
 
-      if (includedAic === 7000) {
+      if (tier === 'enterprise') {
         summary[1].users += 1
         summary[1].includedAic += includedAic
       }

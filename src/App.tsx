@@ -18,6 +18,7 @@ import { ProductUsageAggregator, type ProductUsageResult } from './pipeline/aggr
 import { CostCenterAggregator, type CostCenterResult } from './pipeline/aggregators/costCenterAggregator'
 import { OrganizationAggregator, type OrganizationResult } from './pipeline/aggregators/organizationAggregator'
 import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregators/userUsageAggregator'
+import { getMonthlyAicEntitlements } from './pipeline/aicEntitlements'
 import { runPipeline } from './pipeline/runPipeline'
 import { fillDataForRange } from './utils/fillDataForRange'
 import { formatAic, formatUsd } from './utils/format'
@@ -36,19 +37,6 @@ function createEmptyDailyUsage(date: string): DailyUsageData {
     netAmount: 0,
   }
 }
-
-// Current pooled AI Credits estimate based on Copilot plan assumptions in the billing export:
-// quota >= 300 => 3,000 included credits, quota >= 1,000 => 7,000 included credits.
-const INCLUDED_AIC_BY_MONTHLY_QUOTA = [
-  { minimumQuota: 1000, includedCredits: 7000 },
-  { minimumQuota: 300, includedCredits: 3000 },
-] as const
-
-function getIncludedAicCredits(totalMonthlyQuota: number): number {
-  return INCLUDED_AIC_BY_MONTHLY_QUOTA.find((plan) => totalMonthlyQuota >= plan.minimumQuota)?.includedCredits ?? 0
-}
-
-
 
 function App() {
   const [status, setStatus] = useState<Status>('idle')
@@ -200,7 +188,7 @@ function App() {
     { requests: 0, aicQuantity: 0, grossAmount: 0, aicGrossAmount: 0, aicNetAmount: 0, discountAmount: 0, netAmount: 0 },
   )
 
-  const pooledAicCredits = (userUsage?.users ?? []).reduce((sum, user) => sum + getIncludedAicCredits(user.totalMonthlyQuota), 0)
+  const pooledAicCredits = (userUsage?.users ?? []).reduce((sum, user) => sum + getMonthlyAicEntitlements(user.totalMonthlyQuota), 0)
 
   const aicDiscountRate =
     overviewTotals.aicQuantity > 0
