@@ -1281,6 +1281,24 @@ td.cost-centers-view__num {
   color: #636c76;
 }
 
+.users-view__summaryWrap {
+  margin-bottom: 16px;
+}
+
+.users-view__summaryTable th.users-view__num {
+  text-align: right;
+}
+
+.users-view__license {
+  font-weight: 500;
+  color: #1f2328;
+}
+
+.users-view__license--total,
+.users-view__num--total {
+  font-weight: 600;
+}
+
 .users-view__search {
   border: 1px solid #d1d9e0;
   border-radius: 6px;
