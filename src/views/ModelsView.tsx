@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import type { ModelUsageResult, ModelDailyUsageData } from '../pipeline/aggregators/modelUsageAggregator'
-import { DualAxisLineChart } from '../components'
+import { DualAxisLineChart, MultiSeriesStackedBarChart } from '../components'
 import { fillDataForRange } from '../utils/fillDataForRange'
 import { formatAiu, formatUsd } from '../utils/format'
 
@@ -24,6 +24,14 @@ type ModelsViewProps = {
   rangeEnd: string | null
 }
 
+function formatAverageAicPerRequest(value: number): string {
+  return value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
+}
+
+function roundAverageAicPerRequest(value: number): number {
+  return Number(value.toFixed(3))
+}
+
 export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }: ModelsViewProps) {
   const [selectedModel, setSelectedModel] = useState<string>(modelUsage.models[0] ?? '')
 
@@ -40,6 +48,19 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
   const selectedModelAicDiscount = selectedModelTotals ? aicDiscountRate * selectedModelTotals.aiuGrossAmount : 0
   const selectedModelAicNetAmount = selectedModelTotals
     ? Math.max(selectedModelTotals.aiuGrossAmount - selectedModelAicDiscount, 0)
+    : 0
+  const dailyAverageAicPerRequest = useMemo(
+    () => filledPerModelDailyData.map((day) => ({
+      date: day.date,
+      averageAicPerRequest: day.requests > 0 ? roundAverageAicPerRequest(day.aiuQuantity / day.requests) : 0,
+    })),
+    [filledPerModelDailyData],
+  )
+  const overallAverageAicPerRequest = selectedModelTotals && selectedModelTotals.requests > 0
+    ? selectedModelTotals.aiuQuantity / selectedModelTotals.requests
+    : 0
+  const overallAverageAicGrossPerRequest = selectedModelTotals && selectedModelTotals.requests > 0
+    ? selectedModelTotals.aiuGrossAmount / selectedModelTotals.requests
     : 0
 
   const periodLabel = rangeStart
@@ -132,6 +153,25 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
 
       {selectedModel && filledPerModelDailyData.length > 0 && (
         <div className="per-model__charts charts-grid">
+          <div className="per-model__chartGroup">
+            <MultiSeriesStackedBarChart
+              title={`Daily average AIC per Request (${selectedModel})`}
+              labels={dailyAverageAicPerRequest.map((day) => day.date)}
+              series={[
+                {
+                  label: 'Average daily AICs per request',
+                  color: '#14b8a6',
+                  data: dailyAverageAicPerRequest.map((day) => day.averageAicPerRequest),
+                },
+              ]}
+              height={320}
+            />
+            <p className="per-model__chartNote">
+              Average AICs per request for <strong>{selectedModel}</strong> in the current report period:{' '}
+              <strong>{formatAverageAicPerRequest(overallAverageAicPerRequest)}</strong>, average gross per request{' '}
+              <strong>{formatUsd(overallAverageAicGrossPerRequest)}</strong>
+            </p>
+          </div>
           <DualAxisLineChart
             title={`Daily Requests & AI Credits (${selectedModel})`}
             labels={filledPerModelDailyData.map((day) => day.date)}
