@@ -60,7 +60,7 @@ npm run preview
 3. The app will parse the report and compare request-based and AI Credits-based billing signals
 4. Explore the visualizations and data views to preview how future bills may look after the AI Credits transition
 
-Sample reports are available in the `examples/` directory. Older examples without `aiu_quantity` still load, but AI Credits will remain `0` for those rows.
+Sample reports are available in the `examples/` directory. Older examples without `aic_quantity` still load, but AI Credits will remain `0` for those rows.
 
 ## CSV Report Format
 
@@ -81,9 +81,10 @@ The application expects CSV files with the following primary columns:
 - `total_monthly_quota` - Monthly quota amount
 - `organization` - Organization slug
 - `cost_center_name` - Optional cost center identifier
-- `aiu_quantity` - AI Credits for the same usage row
+- `aic_quantity` - AI Credits for the same usage row
+- `aic_gross_amount` - AI Credit gross cost for the same usage row
 
-The viewer now supports both billing units. On `requests` rows, `quantity` and `applied_cost_per_quantity` drive PRU-based calculations, while `aiu_quantity` and `aiu_gross_amount` remain comparison values and stay `0` when those AI Credit fields are absent. On `ai-units` rows, Premium Requests and generic PRU gross/discount/net totals are counted as `0`; AI Credits are counted from the AI-specific credit fields (`aiu_quantity`, falling back to `quantity` only when the AI field is absent) and AI Credit gross cost comes from `aiu_gross_amount` (falling back to `gross_amount` only when the AI field is absent). Legacy token columns may still appear in older exports, but they are no longer used by the app.
+The viewer now supports both billing units. On `requests` rows, `quantity` and `applied_cost_per_quantity` drive PRU-based calculations, while `aic_quantity` and `aic_gross_amount` remain comparison values and stay `0` when those AI Credit fields are absent. On `ai-units` rows, Premium Requests and generic PRU gross/discount/net totals are counted as `0`; AI Credits are counted from the AI-specific credit fields (`aic_quantity`, falling back to `quantity` only when the AI field is absent) and AI Credit gross cost comes from `aic_gross_amount` (falling back to `gross_amount` only when the AI field is absent). Legacy `aiu_*` column names from older exports are still accepted during parsing, but they are no longer the documented format.
 
 See [docs/report-format.md](docs/report-format.md) for detailed format specifications.
 

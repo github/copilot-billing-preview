@@ -24,11 +24,11 @@ export type TokenUsageRecord = {
   total_monthly_quota: number
   organization: string
   cost_center_name: string | null
-  aiu_quantity: number
-  aiu_gross_amount: number
+  aic_quantity: number
+  aic_gross_amount: number
   aic_net_amount: number
-  has_aiu_quantity: boolean
-  has_aiu_gross_amount: boolean
+  has_aic_quantity: boolean
+  has_aic_gross_amount: boolean
 }
 
 export type TokenUsageHeader = {
@@ -57,14 +57,14 @@ export type UsageMetrics = {
 export function getAicUsageMetrics(record: TokenUsageRecord): Pick<UsageMetrics, 'aiuQuantity' | 'aiuGrossAmount'> {
   if (isAiUnitUsageRecord(record.unit_type)) {
     return {
-      aiuQuantity: record.has_aiu_quantity ? record.aiu_quantity : record.quantity,
-      aiuGrossAmount: record.has_aiu_gross_amount ? record.aiu_gross_amount : record.gross_amount,
+      aiuQuantity: record.has_aic_quantity ? record.aic_quantity : record.quantity,
+      aiuGrossAmount: record.has_aic_gross_amount ? record.aic_gross_amount : record.gross_amount,
     }
   }
 
   return {
-    aiuQuantity: record.aiu_quantity,
-    aiuGrossAmount: record.aiu_gross_amount,
+    aiuQuantity: record.aic_quantity,
+    aiuGrossAmount: record.aic_gross_amount,
   }
 }
 
@@ -173,10 +173,16 @@ function getNullableString(row: string[], i: number | undefined): string | null 
   return raw ? raw : null
 }
 
+function getOptionalHeaderIndex(header: TokenUsageHeader, ...names: string[]): number | undefined {
+  return names.map((name) => header.index[name]).find((index) => index !== undefined)
+}
+
 export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): TokenUsageRecord {
   const row = parseCsvRow(line)
-  const aiuQuantityRaw = getString(row, header.index['aiu_quantity']).trim()
-  const aiuGrossAmountRaw = getString(row, header.index['aiu_gross_amount']).trim()
+  const aicQuantityIndex = getOptionalHeaderIndex(header, 'aic_quantity', 'aiu_quantity')
+  const aicGrossAmountIndex = getOptionalHeaderIndex(header, 'aic_gross_amount', 'aiu_gross_amount')
+  const aicQuantityRaw = getString(row, aicQuantityIndex).trim()
+  const aicGrossAmountRaw = getString(row, aicGrossAmountIndex).trim()
 
   const record: TokenUsageRecord = {
     date: getString(row, header.index['date']).trim(),
@@ -194,11 +200,11 @@ export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): T
     total_monthly_quota: getNumber(row, header.index['total_monthly_quota']),
     organization: getString(row, header.index['organization']).trim(),
     cost_center_name: getNullableString(row, header.index['cost_center_name']),
-    aiu_quantity: getNumber(row, header.index['aiu_quantity']),
-    aiu_gross_amount: getNumber(row, header.index['aiu_gross_amount']),
+    aic_quantity: getNumber(row, aicQuantityIndex),
+    aic_gross_amount: getNumber(row, aicGrossAmountIndex),
     aic_net_amount: 0,
-    has_aiu_quantity: aiuQuantityRaw !== '',
-    has_aiu_gross_amount: aiuGrossAmountRaw !== '',
+    has_aic_quantity: aicQuantityRaw !== '',
+    has_aic_gross_amount: aicGrossAmountRaw !== '',
   }
 
   record.aic_net_amount = getAicUsageMetrics(record).aiuGrossAmount
