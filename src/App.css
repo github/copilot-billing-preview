@@ -997,6 +997,24 @@ td.cost-centers-view__num {
   outline-offset: 2px;
 }
 
+.per-model__chartGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.per-model__chartNote {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  text-align: center;
+  color: #1f2328;
+}
+
+.per-model__chartNote strong {
+  font-weight: 700;
+}
+
 .products-view {
   display: flex;
   flex-direction: column;
