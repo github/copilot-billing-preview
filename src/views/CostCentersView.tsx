@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { CostCenterResult } from '../pipeline/aggregators/costCenterAggregator'
-import { formatAiu, formatDifference, formatUsd } from '../utils/format'
+import { formatAic, formatDifference, formatUsd } from '../utils/format'
 
 export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; rangeStart?: string | null }) {
   const [selected, setSelected] = useState<string>(data.costCenters[0]?.costCenterName ?? '')
@@ -37,9 +37,9 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
   }
 
   const totals = selectedCostCenter?.totals
-  const aicDiscountAmount = totals ? totals.aiuGrossAmount - totals.aicNetAmount : 0
+  const aicDiscountAmount = totals ? totals.aicGrossAmount - totals.aicNetAmount : 0
   const savings = totals ? totals.netAmount - totals.aicNetAmount : 0
-  const hasCosts = totals && (totals.grossAmount > 0 || totals.aiuGrossAmount > 0)
+  const hasCosts = totals && (totals.grossAmount > 0 || totals.aicGrossAmount > 0)
 
   return (
     <section className="cost-centers-view">
@@ -102,13 +102,13 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
             </div>
             <div className="card comparison-card">
               <div className="comparison-card__label">Token-based billing (AICs)</div>
-              <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatUsd(totals.aicNetAmount)}</div>
-              <div className="comparison-card__period">{formatAiu(totals.aiuQuantity)} AICs</div>
+              <div className="comparison-card__big-number comparison-card__big-number--aic">{formatUsd(totals.aicNetAmount)}</div>
+              <div className="comparison-card__period">{formatAic(totals.aicQuantity)} AICs</div>
               <div className="comparison-card__rate">1 AIC = $0.01</div>
               <div className="comparison-card__breakdown">
                 <div className="comparison-card__breakdown-row">
                   <span>Gross cost</span>
-                  <span>{formatUsd(totals.aiuGrossAmount)}</span>
+                  <span>{formatUsd(totals.aicGrossAmount)}</span>
                 </div>
                 <div className="comparison-card__breakdown-row comparison-card__breakdown-row--muted">
                   <span>Included credits discount</span>
@@ -163,7 +163,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
                     <td className="cost-centers-view__name">{row.model}</td>
                     <td className="cost-centers-view__num">{row.totals.requests.toLocaleString()}</td>
                     <td className="cost-centers-view__num">{formatUsd(row.totals.netAmount)}</td>
-                    <td className="cost-centers-view__num">{formatAiu(row.totals.aiuQuantity)}</td>
+                    <td className="cost-centers-view__num">{formatAic(row.totals.aicQuantity)}</td>
                     <td className="cost-centers-view__num">{formatUsd(row.totals.aicNetAmount)}</td>
                     <td className={`cost-centers-view__num cost-centers-view__diff${diff > 0 ? '--positive' : diff < 0 ? '--negative' : ''}`}>
                       {formatDifference(diff)}
@@ -196,7 +196,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
                     <td className="cost-centers-view__name">{row.username}</td>
                     <td className="cost-centers-view__num">{row.totals.requests.toLocaleString()}</td>
                     <td className="cost-centers-view__num">{formatUsd(row.totals.netAmount)}</td>
-                    <td className="cost-centers-view__num">{formatAiu(row.totals.aiuQuantity)}</td>
+                    <td className="cost-centers-view__num">{formatAic(row.totals.aicQuantity)}</td>
                     <td className="cost-centers-view__num">{formatUsd(row.totals.aicNetAmount)}</td>
                     <td className={`cost-centers-view__num cost-centers-view__diff${diff > 0 ? '--positive' : diff < 0 ? '--negative' : ''}`}>
                       {formatDifference(diff)}

@@ -84,7 +84,7 @@ The application expects CSV files with the following primary columns:
 - `aic_quantity` - AI Credits for the same usage row
 - `aic_gross_amount` - AI Credit gross cost for the same usage row
 
-The viewer now supports both billing units. On `requests` rows, `quantity` and `applied_cost_per_quantity` drive PRU-based calculations, while `aic_quantity` and `aic_gross_amount` remain comparison values and stay `0` when those AI Credit fields are absent. On `ai-units` rows, Premium Requests and generic PRU gross/discount/net totals are counted as `0`; AI Credits are counted from the AI-specific credit fields (`aic_quantity`, falling back to `quantity` only when the AI field is absent) and AI Credit gross cost comes from `aic_gross_amount` (falling back to `gross_amount` only when the AI field is absent). Legacy `aiu_*` column names from older exports are still accepted during parsing, but they are no longer the documented format.
+The viewer now supports both billing units. On `requests` rows, `quantity` and `applied_cost_per_quantity` drive PRU-based calculations, while `aic_quantity` and `aic_gross_amount` remain comparison values and stay `0` when those AI Credit fields are absent. On `ai-units` rows, Premium Requests and generic PRU gross/discount/net totals are counted as `0`; AI Credits are counted from the AI-specific credit fields (`aic_quantity`, falling back to `quantity` only when the AI field is absent) and AI Credit gross cost comes from `aic_gross_amount` (falling back to `gross_amount` only when the AI field is absent).
 
 See [docs/report-format.md](docs/report-format.md) for detailed format specifications.
 

@@ -2,16 +2,16 @@ import { useMemo } from 'react'
 import { MultiSeriesStackedBarChart } from '../components'
 import type { UserDailyUsage, UserUsage } from '../pipeline/aggregators/userUsageAggregator'
 import { fillDataForRange } from '../utils/fillDataForRange'
-import { formatAiu } from '../utils/format'
+import { formatAic } from '../utils/format'
 
 type DailySummaryModelRow = {
   model: string
   requests: number
-  aiuQuantity: number
+  aicQuantity: number
   grossAmount: number
   discountAmount: number
   netAmount: number
-  aiuGrossAmount: number
+  aicGrossAmount: number
   aicDiscountAmount: number
   aicNetAmount: number
 }
@@ -49,7 +49,7 @@ function joinValues(values: string[]): string {
 }
 
 function createEmptyUserDaily(date: string): UserDailyUsage {
-  return { date, requests: 0, grossAmount: 0, discountAmount: 0, netAmount: 0, aiuQuantity: 0, aiuGrossAmount: 0, aicNetAmount: 0, models: {} }
+  return { date, requests: 0, grossAmount: 0, discountAmount: 0, netAmount: 0, aicQuantity: 0, aicGrossAmount: 0, aicNetAmount: 0, models: {} }
 }
 
 export interface UserDetailsViewProps {
@@ -90,11 +90,11 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
     }))
   }, [chartDailyEntries, modelNames])
 
-  const aiuSeries = useMemo(() => {
+  const aicSeries = useMemo(() => {
     return modelNames.map((model, index) => ({
       label: model,
       color: MODEL_COLORS[index % MODEL_COLORS.length],
-      data: chartDailyEntries.map((day) => day.models[model]?.aiuQuantity ?? 0),
+      data: chartDailyEntries.map((day) => day.models[model]?.aicQuantity ?? 0),
     }))
   }, [chartDailyEntries, modelNames])
 
@@ -109,12 +109,12 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
         rows.push({
           model,
           requests: usage.requests,
-          aiuQuantity: usage.aiuQuantity,
+          aicQuantity: usage.aicQuantity,
           grossAmount: usage.grossAmount,
           discountAmount: usage.discountAmount,
           netAmount: usage.netAmount,
-          aiuGrossAmount: usage.aiuGrossAmount,
-          aicDiscountAmount: usage.aiuGrossAmount - usage.aicNetAmount,
+          aicGrossAmount: usage.aicGrossAmount,
+          aicDiscountAmount: usage.aicGrossAmount - usage.aicNetAmount,
           aicNetAmount: usage.aicNetAmount,
         })
       }
@@ -129,7 +129,7 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
     ? new Date(rangeStart + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric' })
     : null
 
-  const aicDiscountAmount = user ? user.totals.aiuGrossAmount - user.totals.aicNetAmount : 0
+  const aicDiscountAmount = user ? user.totals.aicGrossAmount - user.totals.aicNetAmount : 0
   const savings = user ? user.totals.netAmount - user.totals.aicNetAmount : 0
 
   if (!user) {
@@ -219,13 +219,13 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
             </div>
             <div className="card comparison-card">
               <div className="comparison-card__label">Token-based billing (AICs)</div>
-              <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatCost(user.totals.aicNetAmount)}</div>
-              <div className="comparison-card__period">{formatAiu(user.totals.aiuQuantity)} AICs</div>
+              <div className="comparison-card__big-number comparison-card__big-number--aic">{formatCost(user.totals.aicNetAmount)}</div>
+              <div className="comparison-card__period">{formatAic(user.totals.aicQuantity)} AICs</div>
               <div className="comparison-card__rate">1 AIC = $0.01</div>
               <div className="comparison-card__breakdown">
                 <div className="comparison-card__breakdown-row">
                   <span>Gross cost</span>
-                  <span>{formatCost(user.totals.aiuGrossAmount)}</span>
+                  <span>{formatCost(user.totals.aicGrossAmount)}</span>
                 </div>
                 <div className="comparison-card__breakdown-row comparison-card__breakdown-row--muted">
                   <span>Included credits discount</span>
@@ -241,7 +241,7 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
 
           <div className="charts-grid">
             <MultiSeriesStackedBarChart title="Daily Requests by Model" labels={labels} series={requestSeries} height={340} />
-            <MultiSeriesStackedBarChart title="Daily AI Credits by Model" labels={labels} series={aiuSeries} height={340} />
+            <MultiSeriesStackedBarChart title="Daily AI Credits by Model" labels={labels} series={aicSeries} height={340} />
           </div>
 
           <div className="user-details__tableWrap data-table-wrap">
@@ -278,8 +278,8 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
                         <td className="user-details__num">{formatCost(row.grossAmount)}</td>
                         <td className="user-details__num">{formatCost(row.discountAmount)}</td>
                         <td className="user-details__num">{formatCost(row.netAmount)}</td>
-                        <td className="user-details__num">{formatAiu(row.aiuQuantity)}</td>
-                        <td className="user-details__num">{formatCost(row.aiuGrossAmount)}</td>
+                        <td className="user-details__num">{formatAic(row.aicQuantity)}</td>
+                        <td className="user-details__num">{formatCost(row.aicGrossAmount)}</td>
                         <td className="user-details__num">{formatCost(row.aicDiscountAmount)}</td>
                         <td className="user-details__num">{formatCost(row.aicNetAmount)}</td>
                         <td className={`user-details__num ${diff > 0 ? 'user-details__diff--positive' : diff < 0 ? 'user-details__diff--negative' : 'user-details__diff--neutral'}`}>

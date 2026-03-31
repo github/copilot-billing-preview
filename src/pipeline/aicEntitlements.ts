@@ -53,23 +53,23 @@ export class PooledAicEntitlementAllocator {
   }
 
   apply(record: TokenUsageRecord): TokenUsageRecord {
-    const { aiuQuantity, aiuGrossAmount } = getAicUsageMetrics(record)
+    const { aicQuantity, aicGrossAmount } = getAicUsageMetrics(record)
 
-    if (aiuQuantity <= 0) {
-      record.aic_net_amount = aiuGrossAmount
+    if (aicQuantity <= 0) {
+      record.aic_net_amount = aicGrossAmount
       return record
     }
 
-    const coveredQuantity = Math.min(aiuQuantity, this.remainingEntitlements)
+    const coveredQuantity = Math.min(aicQuantity, this.remainingEntitlements)
     this.remainingEntitlements = Math.max(this.remainingEntitlements - coveredQuantity, 0)
 
-    if (aiuGrossAmount <= 0) {
-      record.aic_net_amount = aiuGrossAmount
+    if (aicGrossAmount <= 0) {
+      record.aic_net_amount = aicGrossAmount
       return record
     }
 
-    const uncoveredRatio = Math.max(aiuQuantity - coveredQuantity, 0) / aiuQuantity
-    record.aic_net_amount = aiuGrossAmount * uncoveredRatio
+    const uncoveredRatio = Math.max(aicQuantity - coveredQuantity, 0) / aicQuantity
+    record.aic_net_amount = aicGrossAmount * uncoveredRatio
     return record
   }
 

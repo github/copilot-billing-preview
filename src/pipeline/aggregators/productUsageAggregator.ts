@@ -3,10 +3,10 @@ import { getUsageMetrics, type TokenUsageHeader, type TokenUsageRecord } from '.
 
 export type ProductUsageTotals = {
   requests: number
-  aiuQuantity: number
+  aicQuantity: number
   grossAmount: number
   netAmount: number
-  aiuGrossAmount: number
+  aicGrossAmount: number
   aicNetAmount: number
 }
 
@@ -23,10 +23,10 @@ export type ProductUsageResult = {
 function createTotals(): ProductUsageTotals {
   return {
     requests: 0,
-    aiuQuantity: 0,
+    aicQuantity: 0,
     grossAmount: 0,
     netAmount: 0,
-    aiuGrossAmount: 0,
+    aicGrossAmount: 0,
     aicNetAmount: 0,
   }
 }
@@ -59,12 +59,12 @@ export class ProductUsageAggregator implements Aggregator<TokenUsageRecord, Prod
       this.byProduct.set(product, productUsage)
     }
 
-    const { requests, aiuQuantity, grossAmount, netAmount, aiuGrossAmount, aicNetAmount } = getUsageMetrics(record)
+    const { requests, aicQuantity, grossAmount, netAmount, aicGrossAmount, aicNetAmount } = getUsageMetrics(record)
     productUsage.totals.requests += requests
-    productUsage.totals.aiuQuantity += aiuQuantity
+    productUsage.totals.aicQuantity += aicQuantity
     productUsage.totals.grossAmount += grossAmount
     productUsage.totals.netAmount += netAmount
-    productUsage.totals.aiuGrossAmount += aiuGrossAmount
+    productUsage.totals.aicGrossAmount += aicGrossAmount
     productUsage.totals.aicNetAmount += aicNetAmount
 
     let modelTotals = productUsage.models.get(model)
@@ -74,10 +74,10 @@ export class ProductUsageAggregator implements Aggregator<TokenUsageRecord, Prod
     }
 
     modelTotals.requests += requests
-    modelTotals.aiuQuantity += aiuQuantity
+    modelTotals.aicQuantity += aicQuantity
     modelTotals.grossAmount += grossAmount
     modelTotals.netAmount += netAmount
-    modelTotals.aiuGrossAmount += aiuGrossAmount
+    modelTotals.aicGrossAmount += aicGrossAmount
     modelTotals.aicNetAmount += aicNetAmount
   }
 

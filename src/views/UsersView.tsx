@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import type { UserUsage } from '../pipeline/aggregators/userUsageAggregator'
 import { getMonthlyAicEntitlements } from '../pipeline/aicEntitlements'
-import { formatAiu } from '../utils/format'
+import { formatAic } from '../utils/format'
 import { Trie } from '../utils/trie'
 
 function formatInt(n: number): string {
@@ -93,13 +93,13 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
               <tr key={row.label}>
                 <td className="users-view__license">{row.label}</td>
                 <td className="users-view__num">{formatInt(row.users)}</td>
-                <td className="users-view__num">{formatAiu(row.includedAic)}</td>
+                <td className="users-view__num">{formatAic(row.includedAic)}</td>
               </tr>
             ))}
             <tr>
               <td className="users-view__license users-view__license--total">Total AIC pool</td>
               <td className="users-view__num users-view__num--total">{formatInt(licenseSummary.totalUsers)}</td>
-              <td className="users-view__num users-view__num--total">{formatAiu(licenseSummary.totalIncludedAic)}</td>
+              <td className="users-view__num users-view__num--total">{formatAic(licenseSummary.totalIncludedAic)}</td>
             </tr>
           </tbody>
         </table>
@@ -146,7 +146,7 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
               >
                 <td className="users-view__user">{user.username}</td>
                 <td className="users-view__num">{formatInt(user.totals.requests)}</td>
-                <td className="users-view__num">{formatAiu(user.totals.aiuQuantity)}</td>
+                <td className="users-view__num">{formatAic(user.totals.aicQuantity)}</td>
                 <td className="users-view__num">{formatInt(user.totals.distinctModels)}</td>
                 <td className="users-view__num">{formatCost(user.totals.grossAmount)}</td>
                 <td className="users-view__num">{formatCost(user.totals.discountAmount)}</td>

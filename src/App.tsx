@@ -20,7 +20,7 @@ import { OrganizationAggregator, type OrganizationResult } from './pipeline/aggr
 import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregators/userUsageAggregator'
 import { runPipeline } from './pipeline/runPipeline'
 import { fillDataForRange } from './utils/fillDataForRange'
-import { formatAiu, formatUsd } from './utils/format'
+import { formatAic, formatUsd } from './utils/format'
 
 type Status = 'idle' | 'processing' | 'done'
 
@@ -28,9 +28,9 @@ function createEmptyDailyUsage(date: string): DailyUsageData {
   return {
     date,
     requests: 0,
-    aiuQuantity: 0,
+    aicQuantity: 0,
     grossAmount: 0,
-    aiuGrossAmount: 0,
+    aicGrossAmount: 0,
     aicNetAmount: 0,
     discountAmount: 0,
     netAmount: 0,
@@ -190,24 +190,24 @@ function App() {
   const overviewTotals = dailyUsageData.reduce(
     (totals, day) => {
       totals.requests += day.requests
-      totals.aiuQuantity += day.aiuQuantity
+      totals.aicQuantity += day.aicQuantity
       totals.grossAmount += day.grossAmount
-      totals.aiuGrossAmount += day.aiuGrossAmount
+      totals.aicGrossAmount += day.aicGrossAmount
       totals.discountAmount += day.discountAmount
       totals.netAmount += day.netAmount
       return totals
     },
-    { requests: 0, aiuQuantity: 0, grossAmount: 0, aiuGrossAmount: 0, aicNetAmount: 0, discountAmount: 0, netAmount: 0 },
+    { requests: 0, aicQuantity: 0, grossAmount: 0, aicGrossAmount: 0, aicNetAmount: 0, discountAmount: 0, netAmount: 0 },
   )
 
   const pooledAicCredits = (userUsage?.users ?? []).reduce((sum, user) => sum + getIncludedAicCredits(user.totalMonthlyQuota), 0)
 
   const aicDiscountRate =
-    overviewTotals.aiuQuantity > 0
-      ? Math.min(pooledAicCredits / overviewTotals.aiuQuantity, 1)
+    overviewTotals.aicQuantity > 0
+      ? Math.min(pooledAicCredits / overviewTotals.aicQuantity, 1)
       : 0
-  const aicDiscount = aicDiscountRate * overviewTotals.aiuGrossAmount
-  const aicNetAmount = Math.max(overviewTotals.aiuGrossAmount - aicDiscount, 0)
+  const aicDiscount = aicDiscountRate * overviewTotals.aicGrossAmount
+  const aicNetAmount = Math.max(overviewTotals.aicGrossAmount - aicDiscount, 0)
 
   return (
     <div className={`app ${hasReport ? 'app--review' : ''}`}>
@@ -392,7 +392,7 @@ function App() {
                     <div className="context-banner">
                       <h2 className="context-banner__title">GitHub Copilot is moving to token-based billing</h2>
                       <p className="context-banner__body">
-                        Starting May 1, 2026, Copilot usage will be measured in AI Credits (AICs) instead of Premium Requests (PRUs). <strong className="aiu-callout">1 AIC = $0.01.</strong> This preview shows what your usage would look like under the new pricing.
+                        Starting May 1, 2026, Copilot usage will be measured in AI Credits (AICs) instead of Premium Requests (PRUs). <strong className="aic-callout">1 AIC = $0.01.</strong> This preview shows what your usage would look like under the new pricing.
                       </p>
                       {fileName && (
                         <p className="context-banner__note">
@@ -445,13 +445,13 @@ function App() {
                       </div>
                       <div className="card comparison-card">
                         <div className="comparison-card__label">Token-based billing (AICs)</div>
-                        <div className="comparison-card__big-number comparison-card__big-number--aiu">{formatUsd(aicNetAmount)}</div>
-                        <div className="comparison-card__period">{formatAiu(overviewTotals.aiuQuantity)} AICs</div>
+                        <div className="comparison-card__big-number comparison-card__big-number--aic">{formatUsd(aicNetAmount)}</div>
+                        <div className="comparison-card__period">{formatAic(overviewTotals.aicQuantity)} AICs</div>
                         <div className="comparison-card__rate">1 AIC = $0.01</div>
                         <div className="comparison-card__breakdown">
                           <div className="comparison-card__breakdown-row">
                             <span>Gross cost</span>
-                            <span>{formatUsd(overviewTotals.aiuGrossAmount)}</span>
+                            <span>{formatUsd(overviewTotals.aicGrossAmount)}</span>
                           </div>
                           <div className="comparison-card__breakdown-row comparison-card__breakdown-row--muted">
                             <span>Included credits discount</span>
@@ -479,7 +479,7 @@ function App() {
                           {
                             label: 'AI Credits',
                             color: '#22c55e',
-                            data: filledDailyUsageData.map((day) => day.aiuQuantity),
+                            data: filledDailyUsageData.map((day) => day.aicQuantity),
                             yAxisID: 'y1',
                           },
                         ]}
@@ -498,7 +498,7 @@ function App() {
                           {
                             label: 'AIC Gross Cost',
                             color: '#54aeff',
-                            data: filledDailyUsageData.map((day) => day.aiuGrossAmount),
+                            data: filledDailyUsageData.map((day) => day.aicGrossAmount),
                             yAxisID: 'y',
                           },
                         ]}
