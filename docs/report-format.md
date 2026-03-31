@@ -21,20 +21,12 @@ Source examples: files in `examples/`. Some existing sample exports still use th
 | `total_monthly_quota` | number | Monthly quota for the user or plan applicable to the row. |
 | `organization` | string | Organization slug associated with the usage. |
 | `cost_center_name` | string | Optional cost center or tagging field. |
-## Optional AI Credit columns
-
-| Column | Status | Notes |
-| --- | --- | --- |
 | `aic_quantity` | Present in newer previews | Same usage converted to AI Credits. |
 | `aic_gross_amount` | Present in newer previews | Used for AI Credit gross cost when present. |
-| `total_input_tokens` | Legacy / optional | Older token-oriented export field; ignored by the app. |
-| `total_output_tokens` | Legacy / optional | Older token-oriented export field; ignored by the app. |
-| `total_cache_creation_tokens` | Legacy / optional | Older token-oriented export field; ignored by the app. |
-| `total_cache_read_tokens` | Legacy / optional | Older token-oriented export field; ignored by the app. |
 
 ## Notes
 - Header row is single-lined; subsequent rows are usage records. Values are comma-separated, double-quoted where needed.
 - Monetary fields are decimals. `aic_quantity` may also be fractional.
 - The app streams the file, treats the first row as the header, and counts subsequent data rows without loading the entire file into memory.
-- Current calculations support both row types: on `requests` rows, `quantity` and `applied_cost_per_quantity` describe PRU usage while `aic_quantity` and `aic_gross_amount` remain reference/comparison values and stay `0` when those AI Credit fields are absent; on `ai-units` rows, Premium Requests and generic PRU gross/discount/net totals are counted as `0`, while AI Credits and AI Credit gross cost are taken from the AI-specific fields (`aic_quantity` / `aic_gross_amount`, with fallback to `quantity` / `gross_amount` only when those AI-specific fields are absent).
-- Reports without `aic_quantity` still load, but AI Credit summaries will display `0`.
+- Current calculations support both row types: on `requests` rows, `quantity` and `applied_cost_per_quantity` describe PRU usage while `aic_quantity` and `aic_gross_amount` remain reference/comparison values; on `ai-units` rows, Premium Requests and generic PRU gross/discount/net totals are counted as `0`, while AI Credits and AI Credit gross cost are taken from the AI-specific fields (`aic_quantity` / `aic_gross_amount`), with fallback to `quantity` / `gross_amount` only when those AI-specific fields are present but blank.
+- The current app expects the current CSV format, including `aic_quantity` and `aic_gross_amount`.

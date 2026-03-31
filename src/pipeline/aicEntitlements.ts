@@ -15,9 +15,21 @@ export const ENTERPRISE_MONTHLY_AIC_ENTITLEMENTS = 7000
 
 export type AicEntitlementTier = 'business' | 'enterprise' | null
 
+export type LicenseSummaryRow = {
+  label: 'Copilot Business' | 'Copilot Enterprise'
+  users: number
+  includedAic: number
+}
+
+export type LicenseSummary = {
+  rows: LicenseSummaryRow[]
+  totalUsers: number
+  totalIncludedAic: number
+}
+
 export function getAicEntitlementTier(totalMonthlyQuota: number): AicEntitlementTier {
-  if (totalMonthlyQuota >= ENTERPRISE_MONTHLY_QUOTA) return 'enterprise'
-  if (totalMonthlyQuota >= BUSINESS_MONTHLY_QUOTA) return 'business'
+  if (totalMonthlyQuota === ENTERPRISE_MONTHLY_QUOTA) return 'enterprise'
+  if (totalMonthlyQuota === BUSINESS_MONTHLY_QUOTA) return 'business'
   return null
 }
 
@@ -26,6 +38,34 @@ export function getMonthlyAicEntitlements(totalMonthlyQuota: number): number {
   if (tier === 'enterprise') return ENTERPRISE_MONTHLY_AIC_ENTITLEMENTS
   if (tier === 'business') return BUSINESS_MONTHLY_AIC_ENTITLEMENTS
   return 0
+}
+
+export function calculateLicenseSummary(users: { totalMonthlyQuota: number }[]): LicenseSummary {
+  const rows: LicenseSummaryRow[] = [
+    { label: 'Copilot Business', users: 0, includedAic: 0 },
+    { label: 'Copilot Enterprise', users: 0, includedAic: 0 },
+  ]
+
+  users.forEach((user) => {
+    const tier = getAicEntitlementTier(user.totalMonthlyQuota)
+    const includedAic = getMonthlyAicEntitlements(user.totalMonthlyQuota)
+
+    if (tier === 'business') {
+      rows[0].users += 1
+      rows[0].includedAic += includedAic
+    }
+
+    if (tier === 'enterprise') {
+      rows[1].users += 1
+      rows[1].includedAic += includedAic
+    }
+  })
+
+  return {
+    rows,
+    totalUsers: rows.reduce((sum, row) => sum + row.users, 0),
+    totalIncludedAic: rows.reduce((sum, row) => sum + row.includedAic, 0),
+  }
 }
 
 export async function calculateAicEntitlementPool(file: File): Promise<number> {
