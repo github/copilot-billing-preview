@@ -28,6 +28,10 @@ function formatAverageAicPerRequest(value: number): string {
   return value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })
 }
 
+function roundAverageAicPerRequest(value: number): number {
+  return Number(value.toFixed(3))
+}
+
 export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }: ModelsViewProps) {
   const [selectedModel, setSelectedModel] = useState<string>(modelUsage.models[0] ?? '')
 
@@ -48,7 +52,7 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
   const dailyAverageAicPerRequest = useMemo(
     () => filledPerModelDailyData.map((day) => ({
       date: day.date,
-      averageAicPerRequest: day.requests > 0 ? day.aiuQuantity / day.requests : 0,
+      averageAicPerRequest: day.requests > 0 ? roundAverageAicPerRequest(day.aiuQuantity / day.requests) : 0,
     })),
     [filledPerModelDailyData],
   )
