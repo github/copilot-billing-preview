@@ -28,7 +28,7 @@ export class ReportContextAggregator implements Aggregator<TokenUsageRecord, Rep
     }
 
     const isoDate = record.date.trim()
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return
+    if (!isValidIsoDate(isoDate)) return
 
     // Keep raw ISO date strings to avoid timezone mutations.
     if (!this.minDate || isoDate < this.minDate) {
@@ -48,4 +48,20 @@ export class ReportContextAggregator implements Aggregator<TokenUsageRecord, Rep
       unitTypes: [...this.unitTypes].sort(),
     }
   }
+}
+
+function isValidIsoDate(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return false
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const normalized = new Date(Date.UTC(year, month - 1, day))
+
+  return (
+    normalized.getUTCFullYear() === year
+    && normalized.getUTCMonth() === month - 1
+    && normalized.getUTCDate() === day
+  )
 }

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { MultiSeriesStackedBarChart } from '../components'
 import type { UserDailyUsage, UserUsage } from '../pipeline/aggregators/userUsageAggregator'
+import { calculateAicDiscountAmount, calculateSavingsDifference } from '../utils/billingComparison'
 import { fillDataForRange } from '../utils/fillDataForRange'
 import { formatAic } from '../utils/format'
 
@@ -114,7 +115,7 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
           discountAmount: usage.discountAmount,
           netAmount: usage.netAmount,
           aicGrossAmount: usage.aicGrossAmount,
-          aicDiscountAmount: usage.aicGrossAmount - usage.aicNetAmount,
+          aicDiscountAmount: calculateAicDiscountAmount(usage.aicGrossAmount, usage.aicNetAmount),
           aicNetAmount: usage.aicNetAmount,
         })
       }
@@ -129,8 +130,8 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
     ? new Date(rangeStart + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric' })
     : null
 
-  const aicDiscountAmount = user ? user.totals.aicGrossAmount - user.totals.aicNetAmount : 0
-  const savings = user ? user.totals.netAmount - user.totals.aicNetAmount : 0
+  const aicDiscountAmount = user ? calculateAicDiscountAmount(user.totals.aicGrossAmount, user.totals.aicNetAmount) : 0
+  const savings = user ? calculateSavingsDifference(user.totals.netAmount, user.totals.aicNetAmount) : 0
 
   if (!user) {
     return (
@@ -264,7 +265,7 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
               <tbody>
                 {dailySummaryGroups.flatMap((group) =>
                   group.rows.map((row, rowIndex) => {
-                    const diff = row.netAmount - row.aicNetAmount
+                    const diff = calculateSavingsDifference(row.netAmount, row.aicNetAmount)
 
                     return (
                       <tr key={`${group.date}-${row.model}`}>

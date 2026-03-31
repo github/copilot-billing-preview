@@ -1,5 +1,6 @@
 import type { OrganizationResult } from '../pipeline/aggregators/organizationAggregator'
 import { formatAic, formatDifference, formatUsd } from '../utils/format'
+import { calculateSavingsDifference } from '../utils/billingComparison'
 
 export function OrganizationsView({ data }: { data: OrganizationResult }) {
   if (data.organizations.length === 0) {
@@ -35,7 +36,7 @@ export function OrganizationsView({ data }: { data: OrganizationResult }) {
           </thead>
           <tbody>
             {data.organizations.map((organization) => {
-              const difference = organization.netAmount - organization.aicNetAmount
+              const difference = calculateSavingsDifference(organization.netAmount, organization.aicNetAmount)
 
               return (
                 <tr key={organization.organization}>

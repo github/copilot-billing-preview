@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import type { UserUsage } from '../pipeline/aggregators/userUsageAggregator'
-import { getAicEntitlementTier, getMonthlyAicEntitlements } from '../pipeline/aicEntitlements'
+import { calculateLicenseSummary } from '../pipeline/aicEntitlements'
 import { formatAic } from '../utils/format'
 import { Trie } from '../utils/trie'
 
@@ -21,36 +21,7 @@ export interface UsersViewProps {
 export function UsersView({ users, onSelectUser }: UsersViewProps) {
   const [query, setQuery] = useState('')
 
-  const licenseSummary = useMemo(() => {
-    const summary = [
-      { label: 'Copilot Business', users: 0, includedAic: 0 },
-      { label: 'Copilot Enterprise', users: 0, includedAic: 0 },
-    ]
-
-    users.forEach((user) => {
-      const tier = getAicEntitlementTier(user.totalMonthlyQuota)
-      const includedAic = getMonthlyAicEntitlements(user.totalMonthlyQuota)
-
-      if (tier === 'business') {
-        summary[0].users += 1
-        summary[0].includedAic += includedAic
-      }
-
-      if (tier === 'enterprise') {
-        summary[1].users += 1
-        summary[1].includedAic += includedAic
-      }
-    })
-
-    const totalUsers = summary.reduce((sum, row) => sum + row.users, 0)
-    const totalIncludedAic = summary.reduce((sum, row) => sum + row.includedAic, 0)
-
-    return {
-      rows: summary,
-      totalUsers,
-      totalIncludedAic,
-    }
-  }, [users])
+  const licenseSummary = useMemo(() => calculateLicenseSummary(users), [users])
 
   const sortedUsers = useMemo(() => {
     return [...users].sort((a, b) => a.username.localeCompare(b.username))
