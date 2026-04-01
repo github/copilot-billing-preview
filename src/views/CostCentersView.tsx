@@ -97,17 +97,17 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
             <p className="comparison-framing">
               {savings > 0 ? (
                 <>
-                  <strong>{selected}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
+                  <strong>{selectedCostCenterName}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
                   <strong>{formatUsd(savings)} less</strong> under AI Credit based billing
                 </>
               ) : savings < 0 ? (
                 <>
-                  <strong>{selected}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
+                  <strong>{selectedCostCenterName}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
                   <strong>{formatUsd(Math.abs(savings))} more</strong> under AI Credit based billing
                 </>
               ) : (
                 <>
-                  <strong>{selected}</strong>'s <strong>{periodLabel}</strong> usage cost would be the same under AI Credit based billing
+                  <strong>{selectedCostCenterName}</strong>'s <strong>{periodLabel}</strong> usage cost would be the same under AI Credit based billing
                 </>
               )}
             </p>
@@ -181,6 +181,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
             type="button"
             className={`cost-centers-view__tableButton ${activeTable === 'users' ? 'cost-centers-view__tableButton--active' : ''}`}
             onClick={() => setActiveTable('users')}
+            aria-pressed={activeTable === 'users'}
           >
             Top {MAX_DETAIL_ROWS} users
           </button>
@@ -188,6 +189,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
             type="button"
             className={`cost-centers-view__tableButton ${activeTable === 'models' ? 'cost-centers-view__tableButton--active' : ''}`}
             onClick={() => setActiveTable('models')}
+            aria-pressed={activeTable === 'models'}
           >
             Top {MAX_DETAIL_ROWS} models
           </button>

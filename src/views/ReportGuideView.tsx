@@ -216,7 +216,7 @@ export function ReportGuideView() {
           <strong>GPT-4.1</strong>, a Base Model. Because Base Models carry a <strong>0× PRU Multiplier</strong>, the
           gross PRU cost is <strong>$0.00</strong> and this usage would not have appeared in the billing report under
           the old model. Under AI Credit based billing, however, the same usage consumed <strong>≈ 24.9 AICs</strong> at
-          $0.01 each, producing a token-based cost of approximately <strong>$0.249</strong>.
+          $0.01 each, producing an AI Credit based cost of approximately <strong>$0.249</strong>.
         </p>
 
         <AnnotatedRow header={HEADER} values={SAMPLE_ROW_2} annotations={SAMPLE_ROW_2_ANNOTATIONS} />
