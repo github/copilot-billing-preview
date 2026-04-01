@@ -182,16 +182,16 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
               {savings > 0 ? (
                 <>
                   <strong>{user.username}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
-                  <strong>{formatCost(savings)} less</strong> under token-based pricing
+                  <strong>{formatCost(savings)} less</strong> under AI Credit based billing
                 </>
               ) : savings < 0 ? (
                 <>
                   <strong>{user.username}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
-                  <strong>{formatCost(Math.abs(savings))} more</strong> under token-based pricing
+                  <strong>{formatCost(Math.abs(savings))} more</strong> under AI Credit based billing
                 </>
               ) : (
                 <>
-                  <strong>{user.username}</strong>'s <strong>{periodLabel}</strong> usage cost would be the same under token-based pricing
+                  <strong>{user.username}</strong>'s <strong>{periodLabel}</strong> usage cost would be the same under AI Credit based billing
                 </>
               )}
             </p>
@@ -219,7 +219,7 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
               </div>
             </div>
             <div className="card comparison-card">
-              <div className="comparison-card__label">Token-based billing (AICs)</div>
+              <div className="comparison-card__label">AI Credit based billing (AICs)</div>
               <div className="comparison-card__big-number comparison-card__big-number--aic">{formatCost(user.totals.aicNetAmount)}</div>
               <div className="comparison-card__period">{formatAic(user.totals.aicQuantity)} AICs</div>
               <div className="comparison-card__rate">1 AIC = $0.01</div>

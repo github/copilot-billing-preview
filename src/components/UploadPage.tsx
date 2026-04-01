@@ -33,13 +33,13 @@ export function UploadPage({
         </svg>
         <h1 className="upload-screen__title">Copilot Billing Preview</h1>
         <p className="upload-screen__subtitle">
-          GitHub is moving to <strong>token-based billing</strong> for Copilot. Starting May 2026, usage
+          GitHub is moving to <strong>AI Credit based billing</strong> for Copilot. Starting May 2026, usage
           will be measured in AI Credits (AICs) instead of Premium Requests (PRUs). This tool helps you
           understand how the change will impact your bill.
         </p>
         <p className="upload-screen__subtitle upload-screen__subtitle--spaced">
-          Upload your token usage report to preview what your billing would look like under the new
-          pricing. Download the report from <strong>Settings → Billing → Premium request usage</strong>.
+          Upload your Premium request usage report to preview what your billing would look like under the new
+          pricing model. Download the report from <strong>Settings → Billing → Premium request usage</strong>.
         </p>
         {error && (
           <div className="upload-screen__error" role="alert">
@@ -96,7 +96,7 @@ export function UploadPage({
                   </svg>
                 </div>
                 <h3 className="upload-zone__title">Drop your CSV here or click to browse</h3>
-                <p className="upload-zone__hint">tokenUsageReport*.csv</p>
+                <p className="upload-zone__hint">premiumRequestUsageReport_*.csv</p>
               </>
             )}
           </div>
