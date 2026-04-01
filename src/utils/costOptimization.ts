@@ -1,4 +1,4 @@
-import { BUSINESS_MONTHLY_QUOTA } from '../pipeline/aicEntitlements'
+import { getAicEntitlementTier } from '../pipeline/aicEntitlements'
 
 export const AIC_UNIT_PRICE_USD = 0.01
 export const BUSINESS_TO_ENTERPRISE_UPGRADE_COST_USD = 20
@@ -38,7 +38,7 @@ export function calculateCostOptimizationOpportunity({
   aicNetAmount,
   users,
 }: CostOptimizationInput): CostOptimizationOpportunity {
-  const businessUsersAvailable = users.filter((user) => user.totalMonthlyQuota === BUSINESS_MONTHLY_QUOTA).length
+  const businessUsersAvailable = users.filter((user) => getAicEntitlementTier(user.totalMonthlyQuota) === 'business').length
   const hasNetAicOverage = aicNetAmount > EPSILON
   const hasBusinessUsers = businessUsersAvailable > 0
   const estimatedAicOverageCredits = roundAic(aicNetAmount / AIC_UNIT_PRICE_USD)
@@ -52,7 +52,7 @@ export function calculateCostOptimizationOpportunity({
     const recoveredAicCredits = Math.min(remainingAicOverageCredits, BUSINESS_TO_ENTERPRISE_EXTRA_AIC)
     const incrementalSavings = (recoveredAicCredits * AIC_UNIT_PRICE_USD) - BUSINESS_TO_ENTERPRISE_UPGRADE_COST_USD
 
-    if (incrementalSavings <= EPSILON) {
+    if (incrementalSavings < 0.01) {
       break
     }
 

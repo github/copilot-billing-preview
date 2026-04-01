@@ -17,7 +17,7 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
       'Yes, in theory they can. However, user-level and product budgets allow you to control cost and prevent unexpected consumption by any single user.',
   },
   {
-    question: 'Does it mean with the new model we cannot predict how much cost we will end up with?',
+    question: "Does this mean that with the new model we can't predict our total cost?",
     answer:
       'No — it is possible to set an account-level budget that caps your total spend. Once the budget is reached, additional usage is blocked, giving you full predictability over costs.',
   },

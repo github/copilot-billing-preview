@@ -87,4 +87,18 @@ describe('cost optimization opportunity helpers', () => {
     expect(opportunity.estimatedSavings).toBe(0)
     expect(opportunity.estimatedAicNetCostAfterSuggestedUpgrades).toBe(20)
   })
+
+  it('does not recommend an upgrade when the next step saves less than one cent', () => {
+    const opportunity = calculateCostOptimizationOpportunity({
+      aicNetAmount: 20.009,
+      users: [{ totalMonthlyQuota: 300 }],
+    })
+
+    expect(opportunity.hasNetAicOverage).toBe(true)
+    expect(opportunity.hasBusinessUsers).toBe(true)
+    expect(opportunity.hasPotentialCostOptimizationOpportunity).toBe(false)
+    expect(opportunity.suggestedBusinessUsersToUpgrade).toBe(0)
+    expect(opportunity.estimatedSavings).toBe(0)
+    expect(opportunity.estimatedAicNetCostAfterSuggestedUpgrades).toBe(20.01)
+  })
 })
