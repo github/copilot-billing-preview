@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import type { UserUsage } from '../pipeline/aggregators/userUsageAggregator'
 import { calculateLicenseSummary } from '../pipeline/aicEntitlements'
-import { formatAic } from '../utils/format'
+import type { CostOptimizationOpportunity } from '../utils/costOptimization'
+import { formatAic, formatUsd } from '../utils/format'
 import { Trie } from '../utils/trie'
 
 const PAGE_SIZE = 50
@@ -17,10 +18,11 @@ function formatCost(n: number): string {
 
 export interface UsersViewProps {
   users: UserUsage[]
+  costOptimizationOpportunity?: CostOptimizationOpportunity
   onSelectUser?: (username: string) => void
 }
 
-export function UsersView({ users, onSelectUser }: UsersViewProps) {
+export function UsersView({ users, costOptimizationOpportunity, onSelectUser }: UsersViewProps) {
   const [query, setQuery] = useState('')
   const [pageAnchor, setPageAnchor] = useState<string | null>(null)
 
@@ -94,6 +96,35 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
           </tbody>
         </table>
       </div>
+
+      {costOptimizationOpportunity?.hasPotentialCostOptimizationOpportunity && (
+        <div className="entitlement-banner">
+          <div className="entitlement-banner__body">
+            <strong className="entitlement-banner__title">Cost optimization opportunity</strong>
+            <p className="entitlement-banner__text">
+              Your usage is generating <strong>{formatUsd(costOptimizationOpportunity.estimatedAicNetCost)}</strong> in AIC overage charges.
+              Upgrading{' '}
+              <strong>{costOptimizationOpportunity.suggestedBusinessUsersToUpgrade}</strong>{' '}
+              {costOptimizationOpportunity.suggestedBusinessUsersToUpgrade === 1 ? 'Copilot Business user' : 'Copilot Business users'} to Copilot Enterprise
+              would add <strong>{formatAic(costOptimizationOpportunity.extraAicCreditsFromSuggestedUpgrades)}</strong> more pooled AICs
+              and reduce total cost from{' '}
+              <strong>{formatUsd(costOptimizationOpportunity.estimatedAicNetCost)}</strong> to{' '}
+              <strong>{formatUsd(costOptimizationOpportunity.estimatedAicNetCostAfterSuggestedUpgrades)}</strong>{' '}
+              (including <strong>{formatUsd(costOptimizationOpportunity.estimatedUpgradeCost)}</strong> in upgrade cost) —
+              saving <strong>{formatUsd(costOptimizationOpportunity.estimatedSavings)}</strong>.
+            </p>
+          </div>
+          <a
+            href="https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/administer-copilot/manage-for-enterprise/manage-plan/upgrade-plan"
+            className="entitlement-banner__link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Upgrade plan &rarr;
+          </a>
+        </div>
+      )}
+
       <input
         className="users-view__search"
         placeholder="Search users (prefix)…"

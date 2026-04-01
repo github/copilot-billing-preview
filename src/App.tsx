@@ -22,6 +22,7 @@ import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregator
 import { getMonthlyAicEntitlements } from './pipeline/aicEntitlements'
 import { runPipeline } from './pipeline/runPipeline'
 import { calculateOverviewAicDiscountRate } from './utils/overviewBilling'
+import { calculateCostOptimizationOpportunity } from './utils/costOptimization'
 
 type Status = 'idle' | 'processing' | 'done'
 
@@ -162,6 +163,11 @@ function App() {
 
   const pooledAicCredits = (userUsage?.users ?? []).reduce((sum, user) => sum + getMonthlyAicEntitlements(user.totalMonthlyQuota), 0)
   const aicDiscountRate = calculateOverviewAicDiscountRate(dailyUsageData, pooledAicCredits)
+  const overviewAicNetAmount = dailyUsageData.reduce((sum, day) => sum + day.aicNetAmount, 0)
+  const costOptimizationOpportunity = calculateCostOptimizationOpportunity({
+    aicNetAmount: overviewAicNetAmount,
+    users: userUsage?.users ?? [],
+  })
 
   return (
     <div className={`app ${hasReport ? 'app--review' : ''}`}>
@@ -354,6 +360,7 @@ function App() {
               <div className="view-content">
                 <UsersView
                   users={userUsage?.users ?? []}
+                  costOptimizationOpportunity={costOptimizationOpportunity}
                   onSelectUser={(username) => {
                     setSelectedUsername(username)
                     setActiveView('userDetails')
