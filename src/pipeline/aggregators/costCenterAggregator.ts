@@ -1,5 +1,6 @@
 import type { Aggregator } from './base'
 import { getUsageMetrics, type TokenUsageHeader, type TokenUsageRecord } from '../parser'
+import { pickTopEntries } from './topBreakdown'
 
 export type CostTotals = {
   requests: number
@@ -32,8 +33,6 @@ export type CostCenterUsage = {
 export type CostCenterResult = {
   costCenters: CostCenterUsage[]
 }
-
-const MAX_TOP_BREAKDOWN_ENTRIES = 20
 
 type CostCenterInternal = {
   costCenterName: string
@@ -69,22 +68,6 @@ function ensureUserTotals(map: Map<string, CostCenterUserTotals>, key: string): 
   const created: CostCenterUserTotals = { requests: 0, grossAmount: 0, netAmount: 0, aicQuantity: 0, aicGrossAmount: 0, aicNetAmount: 0 }
   map.set(key, created)
   return created
-}
-
-function compareByAicQuantity<T extends { aicQuantity: number }>([leftLabel, leftTotals]: [string, T], [rightLabel, rightTotals]: [string, T]): number {
-  if (rightTotals.aicQuantity !== leftTotals.aicQuantity) {
-    return rightTotals.aicQuantity - leftTotals.aicQuantity
-  }
-
-  return leftLabel.localeCompare(rightLabel)
-}
-
-function pickTopEntries<T extends { aicQuantity: number }>(entries: Iterable<[string, T]>): Record<string, T> {
-  return Object.fromEntries(
-    Array.from(entries)
-      .sort(compareByAicQuantity)
-      .slice(0, MAX_TOP_BREAKDOWN_ENTRIES),
-  )
 }
 
 export class CostCenterAggregator implements Aggregator<TokenUsageRecord, CostCenterResult, TokenUsageHeader> {

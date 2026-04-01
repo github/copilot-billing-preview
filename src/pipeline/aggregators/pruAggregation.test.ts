@@ -326,4 +326,134 @@ describe('PRU gross/net/discount aggregation', () => {
     expect(cats!.totalsByUser['user-04']).toBeUndefined()
     expect(cats!.totals.aicQuantity).toBe(325)
   })
+
+  it('keeps only the top 20 model and user breakdowns per organization ranked by AIC quantity with alphabetical tie-breaks', () => {
+    const aggregator = new OrganizationAggregator()
+    const tiedEntries = [
+      { username: 'user-beta', model: 'Model Beta', aicQuantity: 100 },
+      { username: 'user-alpha', model: 'Model Alpha', aicQuantity: 100 },
+    ]
+
+    tiedEntries.forEach(({ username, model, aicQuantity }) => {
+      aggregator.accumulate(createRecord({
+        username,
+        model,
+        organization: 'octo',
+        quantity: 0,
+        gross_amount: 0,
+        discount_amount: 0,
+        net_amount: 0,
+        unit_type: 'ai-units',
+        sku: 'copilot_ai_unit',
+        aic_quantity: aicQuantity,
+        aic_gross_amount: aicQuantity,
+        aic_net_amount: aicQuantity,
+      }))
+    })
+
+    for (let i = 0; i < 20; i += 1) {
+      const suffix = i.toString().padStart(2, '0')
+      const aicQuantity = 80 - i
+
+      aggregator.accumulate(createRecord({
+        username: `user-${suffix}`,
+        model: `Model ${suffix}`,
+        organization: 'octo',
+        quantity: 0,
+        gross_amount: 0,
+        discount_amount: 0,
+        net_amount: 0,
+        unit_type: 'ai-units',
+        sku: 'copilot_ai_unit',
+        aic_quantity: aicQuantity,
+        aic_gross_amount: aicQuantity,
+        aic_net_amount: aicQuantity,
+      }))
+    }
+
+    aggregator.accumulate(createRecord({
+      username: 'user-20',
+      model: 'Model 20',
+      organization: 'octo',
+      quantity: 0,
+      gross_amount: 0,
+      discount_amount: 0,
+      net_amount: 0,
+      unit_type: 'ai-units',
+      sku: 'copilot_ai_unit',
+      aic_quantity: 1,
+      aic_gross_amount: 1,
+      aic_net_amount: 1,
+    }))
+
+    aggregator.accumulate(createRecord({
+      username: 'user-21',
+      model: 'Model 21',
+      organization: 'octo',
+      quantity: 0,
+      gross_amount: 0,
+      discount_amount: 0,
+      net_amount: 0,
+      unit_type: 'ai-units',
+      sku: 'copilot_ai_unit',
+      aic_quantity: 0.5,
+      aic_gross_amount: 0.5,
+      aic_net_amount: 0.5,
+    }))
+
+    const organization = aggregator.result().organizations.find((entry) => entry.organization === 'octo')
+
+    expect(organization).toBeDefined()
+    expect(Object.keys(organization!.totalsByModel)).toHaveLength(20)
+    expect(Object.keys(organization!.totalsByUser)).toHaveLength(20)
+    expect(Object.keys(organization!.totalsByModel)).toEqual([
+      'Model Alpha',
+      'Model Beta',
+      'Model 00',
+      'Model 01',
+      'Model 02',
+      'Model 03',
+      'Model 04',
+      'Model 05',
+      'Model 06',
+      'Model 07',
+      'Model 08',
+      'Model 09',
+      'Model 10',
+      'Model 11',
+      'Model 12',
+      'Model 13',
+      'Model 14',
+      'Model 15',
+      'Model 16',
+      'Model 17',
+    ])
+    expect(Object.keys(organization!.totalsByUser)).toEqual([
+      'user-alpha',
+      'user-beta',
+      'user-00',
+      'user-01',
+      'user-02',
+      'user-03',
+      'user-04',
+      'user-05',
+      'user-06',
+      'user-07',
+      'user-08',
+      'user-09',
+      'user-10',
+      'user-11',
+      'user-12',
+      'user-13',
+      'user-14',
+      'user-15',
+      'user-16',
+      'user-17',
+    ])
+    expect(organization!.totalsByModel['Model 18']).toBeUndefined()
+    expect(organization!.totalsByModel['Model 20']).toBeUndefined()
+    expect(organization!.totalsByUser['user-18']).toBeUndefined()
+    expect(organization!.totalsByUser['user-20']).toBeUndefined()
+    expect(organization!.totals.aicQuantity).toBeCloseTo(1611.5)
+  })
 })

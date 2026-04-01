@@ -22,7 +22,7 @@ export interface UsersViewProps {
 
 export function UsersView({ users, onSelectUser }: UsersViewProps) {
   const [query, setQuery] = useState('')
-  const [page, setPage] = useState(0)
+  const [pageAnchor, setPageAnchor] = useState<string | null>(null)
 
   const licenseSummary = useMemo(() => calculateLicenseSummary(users), [users])
 
@@ -47,15 +47,20 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
     return indices.map((index) => sortedByAic[index])
   }, [query, sortedByAic, trie])
 
+  const anchoredIndex = pageAnchor
+    ? filteredUsers.findIndex((user) => user.username === pageAnchor)
+    : 0
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE))
-  const safePage = Math.min(page, totalPages - 1)
+  const safePage = anchoredIndex >= 0
+    ? Math.floor(anchoredIndex / PAGE_SIZE)
+    : 0
   const pageStart = safePage * PAGE_SIZE
   const pageEnd = Math.min(pageStart + PAGE_SIZE, filteredUsers.length)
   const pageUsers = filteredUsers.slice(pageStart, pageEnd)
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value)
-    setPage(0)
+    setPageAnchor(null)
   }
 
   return (
@@ -146,7 +151,7 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
         <div className="users-view__pagination">
           <button
             className="users-view__pageBtn"
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            onClick={() => setPageAnchor(filteredUsers[Math.max(0, safePage - 1) * PAGE_SIZE]?.username ?? null)}
             disabled={safePage === 0}
             aria-label="Previous page"
           >
@@ -157,7 +162,7 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
           </span>
           <button
             className="users-view__pageBtn"
-            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            onClick={() => setPageAnchor(filteredUsers[Math.min(totalPages - 1, safePage + 1) * PAGE_SIZE]?.username ?? null)}
             disabled={safePage === totalPages - 1}
             aria-label="Next page"
           >
@@ -168,4 +173,3 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
     </section>
   )
 }
-
