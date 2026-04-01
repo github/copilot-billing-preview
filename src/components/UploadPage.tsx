@@ -33,7 +33,7 @@ export function UploadPage({
         </svg>
         <h1 className="upload-screen__title">Copilot Billing Preview</h1>
         <p className="upload-screen__subtitle">
-          GitHub is moving to <strong>AI Credit based billing</strong> for Copilot. Starting May 2026, usage
+          GitHub is moving to <strong>AI Credits-based billing</strong> for Copilot. Starting May 2026, usage
           will be measured in AI Credits (AICs) instead of Premium Requests (PRUs). This tool helps you
           understand how the change will impact your bill.
         </p>

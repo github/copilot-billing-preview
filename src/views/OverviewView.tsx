@@ -2,7 +2,6 @@ import { DualAxisLineChart } from '../components'
 import type { DailyUsageData } from '../pipeline/aggregators/dailyUsageAggregator'
 import { fillDataForRange } from '../utils/fillDataForRange'
 import { formatAic, formatUsd } from '../utils/format'
-import { calculateOverviewAicDiscountRate } from '../utils/overviewBilling'
 
 type OverviewViewProps = {
   error: string | null
@@ -10,7 +9,6 @@ type OverviewViewProps = {
   dailyUsageData: DailyUsageData[]
   rangeStart: string | null
   rangeEnd: string | null
-  pooledAicCredits: number
 }
 
 function createEmptyDailyUsage(date: string): DailyUsageData {
@@ -32,7 +30,6 @@ export function OverviewView({
   dailyUsageData,
   rangeStart,
   rangeEnd,
-  pooledAicCredits,
 }: OverviewViewProps) {
   const filledDailyUsageData = fillDataForRange(dailyUsageData, rangeStart, rangeEnd, createEmptyDailyUsage)
 
@@ -42,6 +39,7 @@ export function OverviewView({
       totals.aicQuantity += day.aicQuantity
       totals.grossAmount += day.grossAmount
       totals.aicGrossAmount += day.aicGrossAmount
+      totals.aicNetAmount += day.aicNetAmount
       totals.discountAmount += day.discountAmount
       totals.netAmount += day.netAmount
       return totals
@@ -49,9 +47,8 @@ export function OverviewView({
     { requests: 0, aicQuantity: 0, grossAmount: 0, aicGrossAmount: 0, aicNetAmount: 0, discountAmount: 0, netAmount: 0 },
   )
 
-  const aicDiscountRate = calculateOverviewAicDiscountRate(dailyUsageData, pooledAicCredits)
-  const aicDiscount = aicDiscountRate * overviewTotals.aicGrossAmount
-  const aicNetAmount = Math.max(overviewTotals.aicGrossAmount - aicDiscount, 0)
+  const aicNetAmount = overviewTotals.aicNetAmount
+  const aicDiscount = Math.max(overviewTotals.aicGrossAmount - aicNetAmount, 0)
   const periodLabel = rangeStart
     ? new Date(rangeStart + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric' })
     : null
@@ -70,13 +67,13 @@ export function OverviewView({
       {dailyUsageData.length > 0 && (
         <section>
           <div className="context-banner">
-            <h2 className="context-banner__title">GitHub Copilot is moving to AI Credit based billing</h2>
+            <h2 className="context-banner__title">GitHub Copilot is moving to AI Credits-based billing</h2>
             <p className="context-banner__body">
               Starting May 1, 2026, Copilot usage will be measured in AI Credits (AICs) instead of Premium Requests (PRUs). <strong className="aic-callout">1 AIC = $0.01.</strong> This preview shows what your usage would look like under the new pricing.
             </p>
             {fileName && (
               <p className="context-banner__note">
-                Note: This is a preview estimate based on your uploaded report ({fileName}). Actual bills under AI Credit based billing may differ based on model mix and final pricing.
+                Note: This is a preview estimate based on your uploaded report ({fileName}). Actual bills under AI Credits-based billing may differ based on model mix and final pricing.
               </p>
             )}
             <a
@@ -85,7 +82,7 @@ export function OverviewView({
               target="_blank"
               rel="noopener noreferrer"
             >
-              Learn more about AI Credit based billing &rarr;
+              Learn more about AI Credits-based billing &rarr;
             </a>
           </div>
 
@@ -94,16 +91,16 @@ export function OverviewView({
               {savings > 0 ? (
                 <>
                   Your <strong>{periodLabel}</strong> usage would cost{' '}
-                  <strong>{formatUsd(savings)} less</strong> under AI Credit based billing
+                  <strong>{formatUsd(savings)} less</strong> under AI Credits-based billing
                 </>
               ) : savings < 0 ? (
                 <>
                   Your <strong>{periodLabel}</strong> usage would cost{' '}
-                  <strong>{formatUsd(Math.abs(savings))} more</strong> under AI Credit based billing
+                  <strong>{formatUsd(Math.abs(savings))} more</strong> under AI Credits-based billing
                 </>
               ) : (
                 <>
-                  Your <strong>{periodLabel}</strong> usage cost would be the same under AI Credit based billing
+                  Your <strong>{periodLabel}</strong> usage cost would be the same under AI Credits-based billing
                 </>
               )}
             </p>
@@ -131,7 +128,7 @@ export function OverviewView({
               </div>
             </div>
             <div className="card comparison-card">
-              <div className="comparison-card__label">AI Credit based billing (AICs)</div>
+              <div className="comparison-card__label">AI Credits-based billing (AICs)</div>
               <div className="comparison-card__big-number comparison-card__big-number--aic">{formatUsd(aicNetAmount)}</div>
               <div className="comparison-card__period">{formatAic(overviewTotals.aicQuantity)} AICs</div>
               <div className="comparison-card__rate">1 AIC = $0.01</div>
@@ -198,7 +195,7 @@ export function OverviewView({
             <div className="entitlement-banner__body">
               <strong className="entitlement-banner__title">Pooled entitlements are coming</strong>
               <p className="entitlement-banner__text">
-                Under AI Credit based billing, entitlements will be pooled across all licensed users in your organization. No more unused capacity going to waste from idle users.
+                Under AI Credits-based billing, entitlements will be pooled across all licensed users in your organization. No more unused capacity going to waste from idle users.
               </p>
             </div>
             <a
@@ -231,7 +228,7 @@ export function OverviewView({
               </div>
               <div className="next-steps__card">
                 <h3 className="next-steps__card-title">Read the docs</h3>
-                <p className="next-steps__card-body">Learn how AI Credit based billing works and how to plan for the transition.</p>
+                <p className="next-steps__card-body">Learn how AI Credits-based billing works and how to plan for the transition.</p>
                 <a href="https://docs.github.com/billing" className="next-steps__cta" target="_blank" rel="noopener noreferrer">View documentation &rarr;</a>
               </div>
             </div>

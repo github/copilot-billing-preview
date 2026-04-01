@@ -19,7 +19,7 @@ type CostCenterRow = {
 function getTopRows(entries: [string, CostTotals | CostCenterUserTotals][]): CostCenterRow[] {
   return entries
     .map(([label, totals]) => ({ label, totals }))
-    .sort((a, b) => b.totals.netAmount - a.totals.netAmount)
+    .sort((a, b) => Math.max(b.totals.netAmount, b.totals.aicNetAmount) - Math.max(a.totals.netAmount, a.totals.aicNetAmount))
     .slice(0, MAX_DETAIL_ROWS)
 }
 
@@ -98,16 +98,16 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
               {savings > 0 ? (
                 <>
                   <strong>{selectedCostCenterName}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
-                  <strong>{formatUsd(savings)} less</strong> under AI Credit based billing
+                  <strong>{formatUsd(savings)} less</strong> under AI Credits-based billing
                 </>
               ) : savings < 0 ? (
                 <>
                   <strong>{selectedCostCenterName}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
-                  <strong>{formatUsd(Math.abs(savings))} more</strong> under AI Credit based billing
+                  <strong>{formatUsd(Math.abs(savings))} more</strong> under AI Credits-based billing
                 </>
               ) : (
                 <>
-                  <strong>{selectedCostCenterName}</strong>'s <strong>{periodLabel}</strong> usage cost would be the same under AI Credit based billing
+                  <strong>{selectedCostCenterName}</strong>'s <strong>{periodLabel}</strong> usage cost would be the same under AI Credits-based billing
                 </>
               )}
             </p>
@@ -135,7 +135,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
               </div>
             </div>
             <div className="card comparison-card">
-              <div className="comparison-card__label">AI Credit based billing (AICs)</div>
+              <div className="comparison-card__label">AI Credits-based billing (AICs)</div>
               <div className="comparison-card__big-number comparison-card__big-number--aic">{formatUsd(totals.aicNetAmount)}</div>
               <div className="comparison-card__period">{formatAic(totals.aicQuantity)} AICs</div>
               <div className="comparison-card__rate">1 AIC = $0.01</div>
@@ -162,7 +162,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
         <div className="entitlement-banner__body">
           <strong className="entitlement-banner__title">Pooled entitlements are coming</strong>
           <p className="entitlement-banner__text">
-            Under AI Credit based billing, entitlements will be pooled across all licensed users in your organization. No more unused capacity going to waste from idle users.
+            Under AI Credits-based billing, entitlements will be pooled across all licensed users in your organization. No more unused capacity going to waste from idle users.
           </p>
         </div>
         <a

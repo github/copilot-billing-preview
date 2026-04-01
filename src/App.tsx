@@ -338,7 +338,6 @@ function App() {
                 dailyUsageData={dailyUsageData}
                 rangeStart={rangeStart}
                 rangeEnd={rangeEnd}
-                pooledAicCredits={pooledAicCredits}
               />
             ) : activeView === 'models' ? (
               modelUsage && modelUsage.models.length > 0 ? (
