@@ -64,9 +64,9 @@ describe('derived AIC discount aggregation', () => {
     const organization = result.organizations.organizations[0]
 
     expect(organization.organization).toBe('octo')
-    expect(organization.aicGrossAmount).toBeCloseTo(1.5)
-    expect(organization.aicNetAmount).toBeCloseTo(0.6)
-    expect(organization.aicDiscountAmount).toBeCloseTo(0.9)
+    expect(organization.totals.aicGrossAmount).toBeCloseTo(1.5)
+    expect(organization.totals.aicNetAmount).toBeCloseTo(0.6)
+    expect(calculateAicDiscountAmount(organization.totals.aicGrossAmount, organization.totals.aicNetAmount)).toBeCloseTo(0.9)
   })
 
   it('derives cost-center AIC discount from totals gross minus net', () => {
@@ -87,8 +87,8 @@ describe('derived AIC discount aggregation', () => {
     const dailyNet = sum(result.daily.dailyData.map((day) => day.aicNetAmount))
     const userGross = sum(result.users.users.map((user) => user.totals.aicGrossAmount))
     const userNet = sum(result.users.users.map((user) => user.totals.aicNetAmount))
-    const organizationGross = sum(result.organizations.organizations.map((organization) => organization.aicGrossAmount))
-    const organizationNet = sum(result.organizations.organizations.map((organization) => organization.aicNetAmount))
+    const organizationGross = sum(result.organizations.organizations.map((organization) => organization.totals.aicGrossAmount))
+    const organizationNet = sum(result.organizations.organizations.map((organization) => organization.totals.aicNetAmount))
     const costCenterGross = sum(result.costCenters.costCenters.map((costCenter) => costCenter.totals.aicGrossAmount))
     const costCenterNet = sum(result.costCenters.costCenters.map((costCenter) => costCenter.totals.aicNetAmount))
     const modelGross = sum(Object.values(result.models.totalsByModel).map((model) => model.aicGrossAmount))
@@ -122,6 +122,6 @@ describe('derived AIC discount aggregation', () => {
     ])
     const organization = result.organizations.organizations[0]
 
-    expect(calculateSavingsDifference(organization.netAmount, organization.aicNetAmount)).toBeCloseTo(2.75)
+    expect(calculateSavingsDifference(organization.totals.netAmount, organization.totals.aicNetAmount)).toBeCloseTo(2.75)
   })
 })

@@ -270,15 +270,14 @@
 .orgs-view {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
 }
 
-.orgs-view__toolbar {
+.orgs-view__header {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 .orgs-view__title {
@@ -289,16 +288,101 @@
 
 .orgs-view__heading {
   margin: 0;
-  font-size: 18px;
+  font-size: 24px;
+  font-weight: 700;
   color: #1f2328;
 }
 
 .orgs-view__count {
+  font-size: 14px;
+  font-weight: 500;
+  color: #636c76;
+}
+
+.orgs-view__select {
+  border: 1px solid #d1d9e0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  max-width: 500px;
+  color: #1f2328;
+  background: #ffffff;
+}
+
+.orgs-view__select:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+.orgs-view__tables {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.orgs-view__tableControls {
+  display: flex;
+  gap: 0;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #d1d9e0;
+}
+
+.orgs-view__tableButton {
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  border-radius: 0;
+  background: transparent;
+  color: #636c76;
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: color 0.1s ease, border-color 0.1s ease;
+}
+
+.orgs-view__tableButton:hover {
+  color: #1f2328;
+  background: transparent;
+}
+
+.orgs-view__tableButton:focus-visible {
+  outline: 2px solid #0969da;
+  outline-offset: -2px;
+  border-radius: 3px;
+}
+
+.orgs-view__tableButton--active {
+  color: #1f2328;
+  font-weight: 600;
+  border-bottom-color: #fd8c73;
+  background: transparent;
+}
+
+.orgs-view__tableWrap {
+  overflow: hidden;
+}
+
+.orgs-view__tableTitle {
+  padding: 12px 16px;
+  border-bottom: 1px solid #d1d9e0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #636c76;
+  background: #f6f8fa;
+}
+
+.orgs-view__tableHint {
+  padding: 12px 16px 0;
   font-size: 13px;
   color: #636c76;
 }
 
-.orgs-view__table th.orgs-view__num {
+.orgs-view__table th.orgs-view__num,
+td.orgs-view__num {
   text-align: right;
 }
 
@@ -322,16 +406,12 @@
   font-weight: 600;
 }
 
-.orgs-view__diff--neutral {
-  color: #8b949e;
-  font-weight: 600;
-}
-
 .orgs-view__empty {
   background: #ffffff;
   border: 1px solid #d1d9e0;
   border-radius: 6px;
-  padding: 16px;
+  padding: 24px;
+  text-align: center;
   color: #636c76;
 }
 

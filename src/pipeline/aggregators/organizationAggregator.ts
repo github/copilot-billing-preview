@@ -1,35 +1,80 @@
 import type { Aggregator } from './base'
 import { getUsageMetrics, type TokenUsageHeader, type TokenUsageRecord } from '../parser'
 
-export type OrganizationUsage = {
-  organization: string
-  userCount: number
+export type OrgTotals = {
   requests: number
-  modelCount: number
   grossAmount: number
   discountAmount: number
   netAmount: number
   aicQuantity: number
   aicGrossAmount: number
-  aicDiscountAmount: number
   aicNetAmount: number
+}
+
+export type OrgUserTotals = {
+  requests: number
+  grossAmount: number
+  netAmount: number
+  aicQuantity: number
+  aicGrossAmount: number
+  aicNetAmount: number
+}
+
+export type OrganizationUsage = {
+  organization: string
+  userCount: number
+  totals: OrgTotals
+  totalsByModel: Record<string, OrgTotals>
+  totalsByUser: Record<string, OrgUserTotals>
 }
 
 export type OrganizationResult = {
   organizations: OrganizationUsage[]
 }
 
+const MAX_TOP_BREAKDOWN_ENTRIES = 20
+
 type OrgInternal = {
   organization: string
   users: Set<string>
-  models: Set<string>
-  requests: number
-  grossAmount: number
-  discountAmount: number
-  netAmount: number
-  aicQuantity: number
-  aicGrossAmount: number
-  aicNetAmount: number
+  totals: OrgTotals
+  totalsByModel: Map<string, OrgTotals>
+  totalsByUser: Map<string, OrgUserTotals>
+}
+
+function createOrgTotals(): OrgTotals {
+  return { requests: 0, grossAmount: 0, discountAmount: 0, netAmount: 0, aicQuantity: 0, aicGrossAmount: 0, aicNetAmount: 0 }
+}
+
+function ensureOrgTotals(map: Map<string, OrgTotals>, key: string): OrgTotals {
+  const existing = map.get(key)
+  if (existing) return existing
+  const created = createOrgTotals()
+  map.set(key, created)
+  return created
+}
+
+function ensureUserTotals(map: Map<string, OrgUserTotals>, key: string): OrgUserTotals {
+  const existing = map.get(key)
+  if (existing) return existing
+  const created: OrgUserTotals = { requests: 0, grossAmount: 0, netAmount: 0, aicQuantity: 0, aicGrossAmount: 0, aicNetAmount: 0 }
+  map.set(key, created)
+  return created
+}
+
+function compareByAicQuantity<T extends { aicQuantity: number }>([leftLabel, leftTotals]: [string, T], [rightLabel, rightTotals]: [string, T]): number {
+  if (rightTotals.aicQuantity !== leftTotals.aicQuantity) {
+    return rightTotals.aicQuantity - leftTotals.aicQuantity
+  }
+  return leftLabel.localeCompare(rightLabel)
+}
+
+function pickTopEntries<T extends { aicQuantity: number }>(entries: Iterable<[string, T]>): Record<string, T> {
+  return Object.fromEntries(
+    Array.from(entries)
+      .sort(compareByAicQuantity)
+      .slice(0, MAX_TOP_BREAKDOWN_ENTRIES),
+  )
 }
 
 export class OrganizationAggregator implements Aggregator<TokenUsageRecord, OrganizationResult, TokenUsageHeader> {
@@ -51,30 +96,43 @@ export class OrganizationAggregator implements Aggregator<TokenUsageRecord, Orga
       org = {
         organization,
         users: new Set(),
-        models: new Set(),
-        requests: 0,
-        grossAmount: 0,
-        discountAmount: 0,
-        netAmount: 0,
-        aicQuantity: 0,
-        aicGrossAmount: 0,
-        aicNetAmount: 0,
+        totals: createOrgTotals(),
+        totalsByModel: new Map(),
+        totalsByUser: new Map(),
       }
       this.byOrg.set(organization, org)
     }
 
     if (username) org.users.add(username)
-    org.models.add(model)
 
     const { requests, grossAmount, discountAmount, netAmount, aicQuantity, aicGrossAmount, aicNetAmount } = getUsageMetrics(record)
 
-    org.requests += requests
-    org.grossAmount += grossAmount
-    org.discountAmount += discountAmount
-    org.netAmount += netAmount
-    org.aicQuantity += aicQuantity
-    org.aicGrossAmount += aicGrossAmount
-    org.aicNetAmount += aicNetAmount
+    org.totals.requests += requests
+    org.totals.grossAmount += grossAmount
+    org.totals.discountAmount += discountAmount
+    org.totals.netAmount += netAmount
+    org.totals.aicQuantity += aicQuantity
+    org.totals.aicGrossAmount += aicGrossAmount
+    org.totals.aicNetAmount += aicNetAmount
+
+    const byModel = ensureOrgTotals(org.totalsByModel, model)
+    byModel.requests += requests
+    byModel.grossAmount += grossAmount
+    byModel.discountAmount += discountAmount
+    byModel.netAmount += netAmount
+    byModel.aicQuantity += aicQuantity
+    byModel.aicGrossAmount += aicGrossAmount
+    byModel.aicNetAmount += aicNetAmount
+
+    if (username) {
+      const byUser = ensureUserTotals(org.totalsByUser, username)
+      byUser.requests += requests
+      byUser.grossAmount += grossAmount
+      byUser.netAmount += netAmount
+      byUser.aicQuantity += aicQuantity
+      byUser.aicGrossAmount += aicGrossAmount
+      byUser.aicNetAmount += aicNetAmount
+    }
   }
 
   result(): OrganizationResult {
@@ -82,15 +140,9 @@ export class OrganizationAggregator implements Aggregator<TokenUsageRecord, Orga
       .map<OrganizationUsage>((org) => ({
         organization: org.organization,
         userCount: org.users.size,
-        requests: org.requests,
-        modelCount: org.models.size,
-        grossAmount: org.grossAmount,
-        discountAmount: org.discountAmount,
-        netAmount: org.netAmount,
-        aicQuantity: org.aicQuantity,
-        aicGrossAmount: org.aicGrossAmount,
-        aicDiscountAmount: org.aicGrossAmount - org.aicNetAmount,
-        aicNetAmount: org.aicNetAmount,
+        totals: org.totals,
+        totalsByModel: pickTopEntries(org.totalsByModel.entries()),
+        totalsByUser: pickTopEntries(org.totalsByUser.entries()),
       }))
       .sort((a, b) => a.organization.localeCompare(b.organization))
 

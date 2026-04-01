@@ -19,8 +19,13 @@ type CostCenterRow = {
 function getTopRows(entries: [string, CostTotals | CostCenterUserTotals][]): CostCenterRow[] {
   return entries
     .map(([label, totals]) => ({ label, totals }))
-    .sort((a, b) => Math.max(b.totals.netAmount, b.totals.aicNetAmount) - Math.max(a.totals.netAmount, a.totals.aicNetAmount))
-    .slice(0, MAX_DETAIL_ROWS)
+    .sort((a, b) => {
+      if (b.totals.aicQuantity !== a.totals.aicQuantity) {
+        return b.totals.aicQuantity - a.totals.aicQuantity
+      }
+
+      return a.label.localeCompare(b.label)
+    })
 }
 
 export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; rangeStart?: string | null }) {
@@ -200,7 +205,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
             {activeTable === 'users' ? `Per user (top ${MAX_DETAIL_ROWS})` : `Per model (top ${MAX_DETAIL_ROWS})`}
           </div>
           <div className="cost-centers-view__tableHint">
-            Showing the highest-cost {activeTable === 'users' ? 'users' : 'models'} for <strong>{selectedCostCenterName}</strong>.
+            Showing the top {MAX_DETAIL_ROWS} {activeTable === 'users' ? 'users' : 'models'} by AI Credits consumed for <strong>{selectedCostCenterName}</strong>.
           </div>
           <table className="cost-centers-view__table data-table" key={`${selectedCostCenterName}-${activeTable}`}>
             <thead>
