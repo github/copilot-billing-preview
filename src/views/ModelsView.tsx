@@ -97,11 +97,11 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
             {periodLabel && (
               <p className="comparison-framing">
                 {savings > 0 ? (
-                  <><strong>{selectedModel}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}<strong>{formatUsd(savings)} less</strong> under token-based pricing</>
+                  <><strong>{selectedModel}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}<strong>{formatUsd(savings)} less</strong> under AI Credits-based billing</>
                 ) : savings < 0 ? (
-                  <><strong>{selectedModel}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}<strong>{formatUsd(Math.abs(savings))} more</strong> under token-based pricing</>
+                  <><strong>{selectedModel}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}<strong>{formatUsd(Math.abs(savings))} more</strong> under AI Credits-based billing</>
                 ) : (
-                  <><strong>{selectedModel}</strong>'s <strong>{periodLabel}</strong> usage cost would be the same under token-based pricing</>
+                  <><strong>{selectedModel}</strong>'s <strong>{periodLabel}</strong> usage cost would be the same under AI Credits-based billing</>
                 )}
               </p>
             )}
@@ -128,7 +128,7 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
                 </div>
               </div>
               <div className="card comparison-card">
-                <div className="comparison-card__label">Token-based billing (AICs)</div>
+                <div className="comparison-card__label">AI Credits-based billing (AICs)</div>
                 <div className="comparison-card__big-number comparison-card__big-number--aic">{formatUsd(selectedModelAicNetAmount)}</div>
                 <div className="comparison-card__period">{formatAic(selectedModelTotals.aicQuantity)} AICs</div>
                 <div className="comparison-card__rate">1 AIC = $0.01</div>

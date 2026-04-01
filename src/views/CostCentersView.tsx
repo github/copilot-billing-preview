@@ -1,28 +1,65 @@
-import { useMemo, useState } from 'react'
-import type { CostCenterResult } from '../pipeline/aggregators/costCenterAggregator'
+import { useCallback, useMemo, useState } from 'react'
+import type { ChangeEvent } from 'react'
+import type { CostCenterResult, CostCenterUserTotals, CostTotals } from '../pipeline/aggregators/costCenterAggregator'
 import { calculateAicDiscountAmount, calculateSavingsDifference } from '../utils/billingComparison'
 import { formatAic, formatDifference, formatUsd } from '../utils/format'
 
+const MAX_DETAIL_ROWS = 20
+
+type CostCenterRow = {
+  label: string
+  totals: {
+    requests: number
+    netAmount: number
+    aicQuantity: number
+    aicNetAmount: number
+  }
+}
+
+function getTopRows(entries: [string, CostTotals | CostCenterUserTotals][]): CostCenterRow[] {
+  return entries
+    .map(([label, totals]) => ({ label, totals }))
+    .sort((a, b) => Math.max(b.totals.netAmount, b.totals.aicNetAmount) - Math.max(a.totals.netAmount, a.totals.aicNetAmount))
+    .slice(0, MAX_DETAIL_ROWS)
+}
+
 export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; rangeStart?: string | null }) {
   const [selected, setSelected] = useState<string>(data.costCenters[0]?.costCenterName ?? '')
+  const [activeTable, setActiveTable] = useState<'users' | 'models'>('users')
 
-  const selectedCostCenter = useMemo(() => {
-    return data.costCenters.find((costCenter) => costCenter.costCenterName === selected) ?? null
-  }, [data.costCenters, selected])
+  const handleSelectChange = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
+    setSelected(event.target.value)
+  }, [])
 
-  const modelRows = useMemo(() => {
-    if (!selectedCostCenter) return []
-    return Object.entries(selectedCostCenter.totalsByModel)
-      .map(([model, totals]) => ({ model, totals }))
-      .sort((a, b) => b.totals.netAmount - a.totals.netAmount)
-  }, [selectedCostCenter])
+  const costCenterDetails = useMemo(() => {
+    return new Map(
+      data.costCenters.map((costCenter) => [
+        costCenter.costCenterName,
+        {
+          costCenter,
+          modelRows: getTopRows(Object.entries(costCenter.totalsByModel)),
+          userRows: getTopRows(Object.entries(costCenter.totalsByUser)),
+        },
+      ]),
+    )
+  }, [data.costCenters])
 
-  const userRows = useMemo(() => {
-    if (!selectedCostCenter) return []
-    return Object.entries(selectedCostCenter.totalsByUser)
-      .map(([username, totals]) => ({ username, totals }))
-      .sort((a, b) => b.totals.netAmount - a.totals.netAmount)
-  }, [selectedCostCenter])
+  const selectedCostCenterName = costCenterDetails.has(selected)
+    ? selected
+    : data.costCenters[0]?.costCenterName ?? ''
+
+  const selectedDetails = costCenterDetails.get(selectedCostCenterName) ?? null
+  const selectedCostCenter = selectedDetails?.costCenter ?? null
+  const modelRows = selectedDetails?.modelRows ?? []
+  const userRows = selectedDetails?.userRows ?? []
+
+  const selectOptions = useMemo(() => {
+    return data.costCenters.map((costCenter) => (
+      <option key={costCenter.costCenterName} value={costCenter.costCenterName}>
+        {costCenter.costCenterName}
+      </option>
+    ))
+  }, [data.costCenters])
 
   const periodLabel = rangeStart
     ? new Date(rangeStart + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric' })
@@ -49,12 +86,8 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
           <h2 className="cost-centers-view__heading">Cost Centers</h2>
           <span className="cost-centers-view__count">{data.costCenters.length.toLocaleString()} total</span>
         </div>
-        <select className="cost-centers-view__select" value={selected} onChange={(event) => setSelected(event.target.value)}>
-          {data.costCenters.map((costCenter) => (
-            <option key={costCenter.costCenterName} value={costCenter.costCenterName}>
-              {costCenter.costCenterName}
-            </option>
-          ))}
+        <select className="cost-centers-view__select" value={selectedCostCenterName} onChange={handleSelectChange}>
+          {selectOptions}
         </select>
       </div>
 
@@ -64,17 +97,17 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
             <p className="comparison-framing">
               {savings > 0 ? (
                 <>
-                  <strong>{selected}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
-                  <strong>{formatUsd(savings)} less</strong> under token-based pricing
+                  <strong>{selectedCostCenterName}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
+                  <strong>{formatUsd(savings)} less</strong> under AI Credits-based billing
                 </>
               ) : savings < 0 ? (
                 <>
-                  <strong>{selected}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
-                  <strong>{formatUsd(Math.abs(savings))} more</strong> under token-based pricing
+                  <strong>{selectedCostCenterName}</strong>'s <strong>{periodLabel}</strong> usage would cost{' '}
+                  <strong>{formatUsd(Math.abs(savings))} more</strong> under AI Credits-based billing
                 </>
               ) : (
                 <>
-                  <strong>{selected}</strong>'s <strong>{periodLabel}</strong> usage cost would be the same under token-based pricing
+                  <strong>{selectedCostCenterName}</strong>'s <strong>{periodLabel}</strong> usage cost would be the same under AI Credits-based billing
                 </>
               )}
             </p>
@@ -102,7 +135,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
               </div>
             </div>
             <div className="card comparison-card">
-              <div className="comparison-card__label">Token-based billing (AICs)</div>
+              <div className="comparison-card__label">AI Credits-based billing (AICs)</div>
               <div className="comparison-card__big-number comparison-card__big-number--aic">{formatUsd(totals.aicNetAmount)}</div>
               <div className="comparison-card__period">{formatAic(totals.aicQuantity)} AICs</div>
               <div className="comparison-card__rate">1 AIC = $0.01</div>
@@ -129,7 +162,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
         <div className="entitlement-banner__body">
           <strong className="entitlement-banner__title">Pooled entitlements are coming</strong>
           <p className="entitlement-banner__text">
-            Under token-based billing, entitlements will be pooled across all licensed users in your organization. No more unused capacity going to waste from idle users.
+            Under AI Credits-based billing, entitlements will be pooled across all licensed users in your organization. No more unused capacity going to waste from idle users.
           </p>
         </div>
         <a
@@ -143,45 +176,36 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
       </div>
 
       <div className="cost-centers-view__tables">
-          <div className="cost-centers-view__tableWrap data-table-wrap">
-          <div className="cost-centers-view__tableTitle">Per model</div>
-          <table className="cost-centers-view__table data-table">
-            <thead>
-              <tr>
-                <th>Model</th>
-                <th className="cost-centers-view__num">PRUs</th>
-                <th className="cost-centers-view__num">PRU Cost</th>
-                <th className="cost-centers-view__num">AICs</th>
-                <th className="cost-centers-view__num">AIC Cost</th>
-                <th className="cost-centers-view__num">Difference</th>
-              </tr>
-            </thead>
-            <tbody>
-              {modelRows.map((row) => {
-                const diff = calculateSavingsDifference(row.totals.netAmount, row.totals.aicNetAmount)
-                return (
-                  <tr key={row.model}>
-                    <td className="cost-centers-view__name">{row.model}</td>
-                    <td className="cost-centers-view__num">{row.totals.requests.toLocaleString()}</td>
-                    <td className="cost-centers-view__num">{formatUsd(row.totals.netAmount)}</td>
-                    <td className="cost-centers-view__num">{formatAic(row.totals.aicQuantity)}</td>
-                    <td className="cost-centers-view__num">{formatUsd(row.totals.aicNetAmount)}</td>
-                    <td className={`cost-centers-view__num cost-centers-view__diff${diff > 0 ? '--positive' : diff < 0 ? '--negative' : ''}`}>
-                      {formatDifference(diff)}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+        <div className="cost-centers-view__tableControls" aria-label="Cost center detail tables">
+          <button
+            type="button"
+            className={`cost-centers-view__tableButton ${activeTable === 'users' ? 'cost-centers-view__tableButton--active' : ''}`}
+            onClick={() => setActiveTable('users')}
+            aria-pressed={activeTable === 'users'}
+          >
+            Top {MAX_DETAIL_ROWS} users
+          </button>
+          <button
+            type="button"
+            className={`cost-centers-view__tableButton ${activeTable === 'models' ? 'cost-centers-view__tableButton--active' : ''}`}
+            onClick={() => setActiveTable('models')}
+            aria-pressed={activeTable === 'models'}
+          >
+            Top {MAX_DETAIL_ROWS} models
+          </button>
         </div>
 
-          <div className="cost-centers-view__tableWrap data-table-wrap">
-          <div className="cost-centers-view__tableTitle">Per user</div>
-          <table className="cost-centers-view__table data-table">
+        <div className="cost-centers-view__tableWrap data-table-wrap">
+          <div className="cost-centers-view__tableTitle">
+            {activeTable === 'users' ? `Per user (top ${MAX_DETAIL_ROWS})` : `Per model (top ${MAX_DETAIL_ROWS})`}
+          </div>
+          <div className="cost-centers-view__tableHint">
+            Showing the highest-cost {activeTable === 'users' ? 'users' : 'models'} for <strong>{selectedCostCenterName}</strong>.
+          </div>
+          <table className="cost-centers-view__table data-table" key={`${selectedCostCenterName}-${activeTable}`}>
             <thead>
               <tr>
-                <th>User</th>
+                <th>{activeTable === 'users' ? 'User' : 'Model'}</th>
                 <th className="cost-centers-view__num">PRUs</th>
                 <th className="cost-centers-view__num">PRU Cost</th>
                 <th className="cost-centers-view__num">AICs</th>
@@ -190,11 +214,11 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
               </tr>
             </thead>
             <tbody>
-              {userRows.map((row) => {
+              {(activeTable === 'users' ? userRows : modelRows).map((row) => {
                 const diff = calculateSavingsDifference(row.totals.netAmount, row.totals.aicNetAmount)
                 return (
-                  <tr key={row.username}>
-                    <td className="cost-centers-view__name">{row.username}</td>
+                  <tr key={row.label}>
+                    <td className="cost-centers-view__name">{row.label}</td>
                     <td className="cost-centers-view__num">{row.totals.requests.toLocaleString()}</td>
                     <td className="cost-centers-view__num">{formatUsd(row.totals.netAmount)}</td>
                     <td className="cost-centers-view__num">{formatAic(row.totals.aicQuantity)}</td>

@@ -3,7 +3,7 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
     question:
       'Why do I see two rows with one Premium Request to the same model that cost different amounts of AI Credits?',
     answer:
-      'Not every request is the same. Saying "Hi" or "Thank you" to Claude Opus 4.6 costs 3 PRUs but consumes very few tokens (AI Credits) — that\'s a waste. At the same time, a complex and detailed plan implementation can run for a long time and consume a lot of AI Credits. Token-based billing reflects the actual work done, so short trivial exchanges become cheaper while long, intensive tasks are billed by what they truly consume.',
+      'Not every request is the same. Saying "Hi" or "Thank you" to Claude Opus 4.6 costs 3 PRUs but consumes very few tokens (AI Credits) — that\'s a waste. At the same time, a complex and detailed plan implementation can run for a long time and consume a lot of AI Credits. AI Credits-based billing reflects the actual work done, so short trivial exchanges become cheaper while long, intensive tasks are billed by what they truly consume.',
   },
 ]
 
