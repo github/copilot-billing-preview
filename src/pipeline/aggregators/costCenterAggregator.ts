@@ -1,5 +1,6 @@
 import type { Aggregator } from './base'
 import { getUsageMetrics, type TokenUsageHeader, type TokenUsageRecord } from '../parser'
+import { pickTopEntries } from './topBreakdown'
 
 export type CostTotals = {
   requests: number
@@ -130,16 +131,6 @@ export class CostCenterAggregator implements Aggregator<TokenUsageRecord, CostCe
   result(): CostCenterResult {
     const costCenters = Array.from(this.byCostCenter.values())
       .map<CostCenterUsage>((costCenter) => {
-        const totalsByModel: Record<string, CostTotals> = {}
-        for (const [model, totals] of costCenter.totalsByModel.entries()) {
-          totalsByModel[model] = totals
-        }
-
-        const totalsByUser: Record<string, CostCenterUserTotals> = {}
-        for (const [user, totals] of costCenter.totalsByUser.entries()) {
-          totalsByUser[user] = totals
-        }
-
         const userCount = costCenter.users.size
         const netCostPerUser = userCount > 0 ? costCenter.totals.netAmount / userCount : 0
 
@@ -148,8 +139,8 @@ export class CostCenterAggregator implements Aggregator<TokenUsageRecord, CostCe
           userCount,
           netCostPerUser,
           totals: costCenter.totals,
-          totalsByModel,
-          totalsByUser,
+          totalsByModel: pickTopEntries(costCenter.totalsByModel.entries()),
+          totalsByUser: pickTopEntries(costCenter.totalsByUser.entries()),
         }
       })
       .sort((a, b) => a.costCenterName.localeCompare(b.costCenterName))

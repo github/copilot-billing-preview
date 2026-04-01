@@ -387,7 +387,7 @@ function App() {
               </div>
             ) : (
               <div className="view-content">
-                <OrganizationsView data={orgs ?? { organizations: [] }} />
+                <OrganizationsView data={orgs ?? { organizations: [] }} rangeStart={rangeStart} />
               </div>
             )}
           </main>

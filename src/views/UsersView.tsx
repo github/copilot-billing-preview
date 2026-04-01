@@ -5,6 +5,8 @@ import { calculateLicenseSummary } from '../pipeline/aicEntitlements'
 import { formatAic } from '../utils/format'
 import { Trie } from '../utils/trie'
 
+const PAGE_SIZE = 50
+
 function formatInt(n: number): string {
   return n.toLocaleString()
 }
@@ -20,36 +22,52 @@ export interface UsersViewProps {
 
 export function UsersView({ users, onSelectUser }: UsersViewProps) {
   const [query, setQuery] = useState('')
+  const [pageAnchor, setPageAnchor] = useState<string | null>(null)
 
   const licenseSummary = useMemo(() => calculateLicenseSummary(users), [users])
 
-  const sortedUsers = useMemo(() => {
-    return [...users].sort((a, b) => a.username.localeCompare(b.username))
+  const sortedByAic = useMemo(() => {
+    return [...users].sort((a, b) => {
+      if (b.totals.aicQuantity !== a.totals.aicQuantity) return b.totals.aicQuantity - a.totals.aicQuantity
+      return a.username.localeCompare(b.username)
+    })
   }, [users])
 
   const trie = useMemo(() => {
     const nextTrie = new Trie()
-    sortedUsers.forEach((user, index) => nextTrie.insert(user.username.toLowerCase(), index))
+    sortedByAic.forEach((user, index) => nextTrie.insert(user.username.toLowerCase(), index))
     return nextTrie
-  }, [sortedUsers])
+  }, [sortedByAic])
 
   const filteredUsers = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
-    if (!normalizedQuery) return sortedUsers
+    if (!normalizedQuery) return sortedByAic
 
     const indices = trie.searchPrefix(normalizedQuery)
-    return indices.map((index) => sortedUsers[index])
-  }, [query, sortedUsers, trie])
+    return indices.map((index) => sortedByAic[index])
+  }, [query, sortedByAic, trie])
+
+  const anchoredIndex = pageAnchor
+    ? filteredUsers.findIndex((user) => user.username === pageAnchor)
+    : 0
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE))
+  const safePage = anchoredIndex >= 0
+    ? Math.floor(anchoredIndex / PAGE_SIZE)
+    : 0
+  const pageStart = safePage * PAGE_SIZE
+  const pageEnd = Math.min(pageStart + PAGE_SIZE, filteredUsers.length)
+  const pageUsers = filteredUsers.slice(pageStart, pageEnd)
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value)
+    setPageAnchor(null)
   }
 
   return (
     <section className="users-view">
       <div className="users-view__title">
         <h2 className="users-view__heading">Users</h2>
-        <span className="users-view__count">{filteredUsers.length.toLocaleString()} shown</span>
+        <span className="users-view__count">{filteredUsers.length.toLocaleString()} total</span>
       </div>
       <div className="users-view__summaryWrap data-table-wrap">
         <table className="users-view__summaryTable data-table">
@@ -98,7 +116,7 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.map((user) => (
+            {pageUsers.map((user) => (
               <tr
                 key={user.username}
                 className={onSelectUser ? 'users-view__row users-view__row--clickable' : 'users-view__row'}
@@ -128,6 +146,30 @@ export function UsersView({ users, onSelectUser }: UsersViewProps) {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="users-view__pagination">
+          <button
+            className="users-view__pageBtn"
+            onClick={() => setPageAnchor(filteredUsers[Math.max(0, safePage - 1) * PAGE_SIZE]?.username ?? null)}
+            disabled={safePage === 0}
+            aria-label="Previous page"
+          >
+            ← Prev
+          </button>
+          <span className="users-view__pageInfo">
+            {(pageStart + 1).toLocaleString()}–{pageEnd.toLocaleString()} of {filteredUsers.length.toLocaleString()}
+          </span>
+          <button
+            className="users-view__pageBtn"
+            onClick={() => setPageAnchor(filteredUsers[Math.min(totalPages - 1, safePage + 1) * PAGE_SIZE]?.username ?? null)}
+            disabled={safePage === totalPages - 1}
+            aria-label="Next page"
+          >
+            Next →
+          </button>
+        </div>
+      )}
     </section>
   )
 }

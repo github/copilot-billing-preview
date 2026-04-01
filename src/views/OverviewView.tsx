@@ -189,6 +189,32 @@ export function OverviewView({
               formatYAsCurrency
               height={320}
             />
+            <DualAxisLineChart
+              title="Cumulative net cost: PRU vs AIC"
+              labels={filledDailyUsageData.map((day) => day.date)}
+              series={[
+                {
+                  label: 'PRU Net Cost (cumulative)',
+                  color: '#cf222e',
+                  data: filledDailyUsageData.reduce<number[]>((acc, day) => {
+                    acc.push((acc[acc.length - 1] ?? 0) + day.netAmount)
+                    return acc
+                  }, []),
+                  yAxisID: 'y',
+                },
+                {
+                  label: 'AIC Net Cost (cumulative)',
+                  color: '#54aeff',
+                  data: filledDailyUsageData.reduce<number[]>((acc, day) => {
+                    acc.push((acc[acc.length - 1] ?? 0) + day.aicNetAmount)
+                    return acc
+                  }, []),
+                  yAxisID: 'y',
+                },
+              ]}
+              formatYAsCurrency
+              height={320}
+            />
           </section>
 
           <div className="entitlement-banner">
