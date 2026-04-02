@@ -32,8 +32,11 @@ function createTotals(): ProductUsageTotals {
 }
 
 function getFriendlyProductName(record: TokenUsageRecord): string {
+  const product = record.product.trim().toLowerCase()
+  const sku = record.sku.trim().toLowerCase()
   const model = record.model.trim()
 
+  if (product === 'spark' || sku.startsWith('spark_')) return 'Spark'
   if (model === 'Code Review model') return 'Code Review'
   if (model === 'Coding Agent model') return 'Copilot Cloud Agent'
   return 'Copilot'

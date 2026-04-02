@@ -44,9 +44,9 @@ describe('parser and metric normalization', () => {
     expect(parseCsvRow('a,"b,c","d""e"')).toEqual(['a', 'b,c', 'd"e'])
   })
 
-  it('parses known SKU values unchanged', () => {
+  it('parses known SKU values unchanged, including Spark SKUs', () => {
     const header = parseTokenUsageHeader(FULL_HEADER)
-    const record = parseTokenUsageRecord(
+    const copilotRecord = parseTokenUsageRecord(
       buildRow([
         '2026-03-01',
         'mona',
@@ -68,8 +68,32 @@ describe('parser and metric normalization', () => {
       ]),
       header,
     )
+    const sparkRecord = parseTokenUsageRecord(
+      buildRow([
+        '2026-03-31',
+        'test-user-spark',
+        'spark',
+        'spark_premium_request',
+        'Claude Sonnet 4.5',
+        '16',
+        'requests',
+        '0.04',
+        '0.64',
+        '0.64',
+        '0',
+        'FALSE',
+        '1000',
+        'example-org',
+        'Cost Center A',
+        '222.17411999999996',
+        '2.2217412',
+      ]),
+      header,
+    )
 
-    expect(record.sku).toBe('copilot_premium_request')
+    expect(copilotRecord.sku).toBe('copilot_premium_request')
+    expect(sparkRecord.product).toBe('spark')
+    expect(sparkRecord.sku).toBe('spark_premium_request')
   })
 
   it('parses unknown SKU values unchanged rather than coercing or dropping them', () => {
