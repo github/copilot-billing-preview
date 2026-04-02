@@ -78,6 +78,25 @@ function createFixture(): TokenUsageRecord[] {
       aic_gross_amount: 1,
       aic_net_amount: 0.6,
     }),
+    createRecord({
+      date: '2026-03-31',
+      username: 'test-user-spark',
+      product: 'spark',
+      sku: 'spark_premium_request',
+      model: 'Claude Sonnet 4.5',
+      quantity: 16,
+      unit_type: 'requests',
+      applied_cost_per_quantity: 0.04,
+      gross_amount: 0.64,
+      discount_amount: 0.64,
+      net_amount: 0,
+      total_monthly_quota: 1000,
+      organization: 'example-org',
+      cost_center_name: 'Cost Center A',
+      aic_quantity: 222.17411999999996,
+      aic_gross_amount: 2.2217412,
+      aic_net_amount: 2.2217412,
+    }),
   ]
 }
 
@@ -186,12 +205,13 @@ describe('PRU gross/net/discount aggregation', () => {
       dailyDiscount: userDiscount,
     })
 
-    const organization = result.organizations.organizations[0]
-    expect(organization.organization).toBe('octo')
-    expect(organization.totals.requests).toBe(23)
-    expectCloseMoney(organization.totals.grossAmount, 7)
-    expectCloseMoney(organization.totals.discountAmount, 1.7)
-    expectCloseMoney(organization.totals.netAmount, 5.3)
+    const organization = result.organizations.organizations.find((entry) => entry.organization === 'octo')
+    expect(organization).toBeDefined()
+    expect(organization!.organization).toBe('octo')
+    expect(organization!.totals.requests).toBe(23)
+    expectCloseMoney(organization!.totals.grossAmount, 7)
+    expectCloseMoney(organization!.totals.discountAmount, 1.7)
+    expectCloseMoney(organization!.totals.netAmount, 5.3)
   })
 
   it('keeps cost-center totals aligned with per-model and per-user rollups', () => {
@@ -220,13 +240,14 @@ describe('PRU gross/net/discount aggregation', () => {
     expect(sumNumbers(result.models.byModel['GPT-5'].map((day) => day.netAmount))).toBeCloseTo(result.models.totalsByModel['GPT-5'].netAmount)
   })
 
-  it('keeps product totals aligned with per-model breakdowns and uses friendly labels', () => {
+  it('keeps product totals aligned with per-model breakdowns and uses friendly labels, including Spark', () => {
     const result = aggregate(createFixture())
 
     expect(result.products.products.map((product) => product.product)).toEqual([
       'Copilot Cloud Agent',
       'Copilot',
       'Code Review',
+      'Spark',
     ])
 
     result.products.products.forEach((product) => {
@@ -236,16 +257,27 @@ describe('PRU gross/net/discount aggregation', () => {
 
     const copilot = result.products.products.find((product) => product.product === 'Copilot')
     expect(Object.keys(copilot?.models ?? {})).toEqual(['GPT-5', 'GPT-4.1'])
+
+    const spark = result.products.products.find((product) => product.product === 'Spark')
+    expect(spark).toEqual(expect.objectContaining({
+      totals: expect.objectContaining({
+        requests: 16,
+        netAmount: 0,
+        aicQuantity: 222.17411999999996,
+        aicNetAmount: 2.2217412,
+      }),
+    }))
+    expect(Object.keys(spark?.models ?? {})).toEqual(['Claude Sonnet 4.5'])
   })
 
   it('sorts results by current implementation rules and only skips blank organization or cost center where required', () => {
     const result = aggregate(createFixture())
 
-    expect(result.daily.dailyData.map((day) => day.date)).toEqual(['2026-03-01', '2026-03-02'])
-    expect(result.users.users.map((user) => user.username)).toEqual(['hubot', 'mona'])
-    expect(result.organizations.organizations.map((organization) => organization.organization)).toEqual(['octo'])
-    expect(result.costCenters.costCenters.map((costCenter) => costCenter.costCenterName)).toEqual(['Cats', 'Dogs'])
-    expect(result.models.models).toEqual(['Code Review model', 'Coding Agent model', 'GPT-4.1', 'GPT-5'])
+    expect(result.daily.dailyData.map((day) => day.date)).toEqual(['2026-03-01', '2026-03-02', '2026-03-31'])
+    expect(result.users.users.map((user) => user.username)).toEqual(['hubot', 'mona', 'test-user-spark'])
+    expect(result.organizations.organizations.map((organization) => organization.organization)).toEqual(['example-org', 'octo'])
+    expect(result.costCenters.costCenters.map((costCenter) => costCenter.costCenterName)).toEqual(['Cats', 'Cost Center A', 'Dogs'])
+    expect(result.models.models).toEqual(['Claude Sonnet 4.5', 'Code Review model', 'Coding Agent model', 'GPT-4.1', 'GPT-5'])
 
     const hubot = result.users.users.find((user) => user.username === 'hubot')
     expect(hubot?.totals).toEqual(expect.objectContaining({ requests: 10, grossAmount: 5, discountAmount: 1.25, netAmount: 3.75 }))

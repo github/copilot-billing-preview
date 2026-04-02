@@ -2,6 +2,7 @@ export const KNOWN_PRODUCTS = ['copilot', 'spark'] as const
 export const KNOWN_SKUS = [
   'copilot_premium_request',
   'coding_agent_premium_request',
+  'spark_premium_request',
   'copilot_ai_unit',
   'coding_agent_ai_unit',
   'spark_ai_unit',
