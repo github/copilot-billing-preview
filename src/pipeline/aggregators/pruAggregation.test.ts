@@ -6,6 +6,10 @@ import { OrganizationAggregator } from './organizationAggregator'
 import { ProductUsageAggregator } from './productUsageAggregator'
 import { UserUsageAggregator } from './userUsageAggregator'
 import type { TokenUsageRecord } from '../parser'
+import {
+  NON_COPILOT_CODE_REVIEW_PRODUCT,
+  NON_COPILOT_CODE_REVIEW_USER_LABEL,
+} from '../productClassification'
 
 function createRecord(overrides: Partial<TokenUsageRecord> = {}): TokenUsageRecord {
   return {
@@ -268,6 +272,69 @@ describe('PRU gross/net/discount aggregation', () => {
       }),
     }))
     expect(Object.keys(spark?.models ?? {})).toEqual(['Claude Sonnet 4.5'])
+  })
+
+  it('treats blank-username code review rows as an organization-billed product bucket', () => {
+    const result = aggregate([
+      createRecord({
+        username: '',
+        model: 'Code Review model',
+        quantity: 12,
+        gross_amount: 4.8,
+        discount_amount: 0.8,
+        net_amount: 4,
+        organization: 'octo',
+        cost_center_name: 'Cats',
+      }),
+    ])
+
+    expect(result.users.users).toEqual([])
+
+    expect(result.products.products).toEqual([
+      expect.objectContaining({
+        product: NON_COPILOT_CODE_REVIEW_PRODUCT,
+        totals: expect.objectContaining({
+          requests: 12,
+          grossAmount: 4.8,
+          netAmount: 4,
+        }),
+        models: {
+          'Code Review model': expect.objectContaining({
+            requests: 12,
+            grossAmount: 4.8,
+            netAmount: 4,
+          }),
+        },
+      }),
+    ])
+
+    expect(result.organizations.organizations).toEqual([
+      expect.objectContaining({
+        organization: 'octo',
+        userCount: 0,
+        totalsByUser: {
+          [NON_COPILOT_CODE_REVIEW_USER_LABEL]: expect.objectContaining({
+            requests: 12,
+            grossAmount: 4.8,
+            netAmount: 4,
+          }),
+        },
+      }),
+    ])
+
+    expect(result.costCenters.costCenters).toEqual([
+      expect.objectContaining({
+        costCenterName: 'Cats',
+        userCount: 0,
+        totalsByUser: {
+          [NON_COPILOT_CODE_REVIEW_USER_LABEL]: expect.objectContaining({
+            requests: 12,
+            grossAmount: 4.8,
+            netAmount: 4,
+          }),
+        },
+      }),
+    ])
   })
 
   it('sorts results by current implementation rules and only skips blank organization or cost center where required', () => {

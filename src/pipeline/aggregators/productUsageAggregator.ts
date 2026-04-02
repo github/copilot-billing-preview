@@ -1,5 +1,6 @@
 import type { Aggregator } from './base'
 import { getUsageMetrics, type TokenUsageHeader, type TokenUsageRecord } from '../parser'
+import { getFriendlyProductName } from '../productClassification'
 
 export type ProductUsageTotals = {
   requests: number
@@ -29,17 +30,6 @@ function createTotals(): ProductUsageTotals {
     aicGrossAmount: 0,
     aicNetAmount: 0,
   }
-}
-
-function getFriendlyProductName(record: TokenUsageRecord): string {
-  const product = record.product.trim().toLowerCase()
-  const sku = record.sku.trim().toLowerCase()
-  const model = record.model.trim()
-
-  if (product === 'spark' || sku.startsWith('spark_')) return 'Spark'
-  if (model === 'Code Review model') return 'Code Review'
-  if (model === 'Coding Agent model') return 'Copilot Cloud Agent'
-  return 'Copilot'
 }
 
 export class ProductUsageAggregator implements Aggregator<TokenUsageRecord, ProductUsageResult, TokenUsageHeader> {

@@ -1,5 +1,6 @@
 import type { Aggregator } from './base'
 import { getUsageMetrics, type TokenUsageHeader, type TokenUsageRecord } from '../parser'
+import { isNonCopilotCodeReviewUsage, NON_COPILOT_CODE_REVIEW_USER_LABEL } from '../productClassification'
 import { pickTopEntries } from './topBreakdown'
 
 export type CostTotals = {
@@ -96,6 +97,8 @@ export class CostCenterAggregator implements Aggregator<TokenUsageRecord, CostCe
       this.byCostCenter.set(costCenterName, costCenter)
     }
 
+    const specialUsageLabel = isNonCopilotCodeReviewUsage(record) ? NON_COPILOT_CODE_REVIEW_USER_LABEL : null
+
     if (username) costCenter.users.add(username)
 
     const { requests, grossAmount, discountAmount, netAmount, aicQuantity, aicGrossAmount, aicNetAmount } = getUsageMetrics(record)
@@ -117,8 +120,9 @@ export class CostCenterAggregator implements Aggregator<TokenUsageRecord, CostCe
     byModel.aicGrossAmount += aicGrossAmount
     byModel.aicNetAmount += aicNetAmount
 
-    if (username) {
-      const byUser = ensureUserTotals(costCenter.totalsByUser, username)
+    const userBreakdownLabel = username || specialUsageLabel
+    if (userBreakdownLabel) {
+      const byUser = ensureUserTotals(costCenter.totalsByUser, userBreakdownLabel)
       byUser.requests += requests
       byUser.grossAmount += grossAmount
       byUser.netAmount += netAmount
