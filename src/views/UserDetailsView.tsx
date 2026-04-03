@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
 import { MultiSeriesStackedBarChart } from '../components'
+import { getPlanLabel, type ReportPlanScope } from '../pipeline/aicEntitlements'
 import type { UserDailyUsage, UserUsage } from '../pipeline/aggregators/userUsageAggregator'
 import { calculateAicDiscountAmount, calculateSavingsDifference } from '../utils/billingComparison'
 import { fillDataForRange } from '../utils/fillDataForRange'
 import { formatAic } from '../utils/format'
+import type { CostOptimizationOpportunity } from '../utils/costOptimization'
 
 type DailySummaryModelRow = {
   model: string
@@ -55,12 +57,23 @@ function createEmptyUserDaily(date: string): UserDailyUsage {
 
 export interface UserDetailsViewProps {
   user: UserUsage | null
+  reportPlanScope?: ReportPlanScope
+  costOptimizationOpportunity?: CostOptimizationOpportunity
+  showUsersBreadcrumb?: boolean
   rangeStart?: string | null
   rangeEnd?: string | null
   onBackToUsers?: () => void
 }
 
-export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: UserDetailsViewProps) {
+export function UserDetailsView({
+  user,
+  reportPlanScope = 'organization',
+  costOptimizationOpportunity,
+  showUsersBreadcrumb = true,
+  rangeStart,
+  rangeEnd,
+  onBackToUsers,
+}: UserDetailsViewProps) {
   const activeDailyEntries = useMemo(() => {
     if (!user) return []
     return Object.values(user.daily).sort((a, b) => a.date.localeCompare(b.date))
@@ -132,6 +145,7 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
 
   const aicDiscountAmount = user ? calculateAicDiscountAmount(user.totals.aicGrossAmount, user.totals.aicNetAmount) : 0
   const savings = user ? calculateSavingsDifference(user.totals.netAmount, user.totals.aicNetAmount) : 0
+  const planLabel = user ? getPlanLabel(user.totalMonthlyQuota, reportPlanScope) : null
 
   if (!user) {
     return (
@@ -148,25 +162,30 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
     <section className="user-details">
       <div className="user-details__header">
         <div className="user-details__titleGroup">
-          <nav aria-label="Breadcrumb">
-            <ol className="user-details__breadcrumbs">
-              <li className="user-details__breadcrumbItem">
-                {onBackToUsers ? (
-                  <button type="button" className="user-details__breadcrumb user-details__breadcrumb--link" onClick={onBackToUsers}>
-                    users
-                  </button>
-                ) : (
-                  <span className="user-details__breadcrumb">users</span>
-                )}
-              </li>
-              <li className="user-details__breadcrumbItem user-details__breadcrumbItem--current" aria-current="page">
-                <h2 className="user-details__heading">{user.username}</h2>
-              </li>
-            </ol>
-          </nav>
+          {showUsersBreadcrumb ? (
+            <nav aria-label="Breadcrumb">
+              <ol className="user-details__breadcrumbs">
+                <li className="user-details__breadcrumbItem">
+                  {onBackToUsers ? (
+                    <button type="button" className="user-details__breadcrumb user-details__breadcrumb--link" onClick={onBackToUsers}>
+                      users
+                    </button>
+                  ) : (
+                    <span className="user-details__breadcrumb">users</span>
+                  )}
+                </li>
+                <li className="user-details__breadcrumbItem user-details__breadcrumbItem--current" aria-current="page">
+                  <h2 className="user-details__heading">{user.username}</h2>
+                </li>
+              </ol>
+            </nav>
+          ) : (
+            <h2 className="user-details__heading">{user.username}</h2>
+          )}
         </div>
 
         <div className="user-details__metaRow">
+          {planLabel && <span className="user-details__meta">Plan: {planLabel}</span>}
           {user.organizations.length > 0 && <span className="user-details__meta">Organizations: {joinValues(user.organizations)}</span>}
           {user.costCenters.length > 0 && <span className="user-details__meta">Cost Centers: {joinValues(user.costCenters)}</span>}
           <span className="user-details__meta">Days Active: {formatInt(activeDailyEntries.length)}</span>
@@ -239,6 +258,32 @@ export function UserDetailsView({ user, rangeStart, rangeEnd, onBackToUsers }: U
               </div>
             </div>
           </div>
+
+          {reportPlanScope === 'individual' && costOptimizationOpportunity?.hasPotentialCostOptimizationOpportunity && (
+            <div className="entitlement-banner">
+              <div className="entitlement-banner__body">
+                <strong className="entitlement-banner__title">Cost optimization opportunity</strong>
+                <p className="entitlement-banner__text">
+                  Your usage is generating <strong>{formatCost(costOptimizationOpportunity.estimatedAicNetCost)}</strong> in AIC overage charges.
+                  Upgrading from <strong>Copilot Pro/Student</strong> to <strong>Copilot Pro+</strong>
+                  would add <strong>{formatAic(costOptimizationOpportunity.extraAicCreditsFromSuggestedUpgrades)}</strong> more included AICs per week
+                  and reduce total cost from{' '}
+                  <strong>{formatCost(costOptimizationOpportunity.estimatedAicNetCost)}</strong> to{' '}
+                  <strong>{formatCost(costOptimizationOpportunity.estimatedAicNetCostAfterSuggestedUpgrades)}</strong>{' '}
+                  (including <strong>{formatCost(costOptimizationOpportunity.estimatedUpgradeCost)}</strong> in upgrade cost) —
+                  saving <strong>{formatCost(costOptimizationOpportunity.estimatedSavings)}</strong>.
+                </p>
+              </div>
+              <a
+                href="https://docs.github.com/billing/managing-your-copilot-usage"
+                className="entitlement-banner__link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Upgrade plan &rarr;
+              </a>
+            </div>
+          )}
 
           <div className="charts-grid">
             <MultiSeriesStackedBarChart title="Daily Requests by Model" labels={labels} series={requestSeries} height={340} />

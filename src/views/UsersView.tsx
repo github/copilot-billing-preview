@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import type { UserUsage } from '../pipeline/aggregators/userUsageAggregator'
-import { calculateLicenseSummary } from '../pipeline/aicEntitlements'
+import { calculateLicenseSummary, inferReportPlanScope } from '../pipeline/aicEntitlements'
 import type { CostOptimizationOpportunity } from '../utils/costOptimization'
 import { formatAic, formatUsd } from '../utils/format'
 import { Trie } from '../utils/trie'
@@ -27,6 +27,10 @@ export function UsersView({ users, costOptimizationOpportunity, onSelectUser }: 
   const [pageAnchor, setPageAnchor] = useState<string | null>(null)
 
   const licenseSummary = useMemo(() => calculateLicenseSummary(users), [users])
+  const reportPlanScope = useMemo(
+    () => inferReportPlanScope(users.length, users.some((user) => user.organizations.length > 0 || user.costCenters.length > 0)),
+    [users],
+  )
 
   const sortedByAic = useMemo(() => {
     return [...users].sort((a, b) => {
@@ -89,7 +93,9 @@ export function UsersView({ users, costOptimizationOpportunity, onSelectUser }: 
               </tr>
             ))}
             <tr>
-              <td className="users-view__license users-view__license--total">Total AIC pool</td>
+              <td className="users-view__license users-view__license--total">
+                {reportPlanScope === 'individual' ? 'Total included AICs' : 'Total AIC pool'}
+              </td>
               <td className="users-view__num users-view__num--total">{formatInt(licenseSummary.totalUsers)}</td>
               <td className="users-view__num users-view__num--total">{formatAic(licenseSummary.totalIncludedAic)}</td>
             </tr>

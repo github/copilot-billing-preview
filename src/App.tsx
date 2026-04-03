@@ -19,9 +19,8 @@ import { ProductUsageAggregator, type ProductUsageResult } from './pipeline/aggr
 import { CostCenterAggregator, type CostCenterResult } from './pipeline/aggregators/costCenterAggregator'
 import { OrganizationAggregator, type OrganizationResult } from './pipeline/aggregators/organizationAggregator'
 import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregators/userUsageAggregator'
-import { getMonthlyAicEntitlements } from './pipeline/aicEntitlements'
+import { inferReportPlanScope } from './pipeline/aicEntitlements'
 import { runPipeline } from './pipeline/runPipeline'
-import { calculateOverviewAicDiscountRate } from './utils/overviewBilling'
 import { calculateCostOptimizationOpportunity } from './utils/costOptimization'
 
 type Status = 'idle' | 'processing' | 'done'
@@ -156,17 +155,32 @@ function App() {
   const hasReport = status === 'done' && fileName !== null
   const rangeStart = reportContext?.startDate ?? null
   const rangeEnd = reportContext?.endDate ?? null
+  const reportUsers = userUsage?.users ?? []
+  const hasOrganizationContext = reportUsers.some((user) => user.organizations.length > 0 || user.costCenters.length > 0)
+  const reportPlanScope = inferReportPlanScope(reportUsers.length, hasOrganizationContext)
+  const isIndividualReport = reportPlanScope === 'individual' && reportUsers.length === 1
+  const individualUser = isIndividualReport ? reportUsers[0] : null
 
-  const selectedUser = selectedUsername && userUsage
-    ? userUsage.users.find((user) => user.username === selectedUsername) ?? null
-    : null
+  const selectedUser = individualUser
+    ?? (selectedUsername && userUsage
+      ? userUsage.users.find((user) => user.username === selectedUsername) ?? null
+      : null)
+  const userNavActive = isIndividualReport
+    ? activeView === 'userDetails'
+    : activeView === 'users' || activeView === 'userDetails'
+  const openUserView = () => {
+    if (isIndividualReport) {
+      setActiveView('userDetails')
+      return
+    }
 
-  const pooledAicCredits = (userUsage?.users ?? []).reduce((sum, user) => sum + getMonthlyAicEntitlements(user.totalMonthlyQuota), 0)
-  const aicDiscountRate = calculateOverviewAicDiscountRate(dailyUsageData, pooledAicCredits)
+    setActiveView('users')
+  }
+
   const overviewAicNetAmount = dailyUsageData.reduce((sum, day) => sum + day.aicNetAmount, 0)
   const costOptimizationOpportunity = calculateCostOptimizationOpportunity({
     aicNetAmount: overviewAicNetAmount,
-    users: userUsage?.users ?? [],
+    users: reportUsers,
   })
 
   return (
@@ -241,15 +255,15 @@ function App() {
 
                 <button
                   type="button"
-                  className={`sidebar__item ${activeView === 'users' || activeView === 'userDetails' ? 'sidebar__item--active' : ''}`}
+                  className={`sidebar__item ${userNavActive ? 'sidebar__item--active' : ''}`}
                   disabled={!userUsage}
-                  onClick={() => setActiveView('users')}
+                  onClick={openUserView}
                 >
                   <svg className="sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                     <circle cx="12" cy="8" r="4" />
                     <path d="M20 21a8 8 0 1 0-16 0" />
                   </svg>
-                  <span className="sidebar__label">Users</span>
+                  <span className="sidebar__label">{isIndividualReport ? 'User' : 'Users'}</span>
                 </button>
 
                 {modelUsage && modelUsage.models.length > 0 && (
@@ -350,32 +364,34 @@ function App() {
                 <div className="view-content">
                   <ModelsView
                     modelUsage={modelUsage}
-                    aicDiscountRate={aicDiscountRate}
                     rangeStart={rangeStart}
                     rangeEnd={rangeEnd}
                   />
                 </div>
               ) : null
-            ) : activeView === 'users' ? (
-              <div className="view-content">
-                <UsersView
-                  users={userUsage?.users ?? []}
-                  costOptimizationOpportunity={costOptimizationOpportunity}
-                  onSelectUser={(username) => {
-                    setSelectedUsername(username)
-                    setActiveView('userDetails')
-                  }}
-                />
-              </div>
-              ) : activeView === 'userDetails' ? (
-                <div className="view-content">
-                  <UserDetailsView
-                    user={selectedUser}
-                    rangeStart={rangeStart}
-                    rangeEnd={rangeEnd}
-                    onBackToUsers={() => setActiveView('users')}
-                  />
-                </div>
+            ) : activeView === 'users' && !isIndividualReport ? (
+               <div className="view-content">
+                 <UsersView
+                   users={reportUsers}
+                   costOptimizationOpportunity={costOptimizationOpportunity}
+                   onSelectUser={(username) => {
+                     setSelectedUsername(username)
+                     setActiveView('userDetails')
+                   }}
+                 />
+               </div>
+               ) : activeView === 'userDetails' || (activeView === 'users' && isIndividualReport) ? (
+                 <div className="view-content">
+                   <UserDetailsView
+                      user={selectedUser}
+                      reportPlanScope={reportPlanScope}
+                      costOptimizationOpportunity={costOptimizationOpportunity}
+                      showUsersBreadcrumb={!isIndividualReport}
+                      rangeStart={rangeStart}
+                      rangeEnd={rangeEnd}
+                     onBackToUsers={isIndividualReport ? undefined : () => setActiveView('users')}
+                   />
+                 </div>
               ) : activeView === 'costCenters' ? (
               <div className="view-content">
                 <CostCentersView data={costCenters ?? { costCenters: [] }} rangeStart={rangeStart} />

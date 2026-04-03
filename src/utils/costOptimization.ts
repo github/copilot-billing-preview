@@ -1,8 +1,24 @@
-import { getAicEntitlementTier } from '../pipeline/aicEntitlements'
+import {
+  getAicEntitlementTier,
+  getIndividualPlanTier,
+  IndividualAicEntitlementAllocator,
+  inferReportPlanScope,
+  PRO_PLUS_WEEKLY_AIC_ENTITLEMENTS,
+  PRO_WEEKLY_AIC_ENTITLEMENTS,
+} from '../pipeline/aicEntitlements'
+import type { TokenUsageRecord } from '../pipeline/parser'
 
 export const AIC_UNIT_PRICE_USD = 0.01
 export const BUSINESS_TO_ENTERPRISE_UPGRADE_COST_USD = 20
 export const BUSINESS_TO_ENTERPRISE_EXTRA_AIC = 4000
+export const PRO_TO_PRO_PLUS_UPGRADE_COST_USD = 29
+export const PRO_TO_PRO_PLUS_EXTRA_WEEKLY_AIC = PRO_PLUS_WEEKLY_AIC_ENTITLEMENTS - PRO_WEEKLY_AIC_ENTITLEMENTS
+
+type SimulatedDailyUsage = {
+  date: string
+  aicQuantity: number
+  aicGrossAmount: number
+}
 
 export type CostOptimizationOpportunity = {
   hasNetAicOverage: boolean
@@ -21,7 +37,13 @@ export type CostOptimizationOpportunity = {
 
 type CostOptimizationInput = {
   aicNetAmount: number
-  users: Array<{ totalMonthlyQuota: number }>
+  users: Array<{
+    username?: string
+    totalMonthlyQuota: number
+    organizations?: string[]
+    costCenters?: string[]
+    daily?: Record<string, SimulatedDailyUsage>
+  }>
 }
 
 const EPSILON = 1e-9
@@ -38,11 +60,46 @@ export function calculateCostOptimizationOpportunity({
   aicNetAmount,
   users,
 }: CostOptimizationInput): CostOptimizationOpportunity {
-  const businessUsersAvailable = users.filter((user) => getAicEntitlementTier(user.totalMonthlyQuota) === 'business').length
-  const hasNetAicOverage = aicNetAmount > EPSILON
-  const hasBusinessUsers = businessUsersAvailable > 0
-  const estimatedAicOverageCredits = roundAic(aicNetAmount / AIC_UNIT_PRICE_USD)
   const estimatedAicNetCost = roundCurrency(aicNetAmount)
+  const reportPlanScope = inferReportPlanScope(
+    users.length,
+    users.some((user) => (user.organizations?.length ?? 0) > 0 || (user.costCenters?.length ?? 0) > 0),
+  )
+  const hasNetAicOverage = aicNetAmount > EPSILON
+  const estimatedAicOverageCredits = roundAic(aicNetAmount / AIC_UNIT_PRICE_USD)
+
+  if (
+    reportPlanScope === 'individual'
+    && users.length === 1
+    && hasNetAicOverage
+    && users[0].daily
+    && getIndividualPlanTier(users[0].totalMonthlyQuota) === 'pro-student'
+  ) {
+    const simulatedAicNetCost = roundCurrency(simulateIndividualUpgradeNetCost(users[0], PRO_PLUS_WEEKLY_AIC_ENTITLEMENTS))
+    const estimatedUpgradeCost = PRO_TO_PRO_PLUS_UPGRADE_COST_USD
+    const estimatedAicNetCostAfterSuggestedUpgrades = roundCurrency(simulatedAicNetCost + estimatedUpgradeCost)
+    const estimatedSavings = roundCurrency(Math.max(estimatedAicNetCost - estimatedAicNetCostAfterSuggestedUpgrades, 0))
+
+    return {
+      hasNetAicOverage,
+      hasBusinessUsers: false,
+      hasPotentialCostOptimizationOpportunity: estimatedSavings > 0,
+      businessUsersAvailable: 0,
+      suggestedBusinessUsersToUpgrade: 0,
+      estimatedAicOverageCredits,
+      estimatedAicNetCost,
+      extraAicCreditsFromSuggestedUpgrades: PRO_TO_PRO_PLUS_EXTRA_WEEKLY_AIC,
+      estimatedUpgradeCost,
+      estimatedRemainingAicNetCost: simulatedAicNetCost,
+      estimatedAicNetCostAfterSuggestedUpgrades,
+      estimatedSavings,
+    }
+  }
+
+  const businessUsersAvailable = users.filter(
+    (user) => getAicEntitlementTier(user.totalMonthlyQuota, reportPlanScope) === 'business',
+  ).length
+  const hasBusinessUsers = businessUsersAvailable > 0
 
   let suggestedBusinessUsersToUpgrade = 0
   let estimatedSavings = 0
@@ -81,5 +138,42 @@ export function calculateCostOptimizationOpportunity({
     estimatedRemainingAicNetCost,
     estimatedAicNetCostAfterSuggestedUpgrades,
     estimatedSavings: roundedEstimatedSavings,
+  }
+}
+
+function simulateIndividualUpgradeNetCost(
+  user: CostOptimizationInput['users'][number],
+  weeklyEntitlements: number,
+): number {
+  if (!user.daily) return 0
+
+  const allocator = new IndividualAicEntitlementAllocator(weeklyEntitlements)
+  return Object.values(user.daily)
+    .sort((left, right) => left.date.localeCompare(right.date))
+    .reduce((total, day) => total + allocator.apply(createSimulationRecord(user.username ?? 'user', day)).aic_net_amount, 0)
+}
+
+function createSimulationRecord(username: string, day: SimulatedDailyUsage): TokenUsageRecord {
+  return {
+    date: day.date,
+    username,
+    product: 'copilot',
+    sku: 'copilot_ai_unit',
+    model: 'GPT-5',
+    quantity: day.aicQuantity,
+    unit_type: 'ai-units',
+    applied_cost_per_quantity: AIC_UNIT_PRICE_USD,
+    gross_amount: day.aicGrossAmount,
+    discount_amount: 0,
+    net_amount: day.aicGrossAmount,
+    exceeds_quota: false,
+    total_monthly_quota: 0,
+    organization: '',
+    cost_center_name: null,
+    aic_quantity: day.aicQuantity,
+    aic_gross_amount: day.aicGrossAmount,
+    aic_net_amount: day.aicGrossAmount,
+    has_aic_quantity: true,
+    has_aic_gross_amount: true,
   }
 }

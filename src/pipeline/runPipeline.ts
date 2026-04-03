@@ -1,5 +1,5 @@
 import type { Aggregator } from './aggregators/base'
-import { calculateAicEntitlementPool, PooledAicEntitlementAllocator } from './aicEntitlements'
+import { createAicEntitlementAllocator } from './aicEntitlements'
 import { parseTokenUsageHeader, parseTokenUsageRecord, type TokenUsageHeader, type TokenUsageRecord } from './parser'
 import { streamLines } from './streamer'
 
@@ -18,8 +18,7 @@ export async function runPipeline(
   options?: PipelineOptions,
 ): Promise<void> {
   const { progressResolution = 500, onProgress } = options ?? {}
-  const totalAicEntitlements = await calculateAicEntitlementPool(file)
-  const aicEntitlementAllocator = new PooledAicEntitlementAllocator(totalAicEntitlements)
+  const aicEntitlementAllocator = await createAicEntitlementAllocator(file)
   let header: TokenUsageHeader | null = null
   let rowIndex = 0
   let lastEmittedRows = 0
