@@ -20,7 +20,6 @@ function createEmptyModelDailyUsage(date: string): ModelDailyUsageData {
 
 type ModelsViewProps = {
   modelUsage: ModelUsageResult
-  aicDiscountRate: number
   rangeStart: string | null
   rangeEnd: string | null
 }
@@ -33,7 +32,7 @@ function roundAverageAicPerRequest(value: number): number {
   return Number(value.toFixed(3))
 }
 
-export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }: ModelsViewProps) {
+export function ModelsView({ modelUsage, rangeStart, rangeEnd }: ModelsViewProps) {
   const [selectedModel, setSelectedModel] = useState<string>(modelUsage.models[0] ?? '')
 
   const selectedModelTotals = useMemo(
@@ -46,9 +45,11 @@ export function ModelsView({ modelUsage, aicDiscountRate, rangeStart, rangeEnd }
     return fillDataForRange(raw, rangeStart, rangeEnd, createEmptyModelDailyUsage)
   }, [selectedModel, modelUsage, rangeStart, rangeEnd])
 
-  const selectedModelAicDiscount = selectedModelTotals ? calculateAicDiscountAmount(selectedModelTotals.aicGrossAmount, Math.max(selectedModelTotals.aicGrossAmount - (aicDiscountRate * selectedModelTotals.aicGrossAmount), 0)) : 0
+  const selectedModelAicDiscount = selectedModelTotals
+    ? calculateAicDiscountAmount(selectedModelTotals.aicGrossAmount, selectedModelTotals.aicNetAmount)
+    : 0
   const selectedModelAicNetAmount = selectedModelTotals
-    ? Math.max(selectedModelTotals.aicGrossAmount - selectedModelAicDiscount, 0)
+    ? selectedModelTotals.aicNetAmount
     : 0
   const dailyAverageAicPerRequest = useMemo(
     () => filledPerModelDailyData.map((day) => ({

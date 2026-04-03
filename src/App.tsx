@@ -19,9 +19,8 @@ import { ProductUsageAggregator, type ProductUsageResult } from './pipeline/aggr
 import { CostCenterAggregator, type CostCenterResult } from './pipeline/aggregators/costCenterAggregator'
 import { OrganizationAggregator, type OrganizationResult } from './pipeline/aggregators/organizationAggregator'
 import { UserUsageAggregator, type UserUsageResult } from './pipeline/aggregators/userUsageAggregator'
-import { getMonthlyAicEntitlements, inferReportPlanScope } from './pipeline/aicEntitlements'
+import { inferReportPlanScope } from './pipeline/aicEntitlements'
 import { runPipeline } from './pipeline/runPipeline'
-import { calculateOverviewAicDiscountRate } from './utils/overviewBilling'
 import { calculateCostOptimizationOpportunity } from './utils/costOptimization'
 
 type Status = 'idle' | 'processing' | 'done'
@@ -178,11 +177,6 @@ function App() {
     setActiveView('users')
   }
 
-  const pooledAicCredits = reportUsers.reduce(
-    (sum, user) => sum + getMonthlyAicEntitlements(user.totalMonthlyQuota, reportPlanScope),
-    0,
-  )
-  const aicDiscountRate = calculateOverviewAicDiscountRate(dailyUsageData, pooledAicCredits)
   const overviewAicNetAmount = dailyUsageData.reduce((sum, day) => sum + day.aicNetAmount, 0)
   const costOptimizationOpportunity = calculateCostOptimizationOpportunity({
     aicNetAmount: overviewAicNetAmount,
@@ -370,7 +364,6 @@ function App() {
                 <div className="view-content">
                   <ModelsView
                     modelUsage={modelUsage}
-                    aicDiscountRate={aicDiscountRate}
                     rangeStart={rangeStart}
                     rangeEnd={rangeEnd}
                   />
