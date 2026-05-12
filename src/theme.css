@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+/* Primer Primitives: design tokens */
+@import "@primer/primitives/dist/css/functional/themes/light.css";
+@import "@primer/primitives/dist/css/base/size/size.css";
+@import "@primer/primitives/dist/css/base/typography/typography.css";
+@import "@primer/primitives/dist/css/functional/typography/typography.css";
+@import "@primer/primitives/dist/css/functional/size/size.css";
+@import "@primer/primitives/dist/css/functional/size/border.css";
+@import "@primer/primitives/dist/css/functional/size/radius.css";
+@import "@primer/primitives/dist/css/base/motion/motion.css";
+
+/* Map Primer tokens to Tailwind theme utilities via @theme */
+@theme {
+  /* Foreground / text colors */
+  --color-fg-default: var(--fgColor-default);
+  --color-fg-muted: var(--fgColor-muted);
+  --color-fg-accent: var(--fgColor-accent);
+  --color-fg-danger: var(--fgColor-danger);
+  --color-fg-on-emphasis: var(--fgColor-onEmphasis);
+
+  /* Background colors */
+  --color-bg-default: var(--bgColor-default);
+  --color-bg-muted: var(--bgColor-muted);
+  --color-bg-inset: var(--bgColor-inset);
+  --color-bg-emphasis: var(--bgColor-emphasis);
+  --color-bg-accent-emphasis: var(--bgColor-accent-emphasis);
+  --color-bg-accent-muted: var(--bgColor-accent-muted);
+  --color-bg-success-emphasis: var(--bgColor-success-emphasis);
+  --color-bg-success-muted: var(--bgColor-success-muted);
+  --color-bg-attention-emphasis: var(--bgColor-attention-emphasis);
+  --color-bg-attention-muted: var(--bgColor-attention-muted);
+  --color-bg-danger-emphasis: var(--bgColor-danger-emphasis);
+  --color-bg-danger-muted: var(--bgColor-danger-muted);
+  --color-bg-neutral-emphasis: var(--bgColor-neutral-emphasis);
+  --color-bg-neutral-muted: var(--bgColor-neutral-muted);
+  --color-bg-disabled: var(--bgColor-disabled);
+
+  /* Header */
+  --color-header-bg: var(--header-bgColor);
+  --color-header-fg: var(--header-fgColor-default);
+  --color-header-logo: var(--header-fgColor-logo);
+
+  /* Border colors */
+  --color-border-default: var(--borderColor-default);
+  --color-border-muted: var(--borderColor-default);
+  --color-border-emphasis: var(--borderColor-emphasis);
+  --color-border-accent: var(--borderColor-accent-emphasis);
+  --color-border-success: var(--borderColor-success-emphasis);
+  --color-border-danger: var(--borderColor-danger-emphasis);
+  --color-border-attention: var(--borderColor-attention-emphasis);
+
+  /* App-specific semantic tokens (no direct Primer equivalent) */
+  --color-app-accent: #6366f1;
+  --color-app-accent-subtle: rgba(99, 102, 241, 0.08);
+  --color-app-accent-muted: rgba(99, 102, 241, 0.15);
+  --color-app-savings-bg: #f0fdf4;
+  --color-app-savings-fg: #15803d;
+  --color-app-savings-border: #bbf7d0;
+  --color-app-overspend-bg: #fef2f2;
+  --color-app-overspend-fg: #b91c1c;
+  --color-app-overspend-border: #fecaca;
+
+  /* Border radius */
+  --radius-sm: var(--borderRadius-small);
+  --radius-md: var(--borderRadius-medium);
+  --radius-lg: var(--borderRadius-large);
+  --radius-full: var(--borderRadius-full);
+
+  /* Spacing from Primer base sizes */
+  --spacing-0: 0px;
+  --spacing-1: var(--base-size-4);
+  --spacing-2: var(--base-size-8);
+  --spacing-3: var(--base-size-12);
+  --spacing-4: var(--base-size-16);
+  --spacing-5: var(--base-size-20);
+  --spacing-6: var(--base-size-24);
+  --spacing-8: var(--base-size-32);
+  --spacing-10: var(--base-size-40);
+  --spacing-12: var(--base-size-48);
+  --spacing-16: var(--base-size-64);
+  --spacing-20: var(--base-size-80);
+
+  /* Layout */
+  --width-sidebar: 200px;
+  --width-content-max: 1280px;
+
+  /* Font stacks — keep Inter as primary, system fallback */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  --font-mono: var(--fontStack-monospace);
+}
+
+/* Global base styles */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-sans);
+    font-size: var(--base-text-size-sm);
+    line-height: var(--base-text-lineHeight-normal);
+    font-weight: var(--base-text-weight-normal);
+    color: var(--fgColor-default);
+    background-color: var(--bgColor-muted);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  a {
+    color: inherit;
+  }
+}
