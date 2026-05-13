@@ -55,6 +55,25 @@ const SAMPLE_ROW_2 = [
   '0.24936400000000003',
 ]
 
+const SAMPLE_ROW_3 = [
+  '2026-04-15',
+  'mona',
+  'copilot',
+  'copilot_premium_request',
+  'Claude Haiku 4.5',
+  '0',
+  'requests',
+  '0.04',
+  '0',
+  '0',
+  '0',
+  '1000',
+  '',
+  '',
+  '59.167109999999994',
+  '0.5916711000000002',
+]
+
 const SAMPLE_ROW_2_ANNOTATIONS: { index: number; label: string; note: string }[] = [
   {
     index: 4,
@@ -91,6 +110,44 @@ const SAMPLE_ROW_2_ANNOTATIONS: { index: number; label: string; note: string }[]
     index: 15,
     label: 'aic_gross_amount',
     note: '≈ $0.249 (24.9 AICs × $0.01). This is what the same usage would cost under usage-based billing.',
+  },
+]
+
+const SAMPLE_ROW_3_ANNOTATIONS: { index: number; label: string; note: string }[] = [
+  {
+    index: 4,
+    label: 'model',
+    note: '"Claude Haiku 4.5" — the model used by the Copilot subagent.',
+  },
+  {
+    index: 5,
+    label: 'quantity',
+    note: '0 PRUs. Subagent usage was not billable under PRU billing, so no Premium Request quantity is recorded even though work occurred.',
+  },
+  {
+    index: 6,
+    label: 'unit_type',
+    note: '"requests" — this row comes from the Premium Request report shape, but the recorded PRU quantity is 0.',
+  },
+  {
+    index: 7,
+    label: 'applied_cost_per_quantity',
+    note: '$0.04 per PRU — the standard PRU rate. Because quantity is 0, the PRU gross amount remains $0.',
+  },
+  {
+    index: 8,
+    label: 'gross_amount',
+    note: '$0 gross PRU cost (0 PRUs × $0.04).',
+  },
+  {
+    index: 14,
+    label: 'aic_quantity',
+    note: '≈ 59.2 AICs consumed. Under usage-based billing, subagents consume AI Credits based on actual usage.',
+  },
+  {
+    index: 15,
+    label: 'aic_gross_amount',
+    note: '≈ $0.592 (59.2 AICs × $0.01). This is the AI Credits cost for the subagent work.',
   },
 ]
 
@@ -225,6 +282,19 @@ export function ReportGuideView() {
         </p>
 
         <AnnotatedRow header={HEADER} values={SAMPLE_ROW_2} annotations={SAMPLE_ROW_2_ANNOTATIONS} />
+      </div>
+
+      <div className="bg-bg-default border border-border-default rounded-lg px-6 pt-5 pb-6 mb-6">
+        <h3 className="text-base font-semibold text-fg-default mb-2">Example: Subagent usage with 0 Premium Requests</h3>
+        <p className="text-sm text-fg-muted leading-relaxed mb-5">
+          On <strong>15 April 2026</strong>, user <strong>mona</strong> triggered a Copilot subagent using{' '}
+          <strong>Claude Haiku 4.5</strong>. Subagents were not billable under PRU billing, so the row shows{' '}
+          <strong>0</strong> in the <code className="font-mono text-xs">quantity</code> column and a{' '}
+          <strong>$0.00</strong> PRU cost. Under usage-based billing, however, the same subagent work consumed{' '}
+          <strong>≈ 59.2 AICs</strong>, producing an AI Credits cost of approximately <strong>$0.592</strong>.
+        </p>
+
+        <AnnotatedRow header={HEADER} values={SAMPLE_ROW_3} annotations={SAMPLE_ROW_3_ANNOTATIONS} />
       </div>
     </section>
   )
