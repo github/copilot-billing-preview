@@ -75,7 +75,7 @@ export function BillingTotalsCards({
               <span>{formatUsd(pruGrossAmount)}</span>
             </div>
             <div className="flex justify-between items-center text-[13px] text-fg-muted tabular-nums">
-              <span>Discount (included PRUs)</span>
+              <span>Included PRUs</span>
               <span>−{formatUsd(pruDiscountAmount)}</span>
             </div>
             <div className="pt-[6px] border-t border-dotted border-border-muted flex flex-col gap-[6px]">
@@ -114,7 +114,7 @@ export function BillingTotalsCards({
               <span>{formatUsd(aicGrossAmount)}</span>
             </div>
             <div className="flex justify-between items-center text-[13px] text-fg-muted tabular-nums">
-              <span>Discount (included AICs)</span>
+              <span>Included AICs</span>
               <span>−{formatUsd(aicDiscountAmount)}</span>
             </div>
             <div className="pt-[6px] border-t border-dotted border-border-muted flex flex-col gap-[6px]">

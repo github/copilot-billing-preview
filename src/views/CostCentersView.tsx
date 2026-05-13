@@ -132,7 +132,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
                   <span>{formatUsd(totals.grossAmount)}</span>
                 </div>
                 <div className="flex justify-between items-center text-[13px] text-fg-muted tabular-nums">
-                  <span>Discount (included PRUs)</span>
+                  <span>Included PRUs</span>
                   <span>−{formatUsd(totals.discountAmount)}</span>
                 </div>
                 <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums pt-1.5 border-t border-border-default font-semibold">
@@ -153,7 +153,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
                   <span>{formatUsd(totals.aicGrossAmount)}</span>
                 </div>
                 <div className="flex justify-between items-center text-[13px] text-fg-muted tabular-nums">
-                  <span>Discount (included AICs)</span>
+                  <span>Included AICs</span>
                   <span>−{formatUsd(Math.abs(aicDiscountAmount))}</span>
                 </div>
                 <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums pt-1.5 border-t border-border-default font-semibold">
