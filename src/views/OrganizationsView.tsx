@@ -175,7 +175,7 @@ export function OrganizationsView({ data, rangeStart }: { data: OrganizationResu
           </p>
         </div>
         <a
-          href={appLinks.usageBasedBillingBlog}
+          href={appLinks.aiCreditsForOrganizationsDocs}
           className="text-sm font-medium text-fg-accent no-underline whitespace-nowrap hover:underline"
           target="_blank"
           rel="noopener noreferrer"
