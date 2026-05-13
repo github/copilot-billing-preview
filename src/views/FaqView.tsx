@@ -6,6 +6,12 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
       'Not every request is the same. Saying "Hi" or "Thank you" to Claude Opus 4.6 costs 3 PRUs but consumes very few tokens (AI Credits) — that\'s a waste. At the same time, a complex and detailed plan implementation can run for a long time and consume a lot of AI Credits. Usage-based billing reflects the actual work done, so short trivial exchanges become cheaper while long, intensive tasks are billed by what they truly consume.',
   },
   {
+    question:
+      'Why do some rows show 0 Premium Requests to Premium Models but still consume AI Credits?',
+    answer:
+      'Those rows can represent Copilot subagents. Subagent usage was not billable as Premium Requests in the past, so it can appear as 0 Premium Requests to Premium Models. Under usage-based billing, that work still consumes AI Credits based on actual usage, so the same rows can have AI Credits consumed.',
+  },
+  {
     question: 'Why does the AIC net cost stay near zero for most of the month and then spike at the end?',
     answer:
       'Under usage-based billing, every licensed user contributes their monthly included AICs to a shared account-wide pool — 3,000 AICs for Copilot Business users and 7,000 AICs for Copilot Enterprise users. All usage is drawn from this pool first, so the net cost stays $0.00 until the entire pool is consumed. Once the pool runs out, additional usage is billed at $0.01 per AIC — that is when the line climbs steeply. ' +
