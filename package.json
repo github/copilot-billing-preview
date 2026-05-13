@@ -33,7 +33,7 @@
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.11",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.6"
   },
   "description": "A browser app for previewing GitHub Copilot usage-based billing reports.",
   "license": "MIT",
