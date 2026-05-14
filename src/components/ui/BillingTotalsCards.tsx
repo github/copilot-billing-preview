@@ -151,8 +151,8 @@ export function BillingTotalsCards({
       </div>
       {licenseSeatCounts && (
         <p className="m-0 text-[13px] text-fg-muted leading-normal text-center">
-          This estimate uses <strong className="text-fg-default">{licenseSeatCounts.business.toLocaleString()}</strong> Copilot Business and{' '}
-          <strong className="text-fg-default">{licenseSeatCounts.enterprise.toLocaleString()}</strong> Copilot Enterprise users. If you have more users with these licenses that are missing from the report, you can adjust counters in the <strong className="text-fg-default">Users</strong> section of this app.
+          This report contains activity for <strong className="text-fg-default">{licenseSeatCounts.business.toLocaleString()}</strong> Copilot Business and{' '}
+          <strong className="text-fg-default">{licenseSeatCounts.enterprise.toLocaleString()}</strong> Copilot Enterprise users. If you had more users with these licenses during the billing period covered by the uploaded report, you can adjust counters in the <strong className="text-fg-default">Users</strong> section of this app.
         </p>
       )}
     </div>
