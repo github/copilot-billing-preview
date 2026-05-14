@@ -115,6 +115,8 @@ const BASE_BILLING_COLUMNS = [
   'organization',
 ] as const
 const REQUIRED_AIC_COLUMNS = ['aic_quantity', 'aic_gross_amount'] as const
+const APRIL_BACKFILL_START_DATE = '2026-04-24'
+const APRIL_BACKFILL_END_DATE = '2026-04-30'
 
 export class InvalidReportError extends Error {
   constructor() {
@@ -254,5 +256,39 @@ export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): T
   }
 
   record.aic_net_amount = getAicUsageMetrics(record).aicGrossAmount
+  return record
+}
+
+function isAprilBackfillDate(date: string): boolean {
+  return date >= APRIL_BACKFILL_START_DATE && date <= APRIL_BACKFILL_END_DATE
+}
+
+// normalize known export window
+export function normalizeTokenUsageRecord(record: TokenUsageRecord): TokenUsageRecord | null {
+  if (!isAprilBackfillDate(record.date)) {
+    return record
+  }
+
+  if (record.quantity === 0 && record.total_monthly_quota !== 0) {
+    return null
+  }
+
+  if (record.total_monthly_quota === 0 && isRequestUsageRecord(record.unit_type)) {
+    const { aicQuantity, aicGrossAmount } = getAicUsageMetrics(record)
+    const normalized = {
+      ...record,
+      quantity: 0,
+      gross_amount: 0,
+      discount_amount: 0,
+      net_amount: 0,
+      aic_quantity: aicQuantity * 0.5,
+      aic_gross_amount: aicGrossAmount * 0.5,
+      has_aic_quantity: true,
+      has_aic_gross_amount: true,
+    }
+    normalized.aic_net_amount = getAicUsageMetrics(normalized).aicGrossAmount
+    return normalized
+  }
+
   return record
 }

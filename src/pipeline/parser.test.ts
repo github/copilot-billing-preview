@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getUsageMetrics,
   InvalidReportError,
+  normalizeTokenUsageRecord,
   parseCsvRow,
   parseTokenUsageHeader,
   parseTokenUsageRecord,
@@ -486,6 +487,157 @@ describe('parser and metric normalization', () => {
 
     expect(explicitAicRecord.aic_net_amount).toBe(0.75)
     expect(fallbackAicRecord.aic_net_amount).toBe(0.5)
+  })
+
+  // normalize known export window
+  it('drops invalid rows in the known normalization window', () => {
+    const header = parseTokenUsageHeader(FULL_HEADER)
+    const record = parseTokenUsageRecord(
+      buildRow([
+        '2026-04-24',
+        'mona',
+        'copilot',
+        'copilot_premium_request',
+        'GPT-5.3',
+        '0',
+        'requests',
+        '0.04',
+        '0',
+        '0',
+        '0',
+        'False',
+        '300',
+        '',
+        '',
+        '3.5',
+        '0.035',
+      ]),
+      header,
+    )
+
+    expect(normalizeTokenUsageRecord(record)).toBeNull()
+  })
+
+  it('halves AIC values and clears quantity in the known normalization window', () => {
+    const header = parseTokenUsageHeader(FULL_HEADER)
+    const record = parseTokenUsageRecord(
+      buildRow([
+        '2026-04-30',
+        'mona',
+        'copilot',
+        'copilot_premium_request',
+        'Claude Sonnet 4.5',
+        '12',
+        'requests',
+        '0.04',
+        '0.48',
+        '0',
+        '0.48',
+        'False',
+        '0',
+        '',
+        '',
+        '120',
+        '1.20',
+      ]),
+      header,
+    )
+
+    expect(normalizeTokenUsageRecord(record)).toMatchObject({
+      quantity: 0,
+      gross_amount: 0,
+      discount_amount: 0,
+      net_amount: 0,
+      aic_quantity: 60,
+      aic_gross_amount: 0.6,
+      aic_net_amount: 0.6,
+      has_aic_quantity: true,
+      has_aic_gross_amount: true,
+    })
+  })
+
+  it('leaves records outside the known normalization window unchanged', () => {
+    const header = parseTokenUsageHeader(FULL_HEADER)
+    const record = parseTokenUsageRecord(
+      buildRow([
+        '2026-05-01',
+        'mona',
+        'copilot',
+        'copilot_premium_request',
+        'Claude Sonnet 4.5',
+        '12',
+        'requests',
+        '0.04',
+        '0.48',
+        '0',
+        '0.48',
+        'False',
+        '0',
+        '',
+        '',
+        '120',
+        '1.20',
+      ]),
+      header,
+    )
+
+    expect(normalizeTokenUsageRecord(record)).toBe(record)
+  })
+
+  it('leaves non-impacted records in the known normalization window unchanged', () => {
+    const header = parseTokenUsageHeader(FULL_HEADER)
+    const record = parseTokenUsageRecord(
+      buildRow([
+        '2026-04-30',
+        'mona',
+        'copilot',
+        'copilot_premium_request',
+        'Claude Sonnet 4.5',
+        '12',
+        'requests',
+        '0.04',
+        '0.48',
+        '0',
+        '0.48',
+        'False',
+        '300',
+        '',
+        '',
+        '120',
+        '1.20',
+      ]),
+      header,
+    )
+
+    expect(normalizeTokenUsageRecord(record)).toBe(record)
+  })
+
+  it('leaves AI-credit records in the known normalization window unchanged', () => {
+    const header = parseTokenUsageHeader(FULL_HEADER)
+    const record = parseTokenUsageRecord(
+      buildRow([
+        '2026-04-30',
+        'mona',
+        'copilot',
+        'copilot_ai_credit',
+        'Claude Sonnet 4.5',
+        '120',
+        'ai-credits',
+        '0.01',
+        '1.20',
+        '0',
+        '1.20',
+        'False',
+        '0',
+        '',
+        '',
+        '120',
+        '1.20',
+      ]),
+      header,
+    )
+
+    expect(normalizeTokenUsageRecord(record)).toBe(record)
   })
 })
 
