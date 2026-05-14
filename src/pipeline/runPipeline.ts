@@ -1,9 +1,8 @@
 import type { Aggregator } from './aggregators/base'
 import { createAicIncludedCreditsAllocator, type AicIncludedCreditsOverrides } from './aicIncludedCredits'
 import {
-  normalizeTokenUsageRecord,
   parseTokenUsageHeader,
-  parseTokenUsageRecord,
+  parseNormalizedTokenUsageRecord,
   validateHeader,
   type TokenUsageHeader,
   type TokenUsageRecord,
@@ -136,7 +135,7 @@ export async function runPipeline(
       continue
     }
 
-    const normalizedRecord = normalizeTokenUsageRecord(parseTokenUsageRecord(trimmed, header))
+    const normalizedRecord = parseNormalizedTokenUsageRecord(trimmed, header)
     if (!normalizedRecord) continue
 
     const record = aicIncludedCreditAllocator.apply(normalizedRecord)

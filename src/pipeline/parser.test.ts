@@ -4,6 +4,7 @@ import {
   InvalidReportError,
   normalizeTokenUsageRecord,
   parseCsvRow,
+  parseNormalizedTokenUsageRecord,
   parseTokenUsageHeader,
   parseTokenUsageRecord,
   UnsupportedReportVersionError,
@@ -553,6 +554,38 @@ describe('parser and metric normalization', () => {
       aic_net_amount: 0.6,
       has_aic_quantity: true,
       has_aic_gross_amount: true,
+    })
+  })
+
+  it('parses and normalizes records through one helper', () => {
+    const header = parseTokenUsageHeader(FULL_HEADER)
+    const record = parseNormalizedTokenUsageRecord(
+      buildRow([
+        '2026-04-30',
+        'mona',
+        'copilot',
+        'copilot_premium_request',
+        'Claude Sonnet 4.5',
+        '12',
+        'requests',
+        '0.04',
+        '0.48',
+        '0',
+        '0.48',
+        'False',
+        '0',
+        '',
+        '',
+        '120',
+        '1.20',
+      ]),
+      header,
+    )
+
+    expect(record).toMatchObject({
+      quantity: 0,
+      aic_quantity: 60,
+      aic_gross_amount: 0.6,
     })
   })
 
