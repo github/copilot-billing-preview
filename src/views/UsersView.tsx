@@ -267,6 +267,18 @@ export function UsersView({ users, seatOverrides = {}, onSeatOverridesChange, on
             </tr>
           </tbody>
         </table>
+        <div className="text-xs text-fg-muted mt-3 px-1 space-y-2">
+          <p>
+            Users without activity in the reporting period may not be present in the report.
+            <br />
+            You can <strong>add</strong> missing Copilot Business and Copilot Enterprise licenses (but not remove or reduce historical numbers in this report) for accurate bill estimation.
+          </p>
+          {displayBusiness > 0 && (
+            <p>
+              Upgrading Copilot Business users to Copilot Enterprise during the promotional period reduces the additional usage cost by <strong>$20</strong> per upgrade.
+            </p>
+          )}
+        </div>
         {reportPlanScope === 'organization' && (
           <div className="flex gap-2 mt-3 px-1">
             {isEditing ? (
