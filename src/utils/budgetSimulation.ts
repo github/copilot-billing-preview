@@ -1,5 +1,5 @@
 import { calculateAicIncludedCreditsContext, getUsageMonthKey, type AicIncludedCreditsContext, type AicIncludedCreditsOverrides } from '../pipeline/aicIncludedCredits'
-import { getAicUsageMetrics, getUsageMetrics, parseTokenUsageHeader, parseTokenUsageRecord, type TokenUsageHeader, type TokenUsageRecord } from '../pipeline/parser'
+import { getAicUsageMetrics, getUsageMetrics, parseNormalizedTokenUsageRecord, parseTokenUsageHeader, type TokenUsageHeader, type TokenUsageRecord } from '../pipeline/parser'
 import { getProductBudgetName, isNonCopilotCodeReviewUsage, NON_COPILOT_CODE_REVIEW_USER_LABEL, type ProductBudgetName } from '../pipeline/productClassification'
 import { streamLines } from '../pipeline/streamer'
 
@@ -344,7 +344,10 @@ export async function runBudgetSimulation(
       continue
     }
 
-    simulateBudgetRecord(state, parseTokenUsageRecord(trimmed, header), context)
+    const record = parseNormalizedTokenUsageRecord(trimmed, header)
+    if (!record) continue
+
+    simulateBudgetRecord(state, record, context)
   }
 
   return finalizeBudgetSimulation(state, context)

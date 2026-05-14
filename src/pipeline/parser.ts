@@ -292,3 +292,7 @@ export function normalizeTokenUsageRecord(record: TokenUsageRecord): TokenUsageR
 
   return record
 }
+
+export function parseNormalizedTokenUsageRecord(line: string, header: TokenUsageHeader): TokenUsageRecord | null {
+  return normalizeTokenUsageRecord(parseTokenUsageRecord(line, header))
+}

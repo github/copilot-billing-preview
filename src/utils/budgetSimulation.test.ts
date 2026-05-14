@@ -1,7 +1,32 @@
 import { describe, expect, it } from 'vitest'
 import { PRODUCT_BUDGET_COPILOT, PRODUCT_BUDGET_COPILOT_CLOUD_AGENT, PRODUCT_BUDGET_SPARK } from '../pipeline/productClassification'
 import type { TokenUsageRecord } from '../pipeline/parser'
-import { simulateBudgetFromRecords } from './budgetSimulation'
+import { runBudgetSimulation, simulateBudgetFromRecords } from './budgetSimulation'
+
+const HEADER = [
+  'date',
+  'username',
+  'product',
+  'sku',
+  'model',
+  'quantity',
+  'unit_type',
+  'applied_cost_per_quantity',
+  'gross_amount',
+  'discount_amount',
+  'net_amount',
+  'exceeds_quota',
+  'total_monthly_quota',
+  'organization',
+  'cost_center_name',
+  'aic_quantity',
+  'aic_gross_amount',
+].join(',')
+
+function createCsv(rows: string[][]): File {
+  const body = [HEADER, ...rows.map((row) => row.join(','))].join('\n')
+  return new File([body], 'usage.csv', { type: 'text/csv' })
+}
 
 function createRecord(overrides: Partial<TokenUsageRecord>): TokenUsageRecord {
   const quantity = overrides.quantity ?? 0
@@ -331,6 +356,26 @@ describe('simulateBudgetFromRecords', () => {
         { date: '2026-06-01', amount: 4 },
         { date: '2026-06-02', amount: 2 },
       ],
+    })
+  })
+})
+
+describe('runBudgetSimulation', () => {
+  it('normalizes known-window CSV rows before simulating budgets', async () => {
+    const file = createCsv([
+      ['2026-04-25', 'mona', 'copilot', 'copilot_premium_request', 'GPT-5', '10', 'requests', '0.04', '0.40', '0', '0.40', 'False', '0', '', '', '100', '1.00'],
+    ])
+
+    await expect(runBudgetSimulation(file, { accountBudgetUsd: 10 })).resolves.toEqual({
+      totalBill: 0.5,
+      blockedUsers: 0,
+      blockedRequests: 0,
+      blockedIncludedCreditsAic: 0,
+      budgetExhausted: false,
+      firstUserBlockedDate: null,
+      accountBlockedDate: null,
+      productBlockedDates: {},
+      adjustedDailyNetCostByDate: [{ date: '2026-04-25', amount: 0.5 }],
     })
   })
 })
