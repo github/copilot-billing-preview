@@ -128,7 +128,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
               <div className="text-xs text-fg-muted mt-1">1 PRU = $0.04</div>
               <div className="mt-4 pt-3 border-t border-border-default w-full flex flex-col gap-1.5 text-left">
                 <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums">
-                  <span>Consumed (PRUs)</span>
+                  <span>Consumed PRUs</span>
                   <span>{formatUsd(totals.grossAmount)}</span>
                 </div>
                 <div className="flex justify-between items-center text-[13px] text-fg-muted tabular-nums">
@@ -149,7 +149,7 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
               <div className="text-xs text-fg-muted mt-1">1 AIC = $0.01</div>
               <div className="mt-4 pt-3 border-t border-border-default w-full flex flex-col gap-1.5 text-left">
                 <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums">
-                  <span>Consumed (AICs)</span>
+                  <span>Consumed AICs</span>
                   <span>{formatUsd(totals.aicGrossAmount)}</span>
                 </div>
                 <div className="flex justify-between items-center text-[13px] text-fg-muted tabular-nums">
