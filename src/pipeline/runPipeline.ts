@@ -1,6 +1,13 @@
 import type { Aggregator } from './aggregators/base'
 import { createAicIncludedCreditsAllocator, type AicIncludedCreditsOverrides } from './aicIncludedCredits'
-import { parseTokenUsageHeader, parseTokenUsageRecord, validateHeader, type TokenUsageHeader, type TokenUsageRecord } from './parser'
+import {
+  normalizeTokenUsageRecord,
+  parseTokenUsageHeader,
+  parseTokenUsageRecord,
+  validateHeader,
+  type TokenUsageHeader,
+  type TokenUsageRecord,
+} from './parser'
 import { streamLines, type StreamProgress } from './streamer'
 
 async function validateFileHeader(file: File): Promise<void> {
@@ -129,7 +136,10 @@ export async function runPipeline(
       continue
     }
 
-    const record = aicIncludedCreditAllocator.apply(parseTokenUsageRecord(trimmed, header))
+    const normalizedRecord = normalizeTokenUsageRecord(parseTokenUsageRecord(trimmed, header))
+    if (!normalizedRecord) continue
+
+    const record = aicIncludedCreditAllocator.apply(normalizedRecord)
     aggregators.forEach((aggregator) => aggregator.accumulate(record, rowIndex))
     rowIndex += 1
 

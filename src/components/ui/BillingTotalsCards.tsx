@@ -47,7 +47,7 @@ export function BillingTotalsCards({
     <div className={`flex flex-col gap-3 ${className}`.trim()}>
       {upgradeRecommendation && (
         <p className="m-0 text-base font-normal text-center text-fg-default leading-normal">
-          Your current additional usage cost is <strong>{formatUsd(upgradeRecommendation.currentAdditionalUsageCostUsd)}</strong>. Upgrading to <strong>{upgradeRecommendation.nextPlanLabel}</strong> would reduce your total monthly bill by <strong>{formatUsd(upgradeRecommendation.netSavingsUsd)}</strong>. The total bill (license + additional usage) would be <strong>{formatUsd(upgradeRecommendation.upgradedTotalBillUsd)}</strong>.
+          Upgrading to <strong>{upgradeRecommendation.nextPlanLabel}</strong> would reduce your total monthly bill by <strong>{formatUsd(upgradeRecommendation.netSavingsUsd)}</strong>.
           {upgradeRecommendation.nextPlanTier === 'max' && (
             <>
               {' '}
@@ -71,11 +71,11 @@ export function BillingTotalsCards({
           <div className="text-xs text-fg-muted mt-1">1 PRU = $0.04</div>
           <div className="mt-4 pt-3 border-t border-border-default w-full flex flex-col gap-[6px] text-left">
             <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums">
-              <span>Consumed (PRUs)</span>
+              <span>Consumed PRUs</span>
               <span>{formatUsd(pruGrossAmount)}</span>
             </div>
             <div className="flex justify-between items-center text-[13px] text-fg-muted tabular-nums">
-              <span>Discount (included PRUs)</span>
+              <span>Included PRUs</span>
               <span>−{formatUsd(pruDiscountAmount)}</span>
             </div>
             <div className="pt-[6px] border-t border-dotted border-border-muted flex flex-col gap-[6px]">
@@ -110,11 +110,11 @@ export function BillingTotalsCards({
           <div className="text-xs text-fg-muted mt-1">1 AIC = $0.01</div>
           <div className="mt-4 pt-3 border-t border-border-default w-full flex flex-col gap-[6px] text-left">
             <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums">
-              <span>Consumed (AICs)</span>
+              <span>Consumed AICs</span>
               <span>{formatUsd(aicGrossAmount)}</span>
             </div>
             <div className="flex justify-between items-center text-[13px] text-fg-muted tabular-nums">
-              <span>Discount (included AICs)</span>
+              <span>Included AICs</span>
               <span>−{formatUsd(aicDiscountAmount)}</span>
             </div>
             <div className="pt-[6px] border-t border-dotted border-border-muted flex flex-col gap-[6px]">

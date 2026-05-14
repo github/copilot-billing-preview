@@ -46,6 +46,27 @@ class CaptureAggregator implements Aggregator<TokenUsageRecord, TokenUsageRecord
 }
 
 describe('runPipeline progress', () => {
+  it('filters and normalizes known normalization window rows before AIC allocation', async () => {
+    const file = createCsv([
+      ['2026-04-25', 'mona', 'copilot', 'copilot_premium_request', 'GPT-5', '0', 'requests', '0.04', '0', '0', '0', 'False', '300', '', '', '0', '0'],
+      ['2026-04-25', 'mona', 'copilot', 'copilot_premium_request', 'GPT-5', '10', 'requests', '0.04', '0.40', '0', '0.40', 'False', '0', '', '', '100', '1.00'],
+    ])
+    const aggregator = new CaptureAggregator()
+
+    await runPipeline(file, [aggregator])
+
+    expect(aggregator.result()).toEqual([
+      expect.objectContaining({
+        username: 'mona',
+        quantity: 0,
+        total_monthly_quota: 0,
+        aic_quantity: 50,
+        aic_gross_amount: 0.5,
+        aic_net_amount: 0.5,
+      }),
+    ])
+  })
+
   it('emits weighted progress for analysis and processing stages', async () => {
     const file = createCsv([
       ['2026-03-01', 'mona', 'copilot', 'copilot_ai_credit', 'GPT-5', '10', 'ai-credits', '0.01', '0.10', '0', '0.10', 'False', '300', 'octo', 'Cost Center A', '10', '0.10'],

@@ -119,11 +119,11 @@ export function ModelsView({ modelUsage, isIndividualReport, rangeStart, rangeEn
                 <div className="text-xs text-fg-muted mt-1">1 PRU = $0.04</div>
                 <div className="mt-4 pt-3 border-t border-border-default w-full flex flex-col gap-1.5 text-left">
                   <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums">
-                    <span>Consumed (PRUs)</span>
+                    <span>Consumed PRUs</span>
                     <span>{formatUsd(selectedModelTotals.grossAmount)}</span>
                   </div>
                   <div className="flex justify-between items-center text-[13px] text-fg-muted tabular-nums">
-                    <span>Discount (included PRUs)</span>
+                    <span>Included PRUs</span>
                     <span>−{formatUsd(selectedModelTotals.discountAmount)}</span>
                   </div>
                   <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums pt-1.5 border-t border-border-default font-semibold">
@@ -140,11 +140,11 @@ export function ModelsView({ modelUsage, isIndividualReport, rangeStart, rangeEn
                 <div className="text-xs text-fg-muted mt-1">1 AIC = $0.01</div>
                 <div className="mt-4 pt-3 border-t border-border-default w-full flex flex-col gap-1.5 text-left">
                   <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums">
-                    <span>Consumed (AICs)</span>
+                    <span>Consumed AICs</span>
                     <span>{formatUsd(selectedModelTotals.aicGrossAmount)}</span>
                   </div>
                   <div className="flex justify-between items-center text-[13px] text-fg-muted tabular-nums">
-                    <span>Discount (included AICs)</span>
+                    <span>Included AICs</span>
                     <span>−{formatUsd(selectedModelAicDiscount)}</span>
                   </div>
                   <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums pt-1.5 border-t border-border-default font-semibold">

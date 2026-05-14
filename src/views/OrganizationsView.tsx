@@ -127,11 +127,11 @@ export function OrganizationsView({ data, rangeStart }: { data: OrganizationResu
               <div className="text-xs text-fg-muted mt-1">1 PRU = $0.04</div>
               <div className="mt-4 pt-3 border-t border-border-default w-full flex flex-col gap-1.5 text-left">
                 <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums">
-                  <span>Consumed (PRUs)</span>
+                  <span>Consumed PRUs</span>
                   <span>{formatUsd(totals.grossAmount)}</span>
                 </div>
                 <div className="flex justify-between items-center text-[13px] text-fg-muted tabular-nums">
-                  <span>Discount (included PRUs)</span>
+                  <span>Included PRUs</span>
                   <span>−{formatUsd(totals.discountAmount)}</span>
                 </div>
                 <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums pt-1.5 border-t border-border-default font-semibold">
@@ -148,11 +148,11 @@ export function OrganizationsView({ data, rangeStart }: { data: OrganizationResu
               <div className="text-xs text-fg-muted mt-1">1 AIC = $0.01</div>
               <div className="mt-4 pt-3 border-t border-border-default w-full flex flex-col gap-1.5 text-left">
                 <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums">
-                  <span>Consumed (AICs)</span>
+                  <span>Consumed AICs</span>
                   <span>{formatUsd(totals.aicGrossAmount)}</span>
                 </div>
                 <div className="flex justify-between items-center text-[13px] text-fg-muted tabular-nums">
-                  <span>Discount (included AICs)</span>
+                  <span>Included AICs</span>
                   <span>−{formatUsd(Math.abs(aicDiscountAmount))}</span>
                 </div>
                 <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums pt-1.5 border-t border-border-default font-semibold">
@@ -175,7 +175,7 @@ export function OrganizationsView({ data, rangeStart }: { data: OrganizationResu
           </p>
         </div>
         <a
-          href={appLinks.usageBasedBillingBlog}
+          href={appLinks.aiCreditsForOrganizationsDocs}
           className="text-sm font-medium text-fg-accent no-underline whitespace-nowrap hover:underline"
           target="_blank"
           rel="noopener noreferrer"

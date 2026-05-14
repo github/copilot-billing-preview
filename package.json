@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@primer/octicons-react": "^19.25.0",
-    "@primer/primitives": "^11.7.1",
+    "@primer/primitives": "^11.8.1",
     "chart.js": "^4.5.1",
     "react": "19.2.6",
     "react-chartjs-2": "^5.3.1",
