@@ -33,6 +33,11 @@ export interface PipelineOptions {
   onProgress?: (progress: PipelineProgress) => void
 }
 
+export interface PipelineResult {
+  reportRowCount: number
+  processedRowCount: number
+}
+
 const ANALYSIS_PROGRESS_WEIGHT = 0.4
 const MIN_PROGRESS_INCREMENT_PERCENT = 1
 const MIN_PROGRESS_EMIT_INTERVAL_MS = 80
@@ -60,7 +65,7 @@ export async function runPipeline(
   file: File,
   aggregators: Aggregator<TokenUsageRecord, unknown, TokenUsageHeader>[],
   options?: PipelineOptions,
-): Promise<void> {
+): Promise<PipelineResult> {
   const { includedCreditsOverrides = {}, progressResolution = 500, onProgress } = options ?? {}
   await validateFileHeader(file)
   let lastProgressStage: PipelineProgress['stage'] | null = null
@@ -114,6 +119,7 @@ export async function runPipeline(
     },
   })
   let header: TokenUsageHeader | null = null
+  let reportRowCount = 0
   let rowIndex = 0
   let latestStreamProgress: StreamProgress = {
     bytesProcessed: 0,
@@ -136,6 +142,7 @@ export async function runPipeline(
     }
 
     const normalizedRecord = parseNormalizedTokenUsageRecord(trimmed, header)
+    reportRowCount += 1
     if (!normalizedRecord) continue
 
     const record = aicIncludedCreditAllocator.apply(normalizedRecord)
@@ -158,5 +165,10 @@ export async function runPipeline(
       bytesProcessed: file.size,
       totalBytes: file.size,
     }, true)
+  }
+
+  return {
+    reportRowCount,
+    processedRowCount: rowIndex,
   }
 }

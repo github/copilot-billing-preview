@@ -112,7 +112,7 @@ function App() {
     const orgAggregator = new OrganizationAggregator()
     const userAggregator = new UserUsageAggregator()
 
-    await runPipeline(file, [
+    const pipelineResult = await runPipeline(file, [
       statsAggregator,
       contextAggregator,
       dailyAggregator,
@@ -128,7 +128,10 @@ function App() {
     })
 
     return {
-      quickStats: statsAggregator.result(),
+      quickStats: {
+        ...statsAggregator.result(),
+        lineCount: pipelineResult.reportRowCount,
+      },
       reportContext: contextAggregator.result(),
       dailyUsageData: dailyAggregator.result().dailyData,
       modelUsage: modelAggregator.result(),
