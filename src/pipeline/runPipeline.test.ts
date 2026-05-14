@@ -53,7 +53,7 @@ describe('runPipeline progress', () => {
     ])
     const aggregator = new CaptureAggregator()
 
-    await runPipeline(file, [aggregator])
+    const result = await runPipeline(file, [aggregator])
 
     expect(aggregator.result()).toEqual([
       expect.objectContaining({
@@ -65,6 +65,10 @@ describe('runPipeline progress', () => {
         aic_net_amount: 0.5,
       }),
     ])
+    expect(result).toEqual({
+      reportRowCount: 2,
+      processedRowCount: 1,
+    })
   })
 
   it('emits weighted progress for analysis and processing stages', async () => {
