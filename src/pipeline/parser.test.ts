@@ -545,6 +545,9 @@ describe('parser and metric normalization', () => {
 
     expect(normalizeTokenUsageRecord(record)).toMatchObject({
       quantity: 0,
+      gross_amount: 0,
+      discount_amount: 0,
+      net_amount: 0,
       aic_quantity: 60,
       aic_gross_amount: 0.6,
       aic_net_amount: 0.6,
@@ -598,6 +601,34 @@ describe('parser and metric normalization', () => {
         '0.48',
         'False',
         '300',
+        '',
+        '',
+        '120',
+        '1.20',
+      ]),
+      header,
+    )
+
+    expect(normalizeTokenUsageRecord(record)).toBe(record)
+  })
+
+  it('leaves AI-credit records in the known normalization window unchanged', () => {
+    const header = parseTokenUsageHeader(FULL_HEADER)
+    const record = parseTokenUsageRecord(
+      buildRow([
+        '2026-04-30',
+        'mona',
+        'copilot',
+        'copilot_ai_credit',
+        'Claude Sonnet 4.5',
+        '120',
+        'ai-credits',
+        '0.01',
+        '1.20',
+        '0',
+        '1.20',
+        'False',
+        '0',
         '',
         '',
         '120',

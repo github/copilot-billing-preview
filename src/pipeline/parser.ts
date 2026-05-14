@@ -273,11 +273,14 @@ export function normalizeTokenUsageRecord(record: TokenUsageRecord): TokenUsageR
     return null
   }
 
-  if (record.total_monthly_quota === 0) {
+  if (record.total_monthly_quota === 0 && isRequestUsageRecord(record.unit_type)) {
     const { aicQuantity, aicGrossAmount } = getAicUsageMetrics(record)
     const normalized = {
       ...record,
       quantity: 0,
+      gross_amount: 0,
+      discount_amount: 0,
+      net_amount: 0,
       aic_quantity: aicQuantity * 0.5,
       aic_gross_amount: aicGrossAmount * 0.5,
       has_aic_quantity: true,
