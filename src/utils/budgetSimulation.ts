@@ -50,6 +50,16 @@ function normalizeBudget(value: number | undefined): number {
   return Math.max(value, 0)
 }
 
+function createSpendSegmentBudgetCaps(
+  budgets: Partial<Record<UserSpendSegmentId, number>> | undefined,
+): Map<UserSpendSegmentId, number> {
+  return new Map<UserSpendSegmentId, number>(
+    Object.entries(budgets ?? {})
+      .filter((entry): entry is [UserSpendSegmentId, number] => entry[1] !== undefined && Number.isFinite(entry[1]))
+      .map(([segment, amount]) => [segment, normalizeBudget(amount)]),
+  )
+}
+
 function getMaxQuantityByAdditionalSpendBudget(
   aicQuantity: number,
   remainingIncludedCredits: number,
@@ -93,8 +103,7 @@ function createBudgetSimulationState(
   return {
     remainingAccountBudget: normalizeBudget(options.accountBudgetUsd),
     userBudgetCap: normalizeBudget(options.userBudgetUsd),
-    userBudgetCapBySpendSegment: new Map<UserSpendSegmentId, number>(Object.entries(options.userBudgetUsdBySpendSegment ?? {})
-      .map(([segment, amount]) => [segment as UserSpendSegmentId, normalizeBudget(amount)])),
+    userBudgetCapBySpendSegment: createSpendSegmentBudgetCaps(options.userBudgetUsdBySpendSegment),
     userSpendSegmentsByUsername: new Map<string, UserSpendSegmentId>(Object.entries(options.userSpendSegmentsByUsername ?? {})),
     remainingProductBudgetByName: new Map<ProductBudgetName, number>(Object.entries(options.productBudgetsUsd ?? {})
       .map(([name, amount]) => [name as ProductBudgetName, normalizeBudget(amount)])),

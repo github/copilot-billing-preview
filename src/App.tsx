@@ -454,7 +454,7 @@ function App() {
     ?? (selectedUsername && userUsage
       ? userUsage.users.find((user) => user.username === selectedUsername) ?? null
       : null)
-  const canShowSpendInsights = Boolean(userUsage) && !isIndividualReport
+  const canShowSpendInsights = Boolean(userUsage) && !isIndividualReport && reportUsers.length > 1
   const visibleActiveView = activeView === 'spendInsights' && !canShowSpendInsights ? 'overview' : activeView
   const userNavActive = isIndividualReport
     ? visibleActiveView === 'userDetails'

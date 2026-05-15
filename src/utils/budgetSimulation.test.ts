@@ -265,6 +265,32 @@ describe('simulateBudgetFromRecords', () => {
     })
   })
 
+  it('falls back to the universal user budget when a segment budget is blank', () => {
+    const result = simulateBudgetFromRecords([
+      createRecord({ username: 'mona', quantity: 10, aic_quantity: 10, aic_gross_amount: 10 }),
+    ], {
+      userBudgetUsd: 5,
+      userBudgetUsdBySpendSegment: {
+        power: undefined,
+      },
+      userSpendSegmentsByUsername: {
+        mona: 'power',
+      },
+    }, pooledContext)
+
+    expect(result).toEqual({
+      totalBill: 5,
+      blockedUsers: 1,
+      blockedRequests: 5,
+      blockedIncludedCreditsAic: 0,
+      budgetExhausted: false,
+      firstUserBlockedDate: '2026-06-01',
+      accountBlockedDate: null,
+      productBlockedDates: {},
+      adjustedDailyNetCostByDate: [{ date: '2026-06-01', amount: 5 }],
+    })
+  })
+
   it('does not mark the account budget as blocking while included credits still cover remaining usage', () => {
     const result = simulateBudgetFromRecords([
       createRecord({ username: 'mona', quantity: 50, aic_quantity: 50, aic_gross_amount: 5 }),

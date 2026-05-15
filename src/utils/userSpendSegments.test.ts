@@ -68,6 +68,20 @@ describe('calculateUserSpendInsights', () => {
     })
   })
 
+  it('bases the top ten percent concentration on users with AIC gross cost', () => {
+    const insights = calculateUserSpendInsights([
+      createUser('mona', 100),
+      createUser('octocat', 50),
+      ...Array.from({ length: 98 }, (_, index) => createUser(`near-zero-user-${index + 1}`, 0)),
+    ])
+
+    expect(insights.totalUsers).toBe(100)
+    expect(insights.positiveUserCount).toBe(2)
+    expect(insights.top10PercentUserCount).toBe(1)
+    expect(insights.top10PercentShare).toBeCloseTo(100 / 150)
+    expect(insights.concentrationHeadline).toBe('The top 10% of users (1 user) account for 67% of AIC gross cost.')
+  })
+
   it('classifies users once so each report user can keep their spend segment', () => {
     const users = Array.from({ length: 20 }, (_, index) => createUser(`test-user-${index + 1}`, 20 - index))
     const nearZeroUser = createUser('near-zero-user', 0)

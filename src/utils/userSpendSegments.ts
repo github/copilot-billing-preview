@@ -160,8 +160,8 @@ export function calculateUserSpendInsights(users: ClassifiedUserSpendInput[], to
   const positiveUsers = sortedUsers.filter((user) => user.totals.aicGrossAmount > 0)
   const topUsers = positiveUsers.slice(0, topUserLimit).map((user) => createDriver(user, totalAicGrossAmount))
   const topUsersTotal = topUsers.reduce((sum, user) => sum + user.aicGrossAmount, 0)
-  const top10PercentUserCount = totalAicGrossAmount > 0 ? Math.max(1, Math.ceil(users.length * 0.10)) : 0
-  const top10PercentTotal = sortedUsers
+  const top10PercentUserCount = totalAicGrossAmount > 0 ? Math.max(1, Math.ceil(positiveUsers.length * 0.10)) : 0
+  const top10PercentTotal = positiveUsers
     .slice(0, top10PercentUserCount)
     .reduce((sum, user) => sum + user.totals.aicGrossAmount, 0)
 
