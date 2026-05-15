@@ -5,6 +5,7 @@ import type { UserDailyUsage, UserUsage } from '../pipeline/aggregators/userUsag
 import { calculateAicDiscountAmount, calculateSavingsDifference } from '../utils/billingComparison'
 import { fillDataForRange } from '../utils/fillDataForRange'
 import { formatAic } from '../utils/format'
+import { getUserSpendSegmentLabel } from '../utils/userSpendSegments'
 import { BillingProjectionDisclaimer, NegotiatedDiscountDisclaimer, PromotionalDataDisclaimer } from '../components/ui'
 import { th, thNum, td, tdNum } from '../components/ui/tableStyles'
 
@@ -179,6 +180,7 @@ export function UserDetailsView({
   const savings = user ? calculateSavingsDifference(user.totals.netAmount, user.totals.aicNetAmount) : 0
   const planLabel = user ? getPlanLabel(user.totalMonthlyQuota, reportPlanScope) : null
   const showNegotiatedDiscountDisclaimer = reportPlanScope !== 'individual'
+  const spendSegmentLabel = user && showNegotiatedDiscountDisclaimer ? getUserSpendSegmentLabel(user.spendSegment) : null
 
   if (!user) {
     return (
@@ -218,6 +220,7 @@ export function UserDetailsView({
         </div>
 
         <div className="flex items-center gap-3 gap-y-2 flex-wrap">
+          {spendSegmentLabel && <span className="text-sm text-fg-muted whitespace-nowrap [&:not(:last-child)]:after:content-['|'] [&:not(:last-child)]:after:ml-3 [&:not(:last-child)]:after:text-fg-muted">Spend group: {spendSegmentLabel}</span>}
           {planLabel && <span className="text-sm text-fg-muted whitespace-nowrap [&:not(:last-child)]:after:content-['|'] [&:not(:last-child)]:after:ml-3 [&:not(:last-child)]:after:text-fg-muted">Plan: {planLabel}</span>}
           {user.organizations.length > 0 && <span className="text-sm text-fg-muted whitespace-nowrap [&:not(:last-child)]:after:content-['|'] [&:not(:last-child)]:after:ml-3 [&:not(:last-child)]:after:text-fg-muted">Organizations: {joinValues(user.organizations)}</span>}
           {user.costCenters.length > 0 && <span className="text-sm text-fg-muted whitespace-nowrap [&:not(:last-child)]:after:content-['|'] [&:not(:last-child)]:after:ml-3 [&:not(:last-child)]:after:text-fg-muted">Cost Centers: {joinValues(user.costCenters)}</span>}
