@@ -3,13 +3,10 @@ import { DualAxisLineChart } from '../components'
 import { BillingTotalsCards } from '../components/ui'
 import { PRODUCT_BUDGET_COPILOT, PRODUCT_BUDGET_COPILOT_CLOUD_AGENT, PRODUCT_BUDGET_SPARK } from '../pipeline/productClassification'
 import type { BudgetSimulationResult } from '../utils/budgetSimulation'
+import type { BudgetField, BudgetValues } from '../utils/costManagementBudgets'
 import type { DailyUsageData } from '../pipeline/aggregators/dailyUsageAggregator'
 import { formatAic, formatUsd } from '../utils/format'
 import type { IndividualPlanUpgradeRecommendation } from '../utils/individualPlanUpgrade'
-
-export type BudgetField = 'user' | 'account' | 'productCloudAgent' | 'productSpark' | 'productCopilot'
-
-export type BudgetValues = Record<BudgetField, string>
 
 type CostManagementViewProps = {
   budgetValues: BudgetValues
@@ -36,16 +33,27 @@ type CostManagementViewProps = {
   onApplyBudgetSimulation: () => void
 }
 
-const ACCOUNT_BUDGET_FIELDS: Array<{ field: BudgetField; label: string; description: string }> = [
+const ACCOUNT_BUDGET_FIELD: { field: BudgetField; label: string; description: string } = {
+  field: 'account',
+  label: 'Account-level budget',
+  description: 'Controls additional spend only for the current billing period.\nDoes not impact included credits.',
+}
+
+const USER_BUDGET_FIELDS: Array<{ field: BudgetField; label: string; description: string }> = [
   {
     field: 'user',
-    label: 'User level budget',
-    description: 'Applies to pooled AI Credits and additional spend. Controls how many AI Credits a user can spend in total.',
+    label: 'Universal user-level budget',
+    description: 'Default per-user limit for cumulative AIC gross cost.',
   },
   {
-    field: 'account',
-    label: 'Account level budget',
-    description: 'Controls additional spend only for the current billing period.\nDoes not impact included credits.',
+    field: 'heavyUser',
+    label: 'Heavy users budget',
+    description: 'Applies to users classified as Heavy users in this report.',
+  },
+  {
+    field: 'powerUser',
+    label: 'Power users budget',
+    description: 'Applies to users classified as Power users in this report.',
   },
 ]
 
@@ -61,17 +69,17 @@ const PRODUCT_BUDGET_FIELDS: Array<{ field: BudgetField; label: string; descript
   {
     field: 'productCloudAgent',
     label: PRODUCT_BUDGET_COPILOT_CLOUD_AGENT,
-    description: 'Applies only to AI Credits additional spend for Copilot Cloud Agent usage.',
+    description: 'Applies only to additional AIC spend for Copilot Cloud Agent usage.',
   },
   {
     field: 'productSpark',
     label: PRODUCT_BUDGET_SPARK,
-    description: 'Applies only to AI Credits additional spend for Spark usage.',
+    description: 'Applies only to additional AIC spend for Spark usage.',
   },
   {
     field: 'productCopilot',
     label: PRODUCT_BUDGET_COPILOT,
-    description: 'Applies only to AI Credits additional spend for Copilot usage.',
+    description: 'Applies only to additional AIC spend for Copilot usage.',
   },
 ]
 
@@ -130,8 +138,9 @@ export function CostManagementView({
   onBudgetValueChange,
   onApplyBudgetSimulation,
 }: CostManagementViewProps) {
-  const visibleAccountBudgetFields = isIndividualReport ? INDIVIDUAL_BUDGET_FIELDS : ACCOUNT_BUDGET_FIELDS
+  const visibleAccountBudgetFields = isIndividualReport ? INDIVIDUAL_BUDGET_FIELDS : [ACCOUNT_BUDGET_FIELD]
   const hasVisibleBudgetValue = visibleAccountBudgetFields.some(({ field }) => budgetValues[field].trim() !== '')
+    || (!isIndividualReport && USER_BUDGET_FIELDS.some(({ field }) => budgetValues[field].trim() !== ''))
     || (!isIndividualReport && PRODUCT_BUDGET_FIELDS.some(({ field }) => budgetValues[field].trim() !== ''))
 
   const cumulativeSimulationSeries = useMemo(() => {
@@ -163,7 +172,7 @@ export function CostManagementView({
     <section className="flex flex-col gap-6" aria-label="Cost management">
       <div className="flex flex-col gap-1">
         <h2 className="m-0 text-lg text-fg-default">Cost management</h2>
-        <p className="m-0 text-[13px] text-fg-muted">Manage editable USD budgets and see the effect they would have on current uploaded report totals.</p>
+        <p className="m-0 text-[13px] text-fg-muted">Set USD budgets and preview how they would affect the uploaded report.</p>
       </div>
 
       <BillingTotalsCards
@@ -182,7 +191,7 @@ export function CostManagementView({
         upgradeRecommendation={upgradeRecommendation}
       />
 
-      <div className={`grid grid-cols-1 ${isIndividualReport ? '' : 'xl:grid-cols-2'} gap-4`}>
+      <div className="grid grid-cols-1 gap-4">
         {visibleAccountBudgetFields.map(({ field, label, description }) => (
           <label key={field} className="bg-bg-default border border-border-default rounded-md px-5 py-5 flex flex-col gap-3">
             <div className="flex flex-col gap-1">
@@ -207,6 +216,46 @@ export function CostManagementView({
           </label>
         ))}
       </div>
+
+      {!isIndividualReport && (
+        <div className="bg-bg-default border border-border-default rounded-md px-5 py-5 flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <strong className="text-sm font-semibold text-fg-default">User-level budgets</strong>
+            <p className="m-0 text-[13px] text-fg-muted">
+              These budgets apply per user to cumulative AIC gross cost. Heavy and Power budgets replace the universal budget for users classified into those groups.
+            </p>
+            <p className="m-0 text-[13px] text-fg-muted">
+              Values are prepopulated from the average AIC gross cost for the spending groups identified in the <strong className="text-fg-default">Spend Insights</strong> section.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            {USER_BUDGET_FIELDS.map(({ field, label, description }) => (
+              <label key={field} className="border border-border-default rounded-md px-5 py-5 flex flex-col gap-3 bg-bg-muted/30">
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-semibold text-fg-default">{label}</span>
+                  <span className="text-[13px] text-fg-muted leading-normal">{description}</span>
+                </div>
+
+                <div className="flex items-center rounded-md border border-border-default bg-bg-default focus-within:border-fg-accent focus-within:shadow-[0_0_0_3px_rgba(9,105,218,0.3)]">
+                  <span className="pl-3 text-sm font-medium text-fg-muted" aria-hidden>
+                    $
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    className="w-full border-0 bg-transparent px-2 py-2.5 text-sm text-fg-default outline-none"
+                    value={budgetValues[field]}
+                    onChange={(event) => onBudgetValueChange(field, sanitizeUsdInput(event.target.value))}
+                    placeholder="0.00"
+                    aria-label={label}
+                  />
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
 
       {!isIndividualReport && (
         <div className="bg-bg-default border border-border-default rounded-md px-5 py-5 flex flex-col gap-4">
@@ -250,7 +299,7 @@ export function CostManagementView({
           <p className="m-0 text-[13px] text-fg-muted">
             {isIndividualReport
               ? <>The simulation applies the <strong className="text-fg-default">additional usage budget</strong> against total paid AIC additional spend after included credits are used.</>
-              : <>The simulation applies the <strong className="text-fg-default">User level budget</strong> per user against cumulative AIC gross cost, the <strong className="text-fg-default">Account level budget</strong> against total paid AIC additional spend, and <strong className="text-fg-default">Product-level budgets</strong> against additional spend for each product bucket. Whichever limit is hit first blocks later requests for that scope.</>}
+               : <>The simulation applies <strong className="text-fg-default">User-level budgets</strong> per user to cumulative AIC gross cost, the <strong className="text-fg-default">account-level budget</strong> to total paid AIC additional spend, and <strong className="text-fg-default">product-level budgets</strong> to additional spend for each product bucket. The first limit reached blocks later requests for that scope.</>}
           </p>
           <button
             type="button"
