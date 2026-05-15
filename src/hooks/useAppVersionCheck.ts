@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 const VERSION_CHECK_INTERVAL_MS = 5 * 60 * 1000
+const VERSION_CHECK_TIMEOUT_MS = 10 * 1000
 const CURRENT_APP_VERSION = __APP_VERSION__
 
 type VersionManifest = {
@@ -26,16 +27,24 @@ function getVersionManifestUrl() {
 export function useAppVersionCheck() {
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false)
   const isCheckingRef = useRef(false)
+  const isUpdateAvailableRef = useRef(false)
 
   const checkForUpdate = useCallback(async () => {
-    if (import.meta.env.DEV || isCheckingRef.current) {
+    if (import.meta.env.DEV || isCheckingRef.current || isUpdateAvailableRef.current) {
       return
     }
 
     isCheckingRef.current = true
+    const abortController = new AbortController()
+    const timeoutId = window.setTimeout(() => {
+      abortController.abort()
+    }, VERSION_CHECK_TIMEOUT_MS)
 
     try {
-      const response = await fetch(getVersionManifestUrl(), { cache: 'no-store' })
+      const response = await fetch(getVersionManifestUrl(), {
+        cache: 'no-store',
+        signal: abortController.signal,
+      })
       if (!response.ok) {
         console.warn(`App version check failed with status ${response.status}.`)
         return
@@ -48,17 +57,19 @@ export function useAppVersionCheck() {
       }
 
       if (manifest.version !== CURRENT_APP_VERSION) {
+        isUpdateAvailableRef.current = true
         setIsUpdateAvailable(true)
       }
     } catch (error) {
       console.warn('App version check failed.', error)
     } finally {
+      window.clearTimeout(timeoutId)
       isCheckingRef.current = false
     }
   }, [])
 
   useEffect(() => {
-    if (import.meta.env.DEV) {
+    if (import.meta.env.DEV || isUpdateAvailable) {
       return
     }
 
@@ -89,7 +100,7 @@ export function useAppVersionCheck() {
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [checkForUpdate])
+  }, [checkForUpdate, isUpdateAvailable])
 
   const reloadApp = useCallback(() => {
     window.location.reload()
