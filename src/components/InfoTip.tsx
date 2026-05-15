@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useId, useLayoutEffect } from 'react'
+import { useState, useRef, useEffect, useId, useLayoutEffect, useCallback } from 'react'
+import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { InfoIcon } from '@primer/octicons-react'
 
@@ -6,6 +7,7 @@ type InfoTipProps = {
   text: string
   buttonLabel?: string
   className?: string
+  tone?: 'default' | 'danger'
 }
 
 type PopoverPosition = {
@@ -13,18 +15,31 @@ type PopoverPosition = {
   top: number
 }
 
+type ValidationPopoverProps = {
+  id: string
+  text: string | null
+  children: ReactNode
+}
+
 const POPOVER_GAP = 6
 const VIEWPORT_PADDING = 8
+const buttonClassByTone = {
+  default: 'text-fg-muted hover:text-fg-accent hover:bg-bg-accent-muted',
+  danger: 'text-fg-danger hover:bg-bg-danger-muted',
+}
+const popoverClassByTone = {
+  default: 'text-fg-default bg-bg-default border-border-default',
+  danger: 'text-fg-danger bg-bg-danger-muted border-border-danger',
+}
+const popoverBaseClass = 'fixed z-[100] min-w-[220px] max-w-[320px] py-2 px-3 text-xs font-normal leading-normal border rounded-md shadow-[0_3px_12px_rgba(0,0,0,0.12)] whitespace-normal pointer-events-auto'
 
-export function InfoTip({ text, buttonLabel = 'More info', className = '' }: InfoTipProps) {
-  const [open, setOpen] = useState(false)
+function usePopoverPosition(open: boolean) {
   const [position, setPosition] = useState<PopoverPosition | null>(null)
-  const ref = useRef<HTMLSpanElement>(null)
+  const triggerRef = useRef<HTMLSpanElement>(null)
   const popoverRef = useRef<HTMLSpanElement>(null)
-  const popoverId = useId()
 
-  const updatePosition = () => {
-    const trigger = ref.current
+  const updatePosition = useCallback(() => {
+    const trigger = triggerRef.current
     const popover = popoverRef.current
     if (!trigger || !popover) return
 
@@ -43,22 +58,11 @@ export function InfoTip({ text, buttonLabel = 'More info', className = '' }: Inf
       : Math.min(triggerRect.bottom + POPOVER_GAP, window.innerHeight - popoverRect.height - VIEWPORT_PADDING)
 
     setPosition({ left, top })
-  }
-
-  useEffect(() => {
-    if (!open) return
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener('click', handleClick, true)
-    return () => document.removeEventListener('click', handleClick, true)
-  }, [open])
+  }, [])
 
   useLayoutEffect(() => {
     if (open) updatePosition()
-  }, [open])
+  }, [open, updatePosition])
 
   useEffect(() => {
     if (!open) return
@@ -69,13 +73,32 @@ export function InfoTip({ text, buttonLabel = 'More info', className = '' }: Inf
       window.removeEventListener('resize', updatePosition)
       document.removeEventListener('scroll', updatePosition, true)
     }
-  }, [open])
+  }, [open, updatePosition])
+
+  return { triggerRef, popoverRef, position }
+}
+
+export function InfoTip({ text, buttonLabel = 'More info', className = '', tone = 'default' }: InfoTipProps) {
+  const [open, setOpen] = useState(false)
+  const { triggerRef, popoverRef, position } = usePopoverPosition(open)
+  const popoverId = useId()
+
+  useEffect(() => {
+    if (!open) return
+    const handleClick = (e: MouseEvent) => {
+      if (triggerRef.current && !triggerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('click', handleClick, true)
+    return () => document.removeEventListener('click', handleClick, true)
+  }, [open, triggerRef])
 
   return (
-    <span className={`relative inline-flex items-center ml-1 align-middle ${className}`.trim()} ref={ref}>
+    <span className={`relative inline-flex items-center ml-1 align-middle ${className}`.trim()} ref={triggerRef}>
       <button
         type="button"
-        className="inline-flex items-center p-[2px] border-none bg-transparent cursor-pointer text-fg-muted rounded-full hover:text-fg-accent hover:bg-bg-accent-muted"
+        className={`inline-flex items-center p-[2px] border-none bg-transparent cursor-pointer rounded-full ${buttonClassByTone[tone]}`}
         onClick={(e) => {
           e.stopPropagation()
           setOpen((v) => !v)
@@ -92,7 +115,34 @@ export function InfoTip({ text, buttonLabel = 'More info', className = '' }: Inf
           id={popoverId}
           ref={popoverRef}
           role="tooltip"
-          className="fixed z-[100] min-w-[220px] max-w-[320px] py-2 px-3 text-xs font-normal leading-normal text-fg-default bg-bg-default border border-border-default rounded-md shadow-[0_3px_12px_rgba(0,0,0,0.12)] whitespace-normal pointer-events-auto"
+          className={`${popoverBaseClass} ${popoverClassByTone[tone]}`}
+          style={{
+            left: position?.left ?? 0,
+            top: position?.top ?? 0,
+            visibility: position ? 'visible' : 'hidden',
+          }}
+        >
+          {text}
+        </span>,
+        document.body,
+      )}
+    </span>
+  )
+}
+
+export function ValidationPopover({ id, text, children }: ValidationPopoverProps) {
+  const open = Boolean(text)
+  const { triggerRef, popoverRef, position } = usePopoverPosition(open)
+
+  return (
+    <span className="relative inline-flex items-center" ref={triggerRef}>
+      {children}
+      {open && createPortal(
+        <span
+          id={id}
+          ref={popoverRef}
+          role="alert"
+          className={`${popoverBaseClass} ${popoverClassByTone.danger}`}
           style={{
             left: position?.left ?? 0,
             top: position?.top ?? 0,

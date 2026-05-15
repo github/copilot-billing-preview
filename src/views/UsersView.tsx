@@ -9,15 +9,27 @@ import {
   inferReportPlanScope,
 } from '../pipeline/aicIncludedCredits'
 import { calculateSavingsDifference } from '../utils/billingComparison'
-import { InfoTip } from '../components/InfoTip'
+import { InfoTip, ValidationPopover } from '../components/InfoTip'
 import { formatAic, formatDifference } from '../utils/format'
 import { Trie } from '../utils/trie'
 import { th, thBase, thNum, td, tdNum, sortBtn } from '../components/ui/tableStyles'
 
 const PAGE_SIZE = 50
+const seatInputBaseClass = 'w-[90px] px-1.5 py-0.5 text-[13px] tabular-nums text-right border rounded-sm bg-bg-default focus:outline-none'
+const seatInputDefaultClass = `${seatInputBaseClass} border-border-default focus:border-fg-accent focus:shadow-[0_0_0_3px_rgba(9,105,218,0.3)]`
+const seatInputErrorClass = `${seatInputBaseClass} border-border-danger text-fg-danger focus:border-border-danger focus:shadow-[0_0_0_3px_rgba(207,34,46,0.3)]`
 
 function formatInt(n: number): string {
   return n.toLocaleString()
+}
+
+function getSeatReductionError(value: string, minimum: number): string | null {
+  if (value === '') return null
+
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || Math.floor(parsed) >= minimum) return null
+
+  return `Cannot go below ${formatInt(minimum)} because that count comes from historical report data.`
 }
 
 function formatCost(n: number): string {
@@ -73,6 +85,13 @@ export function UsersView({ users, seatOverrides = {}, onSeatOverridesChange, on
 
   const displayBusiness = isEditing ? (draftBusiness !== '' ? parseInt(draftBusiness, 10) || 0 : savedBusiness) : savedBusiness
   const displayEnterprise = isEditing ? (draftEnterprise !== '' ? parseInt(draftEnterprise, 10) || 0 : savedEnterprise) : savedEnterprise
+  const businessSeatError = isEditing
+    ? getSeatReductionError(draftBusiness, defaultBusiness)
+    : null
+  const enterpriseSeatError = isEditing
+    ? getSeatReductionError(draftEnterprise, defaultEnterprise)
+    : null
+  const hasSeatValidationError = Boolean(businessSeatError || enterpriseSeatError)
 
   const adjustedSummary = useMemo(() => {
     if (reportPlanScope === 'individual') return licenseSummary
@@ -95,6 +114,8 @@ export function UsersView({ users, seatOverrides = {}, onSeatOverridesChange, on
   }
 
   const handleSave = () => {
+    if (hasSeatValidationError) return
+
     const parsedBusiness = Number(draftBusiness)
     const parsedEnterprise = Number(draftEnterprise)
     const normalizedBusiness = Number.isFinite(parsedBusiness)
@@ -195,7 +216,12 @@ export function UsersView({ users, seatOverrides = {}, onSeatOverridesChange, on
         </span>
       </div>
       <div className="bg-bg-default border border-border-default rounded-md overflow-auto mb-4 p-4">
-        <table className="w-full border-collapse text-[13px]">
+        <table className="w-full table-fixed border-collapse text-[13px]">
+          <colgroup>
+            <col className="w-[40%]" />
+            <col className="w-[28%]" />
+            <col className="w-[32%]" />
+          </colgroup>
           <thead>
             <tr>
               <th className={th}>License type</th>
@@ -210,15 +236,19 @@ export function UsersView({ users, seatOverrides = {}, onSeatOverridesChange, on
                   <td className={`${td} font-medium text-fg-default`}>Copilot Business</td>
                   <td className={tdNum}>
                     {isEditing ? (
-                      <input
-                        className="w-[90px] px-1.5 py-0.5 text-[13px] tabular-nums text-right border border-border-default rounded-sm bg-bg-default focus:outline-none focus:border-fg-accent focus:shadow-[0_0_0_3px_rgba(9,105,218,0.3)]"
-                        type="number"
-                        min={defaultBusiness}
-                        step="1"
-                        value={draftBusiness}
-                        onChange={(e) => setDraftBusiness(e.target.value)}
-                        aria-label="Copilot Business user count"
-                      />
+                      <ValidationPopover id="business-seat-count-error" text={businessSeatError}>
+                        <input
+                          className={businessSeatError ? seatInputErrorClass : seatInputDefaultClass}
+                          type="number"
+                          min={defaultBusiness}
+                          step="1"
+                          value={draftBusiness}
+                          onChange={(e) => setDraftBusiness(e.target.value)}
+                          aria-label="Copilot Business user count"
+                          aria-invalid={businessSeatError ? 'true' : undefined}
+                          aria-describedby={businessSeatError ? 'business-seat-count-error' : undefined}
+                        />
+                      </ValidationPopover>
                     ) : (
                       <span className={hasSavedOverride && seatOverrides.business !== undefined ? 'text-fg-accent font-semibold' : ''}>
                         {formatInt(savedBusiness)}
@@ -231,15 +261,19 @@ export function UsersView({ users, seatOverrides = {}, onSeatOverridesChange, on
                   <td className={`${td} font-medium text-fg-default`}>Copilot Enterprise</td>
                   <td className={tdNum}>
                     {isEditing ? (
-                      <input
-                        className="w-[90px] px-1.5 py-0.5 text-[13px] tabular-nums text-right border border-border-default rounded-sm bg-bg-default focus:outline-none focus:border-fg-accent focus:shadow-[0_0_0_3px_rgba(9,105,218,0.3)]"
-                        type="number"
-                        min={defaultEnterprise}
-                        step="1"
-                        value={draftEnterprise}
-                        onChange={(e) => setDraftEnterprise(e.target.value)}
-                        aria-label="Copilot Enterprise user count"
-                      />
+                      <ValidationPopover id="enterprise-seat-count-error" text={enterpriseSeatError}>
+                        <input
+                          className={enterpriseSeatError ? seatInputErrorClass : seatInputDefaultClass}
+                          type="number"
+                          min={defaultEnterprise}
+                          step="1"
+                          value={draftEnterprise}
+                          onChange={(e) => setDraftEnterprise(e.target.value)}
+                          aria-label="Copilot Enterprise user count"
+                          aria-invalid={enterpriseSeatError ? 'true' : undefined}
+                          aria-describedby={enterpriseSeatError ? 'enterprise-seat-count-error' : undefined}
+                        />
+                      </ValidationPopover>
                     ) : (
                       <span className={hasSavedOverride && seatOverrides.enterprise !== undefined ? 'text-fg-accent font-semibold' : ''}>
                         {formatInt(savedEnterprise)}
@@ -271,7 +305,7 @@ export function UsersView({ users, seatOverrides = {}, onSeatOverridesChange, on
           <p>
             Users without activity in the reporting period may not be present in the report.
             <br />
-            You can <strong>add</strong> missing Copilot Business and Copilot Enterprise licenses (but not remove or reduce historical numbers in this report) for accurate bill estimation.
+            You can <strong>add</strong> missing Copilot Business and Copilot Enterprise licenses for accurate bill estimation.
           </p>
           {displayBusiness > 0 && (
             <p>
@@ -283,7 +317,14 @@ export function UsersView({ users, seatOverrides = {}, onSeatOverridesChange, on
           <div className="flex gap-2 mt-3 px-1">
             {isEditing ? (
               <>
-                <button type="button" className="px-4 py-1.5 text-[13px] font-medium border border-transparent rounded-md bg-bg-success-emphasis text-fg-on-emphasis cursor-pointer hover:opacity-90" onClick={handleSave}>Save</button>
+                <button
+                  type="button"
+                  className="px-4 py-1.5 text-[13px] font-medium border border-transparent rounded-md bg-bg-success-emphasis text-fg-on-emphasis cursor-pointer hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={handleSave}
+                  disabled={hasSeatValidationError}
+                >
+                  Save
+                </button>
                 <button type="button" className="px-4 py-1.5 text-[13px] font-medium border border-border-default rounded-md bg-bg-muted text-fg-default cursor-pointer hover:bg-bg-inset" onClick={handleCancel}>Cancel</button>
               </>
             ) : (
