@@ -74,8 +74,11 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
 
   if (data.costCenters.length === 0) {
     return (
-      <section className="flex flex-col gap-5">
-        <h2 className="m-0 text-2xl font-bold text-fg-default">Cost Centers</h2>
+      <section className="flex flex-col gap-3">
+        <div className="flex items-baseline gap-3 mb-4">
+          <h2 className="m-0 text-lg text-fg-default">Cost Centers</h2>
+          <span className="text-[13px] text-fg-muted">0 total</span>
+        </div>
         <div className="bg-bg-default border border-border-default rounded-md p-6 text-center text-fg-muted text-sm">No cost centers found in this report.</div>
       </section>
     )
@@ -87,11 +90,13 @@ export function CostCentersView({ data, rangeStart }: { data: CostCenterResult; 
   const hasCosts = totals && (totals.grossAmount > 0 || totals.aicGrossAmount > 0)
 
   return (
-    <section className="flex flex-col gap-5">
+    <section className="flex flex-col gap-3">
       <div className="flex flex-col gap-3 mb-2">
-        <div className="flex items-baseline gap-3">
-          <h2 className="m-0 text-2xl font-bold text-fg-default">Cost Centers</h2>
-          <span className="text-sm font-medium text-fg-muted">{data.costCenters.length.toLocaleString()} total</span>
+        <div className="flex items-baseline gap-3 mb-4">
+          <h2 className="m-0 text-lg text-fg-default">Cost Centers</h2>
+          <span className="text-[13px] text-fg-muted">
+            {data.costCenters.length.toLocaleString()} total
+          </span>
         </div>
         <select className="border border-border-default rounded-md py-2.5 px-3 text-sm max-w-[500px] text-fg-default bg-bg-default focus-visible:outline-2 focus-visible:outline-app-accent focus-visible:outline-offset-2" value={selectedCostCenterName} onChange={handleSelectChange}>
           {selectOptions}
