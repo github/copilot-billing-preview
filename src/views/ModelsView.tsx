@@ -3,6 +3,7 @@ import { InfoIcon } from '@primer/octicons-react'
 import type { ModelUsageResult, ModelDailyUsageData, ModelUsageTotals } from '../pipeline/aggregators/modelUsageAggregator'
 import { DualAxisLineChart, MultiSeriesStackedBarChart } from '../components'
 import { BillingProjectionDisclaimer, NegotiatedDiscountDisclaimer, PromotionalDataDisclaimer } from '../components/ui'
+import { th, thNum, td, tdNum } from '../components/ui/tableStyles'
 import { calculateAicDiscountAmount, calculateSavingsDifference } from '../utils/billingComparison'
 import { fillDataForRange } from '../utils/fillDataForRange'
 import { formatAic, formatUsd } from '../utils/format'
@@ -141,21 +142,21 @@ export function ModelsView({ modelUsage, isIndividualReport, rangeStart, rangeEn
             <table className="w-full min-w-[640px] border-collapse text-[13px]">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 border-b border-bg-muted whitespace-nowrap text-left text-[11px] tracking-[0.05em] uppercase font-semibold text-fg-muted bg-bg-default">Rank</th>
-                  <th className="px-4 py-3 border-b border-bg-muted whitespace-nowrap text-left text-[11px] tracking-[0.05em] uppercase font-semibold text-fg-muted bg-bg-default">Model</th>
-                  <th className="px-4 py-3 border-b border-bg-muted whitespace-nowrap text-[11px] tracking-[0.05em] uppercase font-semibold text-fg-muted bg-bg-default text-right">AICs</th>
-                  <th className="px-4 py-3 border-b border-bg-muted whitespace-nowrap text-[11px] tracking-[0.05em] uppercase font-semibold text-fg-muted bg-bg-default text-right">% of AICs</th>
-                  <th className="px-4 py-3 border-b border-bg-muted whitespace-nowrap text-[11px] tracking-[0.05em] uppercase font-semibold text-fg-muted bg-bg-default text-right">Gross cost</th>
+                  <th className={th}>Rank</th>
+                  <th className={th}>Model</th>
+                  <th className={thNum}>AICs</th>
+                  <th className={thNum}>% of AICs</th>
+                  <th className={thNum}>Gross cost</th>
                 </tr>
               </thead>
-              <tbody className="[&>tr:last-child>td]:border-b-0">
+              <tbody>
                 {modelDriverSummary.topAicModels.map((row, index) => (
                   <tr key={row.model}>
-                    <td className="px-4 py-3 border-b border-bg-muted whitespace-nowrap text-fg-muted tabular-nums">{index + 1}</td>
-                    <td className="px-4 py-3 border-b border-bg-muted whitespace-nowrap font-semibold text-fg-default">{row.model}</td>
-                    <td className="px-4 py-3 border-b border-bg-muted whitespace-nowrap text-right tabular-nums">{formatAic(row.totals.aicQuantity)}</td>
-                    <td className="px-4 py-3 border-b border-bg-muted whitespace-nowrap text-right tabular-nums">{formatShare(row.totals.aicQuantity, modelDriverSummary.totalAicQuantity)}</td>
-                    <td className="px-4 py-3 border-b border-bg-muted whitespace-nowrap text-right tabular-nums">{formatUsd(row.totals.aicGrossAmount)}</td>
+                    <td className={`${td} text-fg-muted tabular-nums`}>{index + 1}</td>
+                    <td className={`${td} font-semibold text-fg-default`}>{row.model}</td>
+                    <td className={tdNum}>{formatAic(row.totals.aicQuantity)}</td>
+                    <td className={tdNum}>{formatShare(row.totals.aicQuantity, modelDriverSummary.totalAicQuantity)}</td>
+                    <td className={tdNum}>{formatUsd(row.totals.aicGrossAmount)}</td>
                   </tr>
                 ))}
               </tbody>
