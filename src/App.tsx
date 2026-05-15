@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import { MarkGithubIcon, GraphIcon, PeopleIcon, CopilotIcon, TableIcon, OrganizationIcon, DatabaseIcon, InfoIcon, QuestionIcon, CreditCardIcon } from '@primer/octicons-react'
 
-import { UploadPage } from './components'
+import { NewVersionBanner, UploadPage } from './components'
 import { UsersView } from './views/UsersView'
 import type { SeatOverrides } from './views/UsersView'
 import { UserDetailsView } from './views/UserDetailsView'
@@ -30,6 +30,7 @@ import { runPipeline } from './pipeline/runPipeline'
 import { runBudgetSimulation, type BudgetSimulationResult } from './utils/budgetSimulation'
 import { EMPTY_BUDGET_VALUES, getDefaultBudgetValues, getUserSpendSegmentsByUsername, type BudgetField, type BudgetValues } from './utils/costManagementBudgets'
 import { calculateIndividualPlanUpgradeRecommendation, getIndividualLicenseMonthlyCost } from './utils/individualPlanUpgrade'
+import { useAppVersionCheck } from './hooks/useAppVersionCheck'
 
 type Status = 'idle' | 'processing' | 'done'
 type ActiveView = 'overview' | 'users' | 'userDetails' | 'costCenters' | 'orgs' | 'models' | 'products' | 'spendInsights' | 'costManagement' | 'guide' | 'faq'
@@ -63,6 +64,7 @@ function App() {
   const currentFileRef = useRef<File | null>(null)
   const latestRunIdRef = useRef(0)
   const latestSimulationIdRef = useRef(0)
+  const { isUpdateAvailable, reloadApp } = useAppVersionCheck()
 
   const applyProcessedData = useCallback(({
     quickStats,
@@ -787,6 +789,8 @@ function App() {
           Something is not right? <a href={appLinks.issues} target="_blank" rel="noopener noreferrer">Submit an issue</a>.
         </footer>
       )}
+
+      <NewVersionBanner isVisible={isUpdateAvailable} onReload={reloadApp} />
     </div>
   )
 }
