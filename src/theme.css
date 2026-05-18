@@ -115,4 +115,15 @@
   a {
     color: inherit;
   }
+
+  input.no-spin-number[type='number'] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+
+  input.no-spin-number[type='number']::-webkit-inner-spin-button,
+  input.no-spin-number[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }

@@ -15,7 +15,7 @@ import { Trie } from '../utils/trie'
 import { th, thBase, thNum, td, tdNum, sortBtn } from '../components/ui/tableStyles'
 
 const PAGE_SIZE = 50
-const seatInputBaseClass = 'w-[90px] px-1.5 py-0.5 text-[13px] tabular-nums text-right border rounded-sm bg-bg-default focus:outline-none'
+const seatInputBaseClass = 'no-spin-number w-[90px] px-1.5 py-0.5 text-[13px] tabular-nums text-right border rounded-sm bg-bg-default focus:outline-none'
 const seatInputDefaultClass = `${seatInputBaseClass} border-border-default focus:border-fg-accent focus:shadow-[0_0_0_3px_rgba(9,105,218,0.3)]`
 const seatInputErrorClass = `${seatInputBaseClass} border-border-danger text-fg-danger focus:border-border-danger focus:shadow-[0_0_0_3px_rgba(207,34,46,0.3)]`
 
@@ -240,6 +240,7 @@ export function UsersView({ users, seatOverrides = {}, onSeatOverridesChange, on
                         <input
                           className={businessSeatError ? seatInputErrorClass : seatInputDefaultClass}
                           type="number"
+                          inputMode="numeric"
                           min={defaultBusiness}
                           step="1"
                           value={draftBusiness}
@@ -265,6 +266,7 @@ export function UsersView({ users, seatOverrides = {}, onSeatOverridesChange, on
                         <input
                           className={enterpriseSeatError ? seatInputErrorClass : seatInputDefaultClass}
                           type="number"
+                          inputMode="numeric"
                           min={defaultEnterprise}
                           step="1"
                           value={draftEnterprise}
