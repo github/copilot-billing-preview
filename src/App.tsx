@@ -284,6 +284,9 @@ function App() {
     setBudgetSimulation(null)
     setBudgetSimulationError(null)
     setIsApplyingBudgetSimulation(false)
+    if (!onError) {
+      setError(null)
+    }
 
     try {
       const nextData = await buildReportData(file, resolvedOverrides)
@@ -291,9 +294,6 @@ function App() {
 
       applyProcessedData(nextData)
       setSeatOverrides(compactSeatOverrides(resolvedOverrides))
-      if (!onError) {
-        setError(null)
-      }
       return true
     } catch (err) {
       if (runId !== latestRunIdRef.current) return false

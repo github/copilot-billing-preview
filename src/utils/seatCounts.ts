@@ -14,9 +14,10 @@ export function parseSeatCountInput(raw: string, minimum: number): number {
 }
 
 export function getSeatReductionError(value: string, minimum: number): string | null {
-  if (value === '') return null
+  const trimmed = value.trim()
+  if (trimmed === '') return null
 
-  const parsed = Number(value)
+  const parsed = Number(trimmed)
   if (!Number.isFinite(parsed) || Math.floor(parsed) >= minimum) return null
 
   return `Cannot go below ${minimum.toLocaleString()} because that count comes from historical report data.`
