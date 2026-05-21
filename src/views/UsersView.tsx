@@ -11,7 +11,7 @@ import {
 import { calculateSavingsDifference } from '../utils/billingComparison'
 import { InfoTip, ValidationPopover } from '../components/InfoTip'
 import { formatAic, formatDifference } from '../utils/format'
-import { getSeatReductionError, parseSeatCountInput } from '../utils/seatCounts'
+import { getSeatCountInputError, parseSeatCountInput } from '../utils/seatCounts'
 import { Trie } from '../utils/trie'
 import { th, thBase, thNum, td, tdNum, sortBtn } from '../components/ui/tableStyles'
 
@@ -75,13 +75,15 @@ export function UsersView({ users, seatOverrides = {}, onSeatOverridesChange, on
   const savedEnterprise = seatOverrides.enterprise ?? defaultEnterprise
   const hasSavedOverride = seatOverrides.business !== undefined || seatOverrides.enterprise !== undefined
 
-  const displayBusiness = isEditing ? (draftBusiness !== '' ? parseInt(draftBusiness, 10) || 0 : savedBusiness) : savedBusiness
-  const displayEnterprise = isEditing ? (draftEnterprise !== '' ? parseInt(draftEnterprise, 10) || 0 : savedEnterprise) : savedEnterprise
+  const parsedDraftBusiness = parseSeatCountInput(draftBusiness)
+  const parsedDraftEnterprise = parseSeatCountInput(draftEnterprise)
+  const displayBusiness = isEditing ? (parsedDraftBusiness ?? savedBusiness) : savedBusiness
+  const displayEnterprise = isEditing ? (parsedDraftEnterprise ?? savedEnterprise) : savedEnterprise
   const businessSeatError = isEditing
-    ? getSeatReductionError(draftBusiness, defaultBusiness)
+    ? getSeatCountInputError(draftBusiness, defaultBusiness)
     : null
   const enterpriseSeatError = isEditing
-    ? getSeatReductionError(draftEnterprise, defaultEnterprise)
+    ? getSeatCountInputError(draftEnterprise, defaultEnterprise)
     : null
   const hasSeatValidationError = Boolean(businessSeatError || enterpriseSeatError)
 
@@ -106,13 +108,11 @@ export function UsersView({ users, seatOverrides = {}, onSeatOverridesChange, on
   }
 
   const handleSave = () => {
-    if (hasSeatValidationError) return
+    if (hasSeatValidationError || parsedDraftBusiness === null || parsedDraftEnterprise === null) return
 
-    const normalizedBusiness = parseSeatCountInput(draftBusiness, defaultBusiness)
-    const normalizedEnterprise = parseSeatCountInput(draftEnterprise, defaultEnterprise)
     const newOverrides: SeatOverrides = {}
-    if (normalizedBusiness !== defaultBusiness) newOverrides.business = normalizedBusiness
-    if (normalizedEnterprise !== defaultEnterprise) newOverrides.enterprise = normalizedEnterprise
+    if (parsedDraftBusiness !== defaultBusiness) newOverrides.business = parsedDraftBusiness
+    if (parsedDraftEnterprise !== defaultEnterprise) newOverrides.enterprise = parsedDraftEnterprise
     onSeatOverridesChange?.(newOverrides)
     setIsEditing(false)
   }

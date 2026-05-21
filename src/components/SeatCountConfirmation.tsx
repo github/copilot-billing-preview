@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { PeopleIcon, ArrowRightIcon } from '@primer/octicons-react'
 import { ValidationPopover } from './InfoTip'
-import { getSeatReductionError, parseSeatCountInput } from '../utils/seatCounts'
+import { getSeatCountInputError, parseSeatCountInput } from '../utils/seatCounts'
 
 export type SeatCountConfirmationProps = {
   fileName: string | null
@@ -24,22 +24,22 @@ export function SeatCountConfirmation({
   const [businessDraft, setBusinessDraft] = useState<string>(String(defaultBusinessSeats))
   const [enterpriseDraft, setEnterpriseDraft] = useState<string>(String(defaultEnterpriseSeats))
 
-  const businessError = useMemo(() => getSeatReductionError(businessDraft, defaultBusinessSeats), [businessDraft, defaultBusinessSeats])
-  const enterpriseError = useMemo(() => getSeatReductionError(enterpriseDraft, defaultEnterpriseSeats), [enterpriseDraft, defaultEnterpriseSeats])
+  const businessError = useMemo(() => getSeatCountInputError(businessDraft, defaultBusinessSeats), [businessDraft, defaultBusinessSeats])
+  const enterpriseError = useMemo(() => getSeatCountInputError(enterpriseDraft, defaultEnterpriseSeats), [enterpriseDraft, defaultEnterpriseSeats])
   const hasError = Boolean(businessError || enterpriseError)
-  const normalizedBusinessSeats = parseSeatCountInput(businessDraft, defaultBusinessSeats)
-  const normalizedEnterpriseSeats = parseSeatCountInput(enterpriseDraft, defaultEnterpriseSeats)
-  const hasAddedSeats = normalizedBusinessSeats > defaultBusinessSeats || normalizedEnterpriseSeats > defaultEnterpriseSeats
+  const parsedBusinessSeats = parseSeatCountInput(businessDraft)
+  const parsedEnterpriseSeats = parseSeatCountInput(enterpriseDraft)
+  const hasAddedSeats = (parsedBusinessSeats ?? defaultBusinessSeats) > defaultBusinessSeats || (parsedEnterpriseSeats ?? defaultEnterpriseSeats) > defaultEnterpriseSeats
   const canApply = !hasError && !isApplying
 
   const onBusinessChange = (event: ChangeEvent<HTMLInputElement>) => setBusinessDraft(event.target.value)
   const onEnterpriseChange = (event: ChangeEvent<HTMLInputElement>) => setEnterpriseDraft(event.target.value)
 
   const handleApply = () => {
-    if (!canApply) return
+    if (!canApply || parsedBusinessSeats === null || parsedEnterpriseSeats === null) return
     onConfirm({
-      business: normalizedBusinessSeats,
-      enterprise: normalizedEnterpriseSeats,
+      business: parsedBusinessSeats,
+      enterprise: parsedEnterpriseSeats,
     })
   }
 
