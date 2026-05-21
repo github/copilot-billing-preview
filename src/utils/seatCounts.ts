@@ -8,10 +8,10 @@ export function normalizeSeatCount(value: number, minimum: number): number {
 
 export function parseSeatCountInput(raw: string): number | null {
   const trimmed = raw.trim()
-  if (trimmed === '') return null
+  if (!/^\d+$/.test(trimmed)) return null
 
   const parsed = Number(trimmed)
-  if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) return null
+  if (!Number.isSafeInteger(parsed)) return null
 
   return parsed
 }

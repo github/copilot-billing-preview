@@ -11,7 +11,7 @@ import {
 import { calculateSavingsDifference } from '../utils/billingComparison'
 import { InfoTip, ValidationPopover } from '../components/InfoTip'
 import { formatAic, formatDifference } from '../utils/format'
-import { getSeatCountInputError, parseSeatCountInput } from '../utils/seatCounts'
+import { getSeatCountInputError, normalizeSeatCount, parseSeatCountInput } from '../utils/seatCounts'
 import { Trie } from '../utils/trie'
 import { th, thBase, thNum, td, tdNum, sortBtn } from '../components/ui/tableStyles'
 
@@ -77,8 +77,8 @@ export function UsersView({ users, seatOverrides = {}, onSeatOverridesChange, on
 
   const parsedDraftBusiness = parseSeatCountInput(draftBusiness)
   const parsedDraftEnterprise = parseSeatCountInput(draftEnterprise)
-  const displayBusiness = isEditing ? (parsedDraftBusiness ?? savedBusiness) : savedBusiness
-  const displayEnterprise = isEditing ? (parsedDraftEnterprise ?? savedEnterprise) : savedEnterprise
+  const displayBusiness = isEditing ? normalizeSeatCount(parsedDraftBusiness ?? savedBusiness, defaultBusiness) : savedBusiness
+  const displayEnterprise = isEditing ? normalizeSeatCount(parsedDraftEnterprise ?? savedEnterprise, defaultEnterprise) : savedEnterprise
   const businessSeatError = isEditing
     ? getSeatCountInputError(draftBusiness, defaultBusiness)
     : null
