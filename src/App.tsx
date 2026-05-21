@@ -729,6 +729,7 @@ function App() {
                 rangeEnd={rangeEnd}
                 licenseAmount={licenseAmount}
                 licenseSeatCounts={licenseSeatCounts}
+                includedAicCredits={includedAicPoolSize}
                 reportPlanScope={reportPlanScope}
                 upgradeRecommendation={individualUpgradeRecommendation}
                 onAdjustSeatCounts={reportPlanScope === 'organization' && !isIndividualReport ? () => setActiveView('users') : undefined}

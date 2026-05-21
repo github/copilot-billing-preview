@@ -3,6 +3,7 @@ import { BillingProjectionDisclaimer, BillingTotalsCards } from '../components/u
 import { appLinks } from '../config/links'
 import type { ReportPlanScope } from '../pipeline/aicIncludedCredits'
 import type { DailyUsageData } from '../pipeline/aggregators/dailyUsageAggregator'
+import { AIC_UNIT_PRICE_USD } from '../utils/billingConstants'
 import { fillDataForRange } from '../utils/fillDataForRange'
 import { formatUsd } from '../utils/format'
 import type { IndividualPlanUpgradeRecommendation } from '../utils/individualPlanUpgrade'
@@ -18,10 +19,15 @@ type OverviewViewProps = {
     business: number
     enterprise: number
   }
+  includedAicCredits: number
   reportPlanScope?: ReportPlanScope
   upgradeRecommendation?: IndividualPlanUpgradeRecommendation | null
   onAdjustSeatCounts?: () => void
 }
+
+const CURRENT_AIC_COLOR = '#1a7f37'
+const ADDITIONAL_AIC_COLOR = '#cf222e'
+const INCLUDED_CREDITS_COLOR = '#0969da'
 
 function createEmptyDailyUsage(date: string): DailyUsageData {
   return {
@@ -44,6 +50,7 @@ export function OverviewView({
   rangeEnd,
   licenseAmount,
   licenseSeatCounts,
+  includedAicCredits,
   reportPlanScope = 'organization',
   upgradeRecommendation = null,
   onAdjustSeatCounts,
@@ -73,6 +80,23 @@ export function OverviewView({
   const usageBasedBillingDocsUrl = reportPlanScope === 'individual'
     ? appLinks.usageBasedBillingForIndividualsDocs
     : appLinks.usageBasedBillingForOrganizationsDocs
+  const includedCreditsValue = includedAicCredits * AIC_UNIT_PRICE_USD
+  const includedCreditsLabel = 'Included value'
+  const includedCreditsLegendLabel = reportPlanScope === 'individual' ? 'Included AI Credits' : 'Included AI Credits pool'
+  const includedCreditsDescription = reportPlanScope === 'individual'
+    ? 'Your plan\'s included AI Credits are consumed first. Additional usage spend starts after cumulative AIC gross cost exceeds the included value.'
+    : 'The account-wide included AI Credits pool is consumed first. Additional usage spend starts after cumulative AIC gross cost exceeds the included value.'
+  const includedCreditsCardTitle = reportPlanScope === 'individual' ? 'Included credits are coming' : 'Pooled included credits are coming'
+  const includedCreditsCardBody = reportPlanScope === 'individual'
+    ? 'Under usage-based billing, your Copilot plan includes AI Credits each month. Usage consumes those included credits first; additional usage is billed only after they are used.'
+    : 'Under usage-based billing, included credits will be pooled across all licensed users in your account. No more unused capacity going to waste from idle users.'
+  const includedCreditsDocsUrl = reportPlanScope === 'individual'
+    ? appLinks.usageBasedBillingForIndividualsDocs
+    : appLinks.aiCreditsForOrganizationsDocs
+  const cumulativeAicGrossAmount = filledDailyUsageData.reduce<number[]>((totals, day) => {
+    totals.push((totals[totals.length - 1] ?? 0) + day.aicGrossAmount)
+    return totals
+  }, [])
 
   return (
     <div className="max-w-[var(--width-content-max)] w-full mx-auto px-6 pt-8 pb-12 flex flex-col gap-6">
@@ -146,25 +170,51 @@ export function OverviewView({
           <BillingProjectionDisclaimer className="mb-6" />
 
           <section className="grid grid-cols-1 gap-6 w-full">
-            <DualAxisLineChart
-              title="Daily Requests & AI Credits"
-              labels={filledDailyUsageData.map((day) => day.date)}
-              series={[
-                {
-                  label: 'Premium Requests',
-                  color: '#6366f1',
-                  data: filledDailyUsageData.map((day) => day.requests),
-                  yAxisID: 'y',
-                },
-                {
-                  label: 'AI Credits',
-                  color: '#22c55e',
-                  data: filledDailyUsageData.map((day) => day.aicQuantity),
-                  yAxisID: 'y1',
-                },
-              ]}
-              height={320}
-            />
+            <div className="flex flex-col gap-2">
+              <DualAxisLineChart
+                title="Cumulative AIC gross cost: included vs additional"
+                labels={filledDailyUsageData.map((day) => day.date)}
+                series={[
+                  {
+                    label: 'AIC gross cost',
+                    legendLabel: 'Usage - within included value',
+                    legendOrder: 1,
+                    color: CURRENT_AIC_COLOR,
+                    data: cumulativeAicGrossAmount,
+                    yAxisID: 'y',
+                    order: 1,
+                    segmentColor: (_startValue, endValue) => (
+                      endValue <= includedCreditsValue
+                        ? CURRENT_AIC_COLOR
+                        : ADDITIONAL_AIC_COLOR
+                    ),
+                  },
+                  {
+                    label: includedCreditsLabel,
+                    legendLabel: includedCreditsLegendLabel,
+                    legendOrder: 3,
+                    color: INCLUDED_CREDITS_COLOR,
+                    data: filledDailyUsageData.map(() => includedCreditsValue),
+                    yAxisID: 'y',
+                    borderDash: [2, 4],
+                    order: 2,
+                    pointRadius: 0,
+                  },
+                ]}
+                extraLegendItems={[
+                  {
+                    label: 'Usage - additional spend',
+                    color: ADDITIONAL_AIC_COLOR,
+                    legendOrder: 2,
+                  },
+                ]}
+                formatYAsCurrency
+                height={320}
+              />
+              <p className="m-0 text-center text-[13px] text-fg-muted leading-normal">
+                {includedCreditsDescription}
+              </p>
+            </div>
             <DualAxisLineChart
               title="Daily cost: PRU cost vs AIC cost"
               labels={filledDailyUsageData.map((day) => day.date)}
@@ -213,24 +263,22 @@ export function OverviewView({
             />
           </section>
 
-          {reportPlanScope === 'organization' && (
-            <div className="bg-bg-default border border-border-default rounded-md py-5 px-6 mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-              <div className="flex-1 flex flex-col gap-1">
-                <strong className="text-sm font-semibold text-fg-default">Pooled included credits are coming</strong>
-                <p className="m-0 text-[13px] text-fg-muted leading-normal">
-                  Under usage-based billing, included credits will be pooled across all licensed users in your account. No more unused capacity going to waste from idle users.
-                </p>
-              </div>
-              <a
-                href={appLinks.aiCreditsForOrganizationsDocs}
-                className="text-sm font-medium text-fg-accent no-underline whitespace-nowrap hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Learn more &rarr;
-              </a>
+          <div className="bg-bg-default border border-border-default rounded-md py-5 px-6 mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+            <div className="flex-1 flex flex-col gap-1">
+              <strong className="text-sm font-semibold text-fg-default">{includedCreditsCardTitle}</strong>
+              <p className="m-0 text-[13px] text-fg-muted leading-normal">
+                {includedCreditsCardBody}
+              </p>
             </div>
-          )}
+            <a
+              href={includedCreditsDocsUrl}
+              className="text-sm font-medium text-fg-accent no-underline whitespace-nowrap hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Learn more &rarr;
+            </a>
+          </div>
 
           <section className="mt-8">
             <h2 className="text-base font-semibold text-fg-default pb-[10px] border-b border-border-default mb-4">Recommended next steps</h2>
