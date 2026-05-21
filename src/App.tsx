@@ -3,6 +3,7 @@ import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import { MarkGithubIcon, GraphIcon, PeopleIcon, CopilotIcon, TableIcon, OrganizationIcon, DatabaseIcon, InfoIcon, QuestionIcon, CreditCardIcon } from '@primer/octicons-react'
 
 import { NewVersionBanner, UploadPage } from './components'
+import { SeatCountConfirmation } from './components/SeatCountConfirmation'
 import { UsersView } from './views/UsersView'
 import type { SeatOverrides } from './views/UsersView'
 import { UserDetailsView } from './views/UserDetailsView'
@@ -67,6 +68,9 @@ function App() {
   const [budgetSimulation, setBudgetSimulation] = useState<BudgetSimulationResult | null>(null)
   const [budgetSimulationError, setBudgetSimulationError] = useState<string | null>(null)
   const [isApplyingBudgetSimulation, setIsApplyingBudgetSimulation] = useState(false)
+  const [seatConfirmationPending, setSeatConfirmationPending] = useState(false)
+  const [seatConfirmationError, setSeatConfirmationError] = useState<string | null>(null)
+  const [isApplyingSeatConfirmation, setIsApplyingSeatConfirmation] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const currentFileRef = useRef<File | null>(null)
   const latestRunIdRef = useRef(0)
@@ -146,7 +150,6 @@ function App() {
     }
   }, [])
 
-
   const getDefaultSeatCounts = useCallback(() => {
     const summary = calculateLicenseSummary(userUsage?.users ?? [])
     return {
@@ -179,6 +182,9 @@ function App() {
     setProgress(0)
     setRowsProcessed(0)
     setSeatOverrides({})
+    setSeatConfirmationPending(false)
+    setSeatConfirmationError(null)
+    setIsApplyingSeatConfirmation(false)
     setBudgetValues(EMPTY_BUDGET_VALUES)
     setBudgetSimulation(null)
     setBudgetSimulationError(null)
@@ -203,6 +209,11 @@ function App() {
       setProgress(100)
       applyProcessedData(nextData)
       setBudgetValues(getDefaultBudgetValues(nextData.userUsage.users))
+      setSeatConfirmationError(null)
+      const processedUsers = nextData.userUsage.users
+      const hasOrgContext = processedUsers.some((user) => user.organizations.length > 0 || user.costCenters.length > 0)
+      const processedPlanScope = inferReportPlanScope(processedUsers.length, hasOrgContext)
+      setSeatConfirmationPending(processedPlanScope === 'organization')
       setStatus('done')
     } catch (err) {
       if (runId !== latestRunIdRef.current) return
@@ -260,29 +271,63 @@ function App() {
     setIsApplyingBudgetSimulation(false)
   }, [])
 
-  const handleSeatOverridesChange = useCallback(async (overrides: SeatOverrides) => {
+  const handleSeatOverridesChange = useCallback(async (
+    overrides: SeatOverrides,
+    onError?: (message: string) => void,
+  ): Promise<boolean> => {
     const file = currentFileRef.current
-    if (!file) return
+    if (!file) return false
 
     const runId = ++latestRunIdRef.current
     latestSimulationIdRef.current += 1
     const resolvedOverrides = resolveIncludedCreditOverrides(overrides)
-    setError(null)
     setBudgetSimulation(null)
     setBudgetSimulationError(null)
     setIsApplyingBudgetSimulation(false)
 
     try {
       const nextData = await buildReportData(file, resolvedOverrides)
-      if (runId !== latestRunIdRef.current) return
+      if (runId !== latestRunIdRef.current) return false
 
       applyProcessedData(nextData)
       setSeatOverrides(compactSeatOverrides(resolvedOverrides))
+      if (!onError) {
+        setError(null)
+      }
+      return true
     } catch (err) {
-      if (runId !== latestRunIdRef.current) return
-      setError(err instanceof Error ? err.message : 'Failed to recalculate usage-based billing.')
+      if (runId !== latestRunIdRef.current) return false
+      const message = err instanceof Error ? err.message : 'Failed to recalculate usage-based billing.'
+      if (onError) {
+        onError(message)
+      } else {
+        setError(message)
+      }
+      return false
     }
   }, [applyProcessedData, buildReportData, compactSeatOverrides, resolveIncludedCreditOverrides])
+
+  const handleSeatConfirmationApply = useCallback(async (counts: { business: number; enterprise: number }) => {
+    setIsApplyingSeatConfirmation(true)
+    setSeatConfirmationError(null)
+    try {
+      const { business: defaultBusiness, enterprise: defaultEnterprise } = getDefaultSeatCounts()
+      if (counts.business === defaultBusiness && counts.enterprise === defaultEnterprise) {
+        setSeatConfirmationPending(false)
+        return
+      }
+
+      const success = await handleSeatOverridesChange(
+        { business: counts.business, enterprise: counts.enterprise },
+        setSeatConfirmationError,
+      )
+      if (success) {
+        setSeatConfirmationPending(false)
+      }
+    } finally {
+      setIsApplyingSeatConfirmation(false)
+    }
+  }, [getDefaultSeatCounts, handleSeatOverridesChange])
 
   const handleApplyBudgetSimulation = useCallback(async () => {
     const file = currentFileRef.current
@@ -432,6 +477,7 @@ function App() {
   }
 
   const hasReport = status === 'done' && fileName !== null
+  const showSeatConfirmation = hasReport && seatConfirmationPending
   const rangeStart = reportContext?.startDate ?? null
   const rangeEnd = reportContext?.endDate ?? null
   const reportUsers = userUsage?.users ?? []
@@ -533,6 +579,16 @@ function App() {
       </header>
 
       {hasReport ? (
+        showSeatConfirmation ? (
+          <SeatCountConfirmation
+            fileName={fileName}
+            defaultBusinessSeats={defaultBusinessSeats}
+            defaultEnterpriseSeats={defaultEnterpriseSeats}
+            error={seatConfirmationError}
+            isApplying={isApplyingSeatConfirmation}
+            onConfirm={(counts) => { void handleSeatConfirmationApply(counts) }}
+          />
+        ) : (
         <>
           <nav className="bg-bg-default border-b border-border-default px-6 py-3 flex justify-between items-center gap-4 flex-wrap max-sm:px-4 max-sm:flex-col max-sm:items-start max-sm:gap-3">
             <div className="flex items-center gap-2 flex-wrap text-sm text-fg-default max-sm:flex-col max-sm:items-start max-sm:gap-1">
@@ -675,6 +731,7 @@ function App() {
                 licenseSeatCounts={licenseSeatCounts}
                 reportPlanScope={reportPlanScope}
                 upgradeRecommendation={individualUpgradeRecommendation}
+                onAdjustSeatCounts={reportPlanScope === 'organization' && !isIndividualReport ? () => setActiveView('users') : undefined}
               />
             ) : visibleActiveView === 'models' ? (
               modelUsage && modelUsage.models.length > 0 ? (
@@ -771,6 +828,7 @@ function App() {
           </main>
           </div>
         </>
+        )
       ) : (
         <UploadPage
           dragActive={dragActive}

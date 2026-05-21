@@ -20,6 +20,7 @@ type OverviewViewProps = {
   }
   reportPlanScope?: ReportPlanScope
   upgradeRecommendation?: IndividualPlanUpgradeRecommendation | null
+  onAdjustSeatCounts?: () => void
 }
 
 function createEmptyDailyUsage(date: string): DailyUsageData {
@@ -45,6 +46,7 @@ export function OverviewView({
   licenseSeatCounts,
   reportPlanScope = 'organization',
   upgradeRecommendation = null,
+  onAdjustSeatCounts,
 }: OverviewViewProps) {
   const filledDailyUsageData = fillDataForRange(dailyUsageData, rangeStart, rangeEnd, createEmptyDailyUsage)
 
@@ -138,6 +140,7 @@ export function OverviewView({
             showExistingDiscountDisclaimer={reportPlanScope !== 'individual'}
             showPromotionalDataDisclaimer={reportPlanScope === 'individual'}
             upgradeRecommendation={upgradeRecommendation}
+            onAdjustSeatCounts={onAdjustSeatCounts}
             className="mb-3"
           />
           <BillingProjectionDisclaimer className="mb-6" />

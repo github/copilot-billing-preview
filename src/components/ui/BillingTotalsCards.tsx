@@ -21,6 +21,7 @@ export type BillingTotalsCardsProps = {
   showExistingDiscountDisclaimer?: boolean
   showPromotionalDataDisclaimer?: boolean
   upgradeRecommendation?: IndividualPlanUpgradeRecommendation | null
+  onAdjustSeatCounts?: () => void
   className?: string
 }
 
@@ -38,6 +39,7 @@ export function BillingTotalsCards({
   showExistingDiscountDisclaimer = false,
   showPromotionalDataDisclaimer = false,
   upgradeRecommendation = null,
+  onAdjustSeatCounts,
   className = '',
 }: BillingTotalsCardsProps) {
   const pruTotalAmount = pruNetAmount + (licenseAmount ?? 0)
@@ -151,8 +153,19 @@ export function BillingTotalsCards({
       </div>
       {licenseSeatCounts && (
         <p className="m-0 text-[13px] text-fg-muted leading-normal text-center">
-          This report contains activity for <strong className="text-fg-default">{licenseSeatCounts.business.toLocaleString()}</strong> Copilot Business and{' '}
-          <strong className="text-fg-default">{licenseSeatCounts.enterprise.toLocaleString()}</strong> Copilot Enterprise users. If you had more users with these licenses during the billing period covered by the uploaded report, you can adjust counters in the <strong className="text-fg-default">Users</strong> section of this app.
+          This estimate uses <strong className="text-fg-default">{licenseSeatCounts.business.toLocaleString()}</strong> Copilot Business and{' '}
+          <strong className="text-fg-default">{licenseSeatCounts.enterprise.toLocaleString()}</strong> Copilot Enterprise seats for the included AI Credits pool. If these totals do not match your licensed seat counts,{' '}
+          {onAdjustSeatCounts ? (
+            <button
+              type="button"
+              onClick={onAdjustSeatCounts}
+              className="inline bg-transparent border-0 p-0 text-fg-accent font-medium cursor-pointer hover:underline focus-visible:outline-2 focus-visible:outline-border-accent focus-visible:outline-offset-2 rounded-sm"
+            >
+              adjust seat counts &rarr;
+            </button>
+          ) : (
+            <>adjust seat counts in the <strong className="text-fg-default">Users</strong> section of this app.</>
+          )}
         </p>
       )}
     </div>
