@@ -11,6 +11,7 @@ import {
 import { calculateSavingsDifference } from '../utils/billingComparison'
 import { InfoTip, ValidationPopover } from '../components/InfoTip'
 import { formatAic, formatDifference } from '../utils/format'
+import { getSeatReductionError, parseSeatCountInput } from '../utils/seatCounts'
 import { Trie } from '../utils/trie'
 import { th, thBase, thNum, td, tdNum, sortBtn } from '../components/ui/tableStyles'
 
@@ -21,15 +22,6 @@ const seatInputErrorClass = `${seatInputBaseClass} border-border-danger text-fg-
 
 function formatInt(n: number): string {
   return n.toLocaleString()
-}
-
-function getSeatReductionError(value: string, minimum: number): string | null {
-  if (value === '') return null
-
-  const parsed = Number(value)
-  if (!Number.isFinite(parsed) || Math.floor(parsed) >= minimum) return null
-
-  return `Cannot go below ${formatInt(minimum)} because that count comes from historical report data.`
 }
 
 function formatCost(n: number): string {
@@ -116,14 +108,8 @@ export function UsersView({ users, seatOverrides = {}, onSeatOverridesChange, on
   const handleSave = () => {
     if (hasSeatValidationError) return
 
-    const parsedBusiness = Number(draftBusiness)
-    const parsedEnterprise = Number(draftEnterprise)
-    const normalizedBusiness = Number.isFinite(parsedBusiness)
-      ? Math.max(defaultBusiness, Math.floor(parsedBusiness))
-      : defaultBusiness
-    const normalizedEnterprise = Number.isFinite(parsedEnterprise)
-      ? Math.max(defaultEnterprise, Math.floor(parsedEnterprise))
-      : defaultEnterprise
+    const normalizedBusiness = parseSeatCountInput(draftBusiness, defaultBusiness)
+    const normalizedEnterprise = parseSeatCountInput(draftEnterprise, defaultEnterprise)
     const newOverrides: SeatOverrides = {}
     if (normalizedBusiness !== defaultBusiness) newOverrides.business = normalizedBusiness
     if (normalizedEnterprise !== defaultEnterprise) newOverrides.enterprise = normalizedEnterprise

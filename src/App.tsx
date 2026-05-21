@@ -36,6 +36,7 @@ import { runPipeline } from './pipeline/runPipeline'
 import { runBudgetSimulation, type BudgetSimulationResult } from './utils/budgetSimulation'
 import { EMPTY_BUDGET_VALUES, getDefaultBudgetValues, getUserSpendSegmentsByUsername, type BudgetField, type BudgetValues } from './utils/costManagementBudgets'
 import { calculateIndividualPlanUpgradeRecommendation, getIndividualLicenseMonthlyCost } from './utils/individualPlanUpgrade'
+import { normalizeSeatCount } from './utils/seatCounts'
 import { useAppVersionCheck } from './hooks/useAppVersionCheck'
 
 type Status = 'idle' | 'processing' | 'done'
@@ -145,27 +146,20 @@ function App() {
     }
   }, [])
 
-  const normalizeSeatOverride = useCallback((value: number, minimum: number): number => {
-    if (!Number.isFinite(value)) {
-      return minimum
-    }
-
-    return Math.max(minimum, Math.floor(value))
-  }, [])
 
   const getDefaultSeatCounts = useCallback(() => {
     const summary = calculateLicenseSummary(userUsage?.users ?? [])
     return {
-      business: normalizeSeatOverride(
+      business: normalizeSeatCount(
         summary.rows.find((row) => row.label === 'Copilot Business')?.users ?? 0,
         0,
       ),
-      enterprise: normalizeSeatOverride(
+      enterprise: normalizeSeatCount(
         summary.rows.find((row) => row.label === 'Copilot Enterprise')?.users ?? 0,
         0,
       ),
     }
-  }, [normalizeSeatOverride, userUsage])
+  }, [userUsage])
 
   const resetReportState = useCallback(({ status, fileName }: { status: Status; fileName: string | null }) => {
     setStatus(status)
@@ -229,12 +223,12 @@ function App() {
     return {
       business: overrides.business === undefined
         ? defaultBusiness
-        : normalizeSeatOverride(overrides.business, defaultBusiness),
+        : normalizeSeatCount(overrides.business, defaultBusiness),
       enterprise: overrides.enterprise === undefined
         ? defaultEnterprise
-        : normalizeSeatOverride(overrides.enterprise, defaultEnterprise),
+        : normalizeSeatCount(overrides.enterprise, defaultEnterprise),
     }
-  }, [getDefaultSeatCounts, normalizeSeatOverride])
+  }, [getDefaultSeatCounts])
 
   const compactSeatOverrides = useCallback((overrides: AicIncludedCreditsOverrides): SeatOverrides => {
     if (overrides.business === undefined && overrides.enterprise === undefined) {
