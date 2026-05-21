@@ -442,15 +442,6 @@ export function CostManagementView({
                     ),
                   },
                   {
-                    label: 'Simulated - additional usage',
-                    legendOrder: 2,
-                    color: SIMULATED_ADDITIONAL_COLOR,
-                    data: cumulativeSimulationSeries.labels.map(() => null),
-                    yAxisID: 'y',
-                    order: 4,
-                    pointRadius: 0,
-                  },
-                  {
                     label: 'Included AI Credits pool',
                     legendOrder: 4,
                     color: INCLUDED_CREDITS_POOL_COLOR,
@@ -459,6 +450,13 @@ export function CostManagementView({
                     borderDash: [2, 4],
                     order: 3,
                     pointRadius: 0,
+                  },
+                ]}
+                extraLegendItems={[
+                  {
+                    label: 'Simulated - additional usage',
+                    color: SIMULATED_ADDITIONAL_COLOR,
+                    legendOrder: 2,
                   },
                 ]}
                 formatYAsCurrency

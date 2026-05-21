@@ -8,6 +8,7 @@ import {
   Tooltip,
   Legend,
   type ChartOptions,
+  type LegendItem,
   type ScriptableLineSegmentContext,
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
@@ -27,12 +28,23 @@ export interface LineSeries {
   segmentColor?: (startValue: number, endValue: number) => string
 }
 
+export interface ExtraLegendItem {
+  label: string
+  color: string
+  legendOrder?: number
+}
+
 export interface DualAxisLineChartProps {
   title: string
   labels: string[]
   series: [LineSeries, LineSeries, ...LineSeries[]]
   height?: number
   formatYAsCurrency?: boolean
+  extraLegendItems?: ExtraLegendItem[]
+}
+
+type OrderedLegendItem = LegendItem & {
+  legendOrder?: number
 }
 
 function formatTick(value: number): string {
@@ -52,6 +64,7 @@ export function DualAxisLineChart({
   series,
   height = 320,
   formatYAsCurrency = false,
+  extraLegendItems = [],
 }: DualAxisLineChartProps) {
   const tickFormatter = formatYAsCurrency ? formatUsdTick : formatTick
   const usesSecondaryAxis = series.some((dataset) => dataset.yAxisID === 'y1')
@@ -111,24 +124,33 @@ export function DualAxisLineChart({
           font: { size: 11, weight: 500 },
           generateLabels: (chart) => {
             const defaultLabels = ChartJS.defaults.plugins.legend.labels.generateLabels?.(chart) ?? []
-            return defaultLabels.map((item) => {
+            const datasetLabels: OrderedLegendItem[] = defaultLabels.map((item) => {
               const dataset = typeof item.datasetIndex === 'number'
                 ? chart.data.datasets[item.datasetIndex] as { legendLabel?: string, legendOrder?: number }
                 : undefined
 
-              return dataset?.legendLabel ? { ...item, text: dataset.legendLabel } : item
-            }).sort((a, b) => {
-              const datasetA = typeof a.datasetIndex === 'number'
-                ? chart.data.datasets[a.datasetIndex] as { legendOrder?: number }
-                : undefined
-              const datasetB = typeof b.datasetIndex === 'number'
-                ? chart.data.datasets[b.datasetIndex] as { legendOrder?: number }
-                : undefined
+              return {
+                ...item,
+                text: dataset?.legendLabel ?? item.text,
+                legendOrder: dataset?.legendOrder,
+              }
+            })
 
-              return (datasetA?.legendOrder ?? a.datasetIndex ?? 0) - (datasetB?.legendOrder ?? b.datasetIndex ?? 0)
+            const additionalLabels: OrderedLegendItem[] = extraLegendItems.map((item) => ({
+              text: item.label,
+              fillStyle: item.color,
+              strokeStyle: item.color,
+              hidden: false,
+              lineWidth: 2,
+              legendOrder: item.legendOrder,
+            }))
+
+            return [...datasetLabels, ...additionalLabels].sort((a, b) => {
+              return (a.legendOrder ?? a.datasetIndex ?? 0) - (b.legendOrder ?? b.datasetIndex ?? 0)
             })
           },
         },
+        onClick: () => undefined,
       },
       title: {
         display: true,
