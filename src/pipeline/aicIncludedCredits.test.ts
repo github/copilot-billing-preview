@@ -18,6 +18,7 @@ import {
   PRO_PLUS_MONTHLY_AIC_INCLUDED_CREDITS,
   PooledAicIncludedCreditsAllocator,
   PRO_PLUS_MONTHLY_QUOTA,
+  selectKnownMonthlyQuota,
 } from './aicIncludedCredits'
 import { CostCenterAggregator } from './aggregators/costCenterAggregator'
 import { OrganizationAggregator } from './aggregators/organizationAggregator'
@@ -45,6 +46,7 @@ const HEADER = [
   'aic_quantity',
   'aic_gross_amount',
 ].join(',')
+const UNKNOWN_HIGH_MONTHLY_QUOTA = 2147483647
 
 function createCsv(rows: string[][]): File {
   const body = [HEADER, ...rows.map((row) => row.join(','))].join('\n')
@@ -170,6 +172,13 @@ describe('AIC included credit tiering and pool sizing', () => {
     expect(getPlanLabel(0)).toBe('Unknown')
   })
 
+  it('selects the maximum known monthly quota while ignoring unknown quota values', () => {
+    expect(selectKnownMonthlyQuota(0, UNKNOWN_HIGH_MONTHLY_QUOTA)).toBe(0)
+    expect(selectKnownMonthlyQuota(BUSINESS_MONTHLY_QUOTA, UNKNOWN_HIGH_MONTHLY_QUOTA)).toBe(BUSINESS_MONTHLY_QUOTA)
+    expect(selectKnownMonthlyQuota(UNKNOWN_HIGH_MONTHLY_QUOTA, ENTERPRISE_MONTHLY_QUOTA)).toBe(ENTERPRISE_MONTHLY_QUOTA)
+    expect(selectKnownMonthlyQuota(BUSINESS_MONTHLY_QUOTA, ENTERPRISE_MONTHLY_QUOTA)).toBe(ENTERPRISE_MONTHLY_QUOTA)
+  })
+
   it('does not create an organization pool for a single-user Pro/Student report', async () => {
     const file = createCsv([
       ['2026-03-01', 'mona', 'copilot', 'copilot_ai_credit', 'GPT-5', '10', 'ai-credits', '0.01', '0.10', '0', '0.10', 'False', '300', '', '', '10', '0.10'],
@@ -211,6 +220,32 @@ describe('AIC included credit tiering and pool sizing', () => {
     await expect(calculateAicIncludedCreditsPool(file)).resolves.toBe(
       BUSINESS_MONTHLY_AIC_INCLUDED_CREDITS + ENTERPRISE_MONTHLY_AIC_INCLUDED_CREDITS,
     )
+  })
+
+  it('ignores unknown high quota rows when sizing a business pool', async () => {
+    const file = createCsv([
+      ['2026-03-01', 'mona', 'copilot', 'copilot_ai_credit', 'GPT-5', '10', 'ai-credits', '0.01', '0.10', '0', '0.10', 'False', '300', 'octo', 'Cats', '10', '0.10'],
+      ['2026-03-02', 'mona', 'copilot', 'copilot_ai_credit', 'GPT-5', '10', 'ai-credits', '0.01', '0.10', '0', '0.10', 'False', `${UNKNOWN_HIGH_MONTHLY_QUOTA}`, 'octo', 'Cats', '10', '0.10'],
+    ])
+
+    await expect(calculateAicIncludedCreditsPool(file)).resolves.toBe(BUSINESS_MONTHLY_AIC_INCLUDED_CREDITS)
+  })
+
+  it('ignores unknown high quota rows when sizing an enterprise pool', async () => {
+    const file = createCsv([
+      ['2026-03-01', 'hubot', 'copilot', 'copilot_ai_credit', 'GPT-5', '10', 'ai-credits', '0.01', '0.10', '0', '0.10', 'False', '1000', 'octo', 'Cats', '10', '0.10'],
+      ['2026-03-02', 'hubot', 'copilot', 'copilot_ai_credit', 'GPT-5', '10', 'ai-credits', '0.01', '0.10', '0', '0.10', 'False', `${UNKNOWN_HIGH_MONTHLY_QUOTA}`, 'octo', 'Cats', '10', '0.10'],
+    ])
+
+    await expect(calculateAicIncludedCreditsPool(file)).resolves.toBe(ENTERPRISE_MONTHLY_AIC_INCLUDED_CREDITS)
+  })
+
+  it('does not size a pool from users that only have unknown high quota rows', async () => {
+    const file = createCsv([
+      ['2026-03-01', 'mona', 'copilot', 'copilot_ai_credit', 'GPT-5', '10', 'ai-credits', '0.01', '0.10', '0', '0.10', 'False', `${UNKNOWN_HIGH_MONTHLY_QUOTA}`, 'octo', 'Cats', '10', '0.10'],
+    ])
+
+    await expect(calculateAicIncludedCreditsPool(file)).resolves.toBe(0)
   })
 
   it('uses override seat counts instead of active users when sizing an organization pool', async () => {
@@ -405,6 +440,40 @@ describe('AIC included credit tiering and pool sizing', () => {
         }),
       }),
     ])
+  })
+
+  it('keeps user aggregation and license summary aligned when unknown high quota rows are present', async () => {
+    const file = createCsv([
+      ['2026-03-01', 'mona', 'copilot', 'copilot_ai_credit', 'GPT-5', '1500', 'ai-credits', '0.01', '15.00', '0', '15.00', 'False', '300', 'example-org', 'Cost Center A', '1500', '15.00'],
+      ['2026-03-02', 'mona', 'copilot', 'copilot_ai_credit', 'GPT-5', '1500', 'ai-credits', '0.01', '15.00', '0', '15.00', 'False', `${UNKNOWN_HIGH_MONTHLY_QUOTA}`, 'example-org', 'Cost Center A', '1500', '15.00'],
+      ['2026-03-03', 'hubot', 'copilot', 'copilot_ai_credit', 'GPT-5', '3500', 'ai-credits', '0.01', '35.00', '0', '35.00', 'False', '1000', 'example-org', 'Cost Center A', '3500', '35.00'],
+      ['2026-03-04', 'hubot', 'copilot', 'copilot_ai_credit', 'GPT-5', '3500', 'ai-credits', '0.01', '35.00', '0', '35.00', 'False', `${UNKNOWN_HIGH_MONTHLY_QUOTA}`, 'example-org', 'Cost Center A', '3500', '35.00'],
+      ['2026-03-05', 'octocat', 'copilot', 'copilot_ai_credit', 'GPT-5', '100', 'ai-credits', '0.01', '1.00', '0', '1.00', 'False', `${UNKNOWN_HIGH_MONTHLY_QUOTA}`, 'example-org', 'Cost Center B', '100', '1.00'],
+    ])
+    const users = new UserUsageAggregator()
+
+    await runPipeline(file, [users])
+
+    const userResult = users.result().users
+    const licenseSummary = calculateLicenseSummary(userResult)
+
+    expect(userResult.find((user) => user.username === 'mona')).toEqual(expect.objectContaining({
+      totalMonthlyQuota: BUSINESS_MONTHLY_QUOTA,
+    }))
+    expect(userResult.find((user) => user.username === 'hubot')).toEqual(expect.objectContaining({
+      totalMonthlyQuota: ENTERPRISE_MONTHLY_QUOTA,
+    }))
+    expect(userResult.find((user) => user.username === 'octocat')).toEqual(expect.objectContaining({
+      totalMonthlyQuota: 0,
+    }))
+    expect(licenseSummary).toEqual({
+      rows: [
+        { label: 'Copilot Business', users: 1, includedAic: 3000 },
+        { label: 'Copilot Enterprise', users: 1, includedAic: 7000 },
+      ],
+      totalUsers: 2,
+      totalIncludedAic: 10000,
+    })
   })
 })
 

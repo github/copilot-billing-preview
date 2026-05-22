@@ -11,6 +11,12 @@ export const BUSINESS_MONTHLY_QUOTA = 300
 export const ENTERPRISE_MONTHLY_QUOTA = 1000
 export const PRO_MONTHLY_QUOTA = 300
 export const PRO_PLUS_MONTHLY_QUOTA = 1500
+const KNOWN_MONTHLY_QUOTAS = new Set([
+  BUSINESS_MONTHLY_QUOTA,
+  ENTERPRISE_MONTHLY_QUOTA,
+  PRO_MONTHLY_QUOTA,
+  PRO_PLUS_MONTHLY_QUOTA,
+])
 
 export const BUSINESS_MONTHLY_AIC_INCLUDED_CREDITS = 3000
 export const ENTERPRISE_MONTHLY_AIC_INCLUDED_CREDITS = 7000
@@ -68,6 +74,16 @@ function calculateOrganizationIncludedCreditsPool(overrides: AicIncludedCreditsO
     (businessSeats ?? 0) * BUSINESS_MONTHLY_AIC_INCLUDED_CREDITS
     + (enterpriseSeats ?? 0) * ENTERPRISE_MONTHLY_AIC_INCLUDED_CREDITS
   )
+}
+
+export function isKnownMonthlyQuota(totalMonthlyQuota: number): boolean {
+  return Number.isFinite(totalMonthlyQuota) && KNOWN_MONTHLY_QUOTAS.has(totalMonthlyQuota)
+}
+
+export function selectKnownMonthlyQuota(currentQuota: number, candidateQuota: number): number {
+  const currentKnownQuota = isKnownMonthlyQuota(currentQuota) ? currentQuota : 0
+  if (!isKnownMonthlyQuota(candidateQuota)) return currentKnownQuota
+  return Math.max(currentKnownQuota, candidateQuota)
 }
 
 export function inferReportPlanScope(userCount: number, hasOrganizationContext = false): ReportPlanScope {
@@ -200,9 +216,7 @@ export async function calculateAicIncludedCreditsContext(
     }
 
     const currentQuota = quotasByUser.get(username) ?? 0
-    if (record.total_monthly_quota > currentQuota) {
-      quotasByUser.set(username, record.total_monthly_quota)
-    }
+    quotasByUser.set(username, selectKnownMonthlyQuota(currentQuota, record.total_monthly_quota))
   }
 
   const reportPlanScope = inferReportPlanScope(quotasByUser.size, hasOrganizationContext)

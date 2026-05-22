@@ -3,6 +3,7 @@ import { getUsageMetrics, type TokenUsageHeader, type TokenUsageRecord } from '.
 import { getDisplayModelName } from '../modelLabels'
 import { getFriendlyProductName } from '../productClassification'
 import { classifyUserSpendSegments, type UserSpendSegmentId } from '../../utils/userSpendSegments'
+import { selectKnownMonthlyQuota } from '../aicIncludedCredits'
 
 export type UserModelDailyUsage = {
   requests: number
@@ -167,7 +168,7 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
     if (!user) {
       user = {
         username,
-        totalMonthlyQuota: record.total_monthly_quota,
+        totalMonthlyQuota: selectKnownMonthlyQuota(0, record.total_monthly_quota),
         organizations: new Set(),
         costCenters: new Set(),
         daily: new Map(),
@@ -186,9 +187,7 @@ export class UserUsageAggregator implements Aggregator<TokenUsageRecord, UserUsa
       this.byUser.set(username, user)
     }
 
-    if (record.total_monthly_quota > user.totalMonthlyQuota) {
-      user.totalMonthlyQuota = record.total_monthly_quota
-    }
+    user.totalMonthlyQuota = selectKnownMonthlyQuota(user.totalMonthlyQuota, record.total_monthly_quota)
 
     const organization = record.organization.trim()
     if (organization) {
