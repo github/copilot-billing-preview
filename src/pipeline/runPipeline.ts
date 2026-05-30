@@ -3,19 +3,31 @@ import { createAicIncludedCreditsAllocator, type AicIncludedCreditsOverrides } f
 import {
   parseTokenUsageHeader,
   parseNormalizedTokenUsageRecord,
+  parseTokenUsageRecord,
+  validateSupportedReportRecord,
   validateHeader,
   type TokenUsageHeader,
   type TokenUsageRecord,
 } from './parser'
 import { streamLines, type StreamProgress } from './streamer'
 
-async function validateFileHeader(file: File): Promise<void> {
+async function validateFileFormat(file: File): Promise<void> {
+  let header: TokenUsageHeader | null = null
+
   for await (const line of streamLines(file)) {
     const trimmed = line.trimEnd()
-    if (trimmed) {
-      validateHeader(parseTokenUsageHeader(trimmed))
-      return
+    if (!trimmed) {
+      continue
     }
+
+    if (!header) {
+      header = parseTokenUsageHeader(trimmed)
+      validateHeader(header)
+      continue
+    }
+
+    validateSupportedReportRecord(header, parseTokenUsageRecord(trimmed, header))
+    return
   }
 }
 
@@ -67,7 +79,7 @@ export async function runPipeline(
   options?: PipelineOptions,
 ): Promise<PipelineResult> {
   const { includedCreditsOverrides = {}, progressResolution = 500, onProgress } = options ?? {}
-  await validateFileHeader(file)
+  await validateFileFormat(file)
   let lastProgressStage: PipelineProgress['stage'] | null = null
   let lastProgressPercent = -1
   let lastProgressTimestamp = 0

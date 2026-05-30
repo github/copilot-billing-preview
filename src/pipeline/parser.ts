@@ -138,6 +138,17 @@ export class UnsupportedReportVersionError extends Error {
   }
 }
 
+export class UnsupportedNativeAiCreditsReportError extends Error {
+  constructor() {
+    super(
+      `This billing preview app currently supports PRU vs usage-based billing reports generated for ` +
+        `the April and May billing periods. Reports generated on or after June 1 use AI Credits as ` +
+        `the primary unit and are not supported yet.`,
+    )
+    this.name = 'UnsupportedNativeAiCreditsReportError'
+  }
+}
+
 export function validateHeader(header: TokenUsageHeader): void {
   const missingBase = BASE_BILLING_COLUMNS.filter((col) => !(col in header.index))
   if (missingBase.length > 0) {
@@ -147,6 +158,15 @@ export function validateHeader(header: TokenUsageHeader): void {
   const missingAic = REQUIRED_AIC_COLUMNS.filter((col) => !(col in header.index))
   if (missingAic.length > 0) {
     throw new UnsupportedReportVersionError()
+  }
+}
+
+export function validateSupportedReportRecord(header: TokenUsageHeader, record: TokenUsageRecord): void {
+  const lacksExceedsQuota = !('exceeds_quota' in header.index)
+  const usesNativeAiCreditsUnit = record.unit_type === 'ai-credits' && record.sku.endsWith('_ai_credit')
+
+  if (lacksExceedsQuota && usesNativeAiCreditsUnit) {
+    throw new UnsupportedNativeAiCreditsReportError()
   }
 }
 

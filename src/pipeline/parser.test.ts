@@ -7,8 +7,10 @@ import {
   parseNormalizedTokenUsageRecord,
   parseTokenUsageHeader,
   parseTokenUsageRecord,
+  UnsupportedNativeAiCreditsReportError,
   UnsupportedReportVersionError,
   validateHeader,
+  validateSupportedReportRecord,
 } from './parser'
 
 const FULL_HEADER = [
@@ -757,5 +759,64 @@ describe('validateHeader', () => {
     ].join(',')
     const header = parseTokenUsageHeader(incompleteBillingHeader)
     expect(() => validateHeader(header)).toThrow(InvalidReportError)
+  })
+})
+
+describe('validateSupportedReportRecord', () => {
+  it('throws a clear error for the native AI Credits report format', () => {
+    const header = parseTokenUsageHeader(HEADER_WITHOUT_EXCEEDS_QUOTA)
+    const record = parseTokenUsageRecord(
+      buildRow([
+        '5/29/26',
+        'mona',
+        'copilot',
+        'copilot_ai_credit',
+        'Auto: Claude Haiku 4.5',
+        '96.9990345',
+        'ai-credits',
+        '0.01',
+        '0.969990345',
+        '0',
+        '0.969990345',
+        '3900',
+        'example-org',
+        '',
+        '96.9990345',
+        '0.969990345',
+      ]),
+      header,
+    )
+
+    expect(() => validateSupportedReportRecord(header, record)).toThrow(UnsupportedNativeAiCreditsReportError)
+    expect(() => validateSupportedReportRecord(header, record)).toThrow(
+      'currently supports PRU vs usage-based billing reports generated for the April and May billing periods',
+    )
+  })
+
+  it('accepts PRU report rows when exceeds_quota is absent', () => {
+    const header = parseTokenUsageHeader(HEADER_WITHOUT_EXCEEDS_QUOTA)
+    const record = parseTokenUsageRecord(
+      buildRow([
+        '2026-05-29',
+        'mona',
+        'copilot',
+        'copilot_premium_request',
+        'Auto: Claude Haiku 4.5',
+        '2',
+        'requests',
+        '0.04',
+        '0.08',
+        '0',
+        '0.08',
+        '300',
+        'example-org',
+        'Cost Center A',
+        '20',
+        '0.20',
+      ]),
+      header,
+    )
+
+    expect(() => validateSupportedReportRecord(header, record)).not.toThrow()
   })
 })

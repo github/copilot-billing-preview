@@ -24,8 +24,27 @@ const HEADER = [
   'aic_gross_amount',
 ].join(',')
 
-function createCsv(rows: string[][]): File {
-  const body = [HEADER, ...rows.map((row) => row.join(','))].join('\n')
+const NATIVE_AI_CREDITS_HEADER = [
+  'date',
+  'username',
+  'product',
+  'sku',
+  'model',
+  'quantity',
+  'unit_type',
+  'applied_cost_per_quantity',
+  'gross_amount',
+  'discount_amount',
+  'net_amount',
+  'total_monthly_quota',
+  'organization',
+  'cost_center_name',
+  'aic_quantity',
+  'aic_gross_amount',
+].join(',')
+
+function createCsv(rows: string[][], header = HEADER): File {
+  const body = [header, ...rows.map((row) => row.join(','))].join('\n')
   return new File([body], 'usage.csv', { type: 'text/csv' })
 }
 
@@ -45,7 +64,36 @@ class CaptureAggregator implements Aggregator<TokenUsageRecord, TokenUsageRecord
   }
 }
 
-describe('runPipeline progress', () => {
+describe('runPipeline', () => {
+  it('rejects native AI Credits reports before processing rows', async () => {
+    const file = createCsv([
+      [
+        '5/29/26',
+        'mona',
+        'copilot',
+        'copilot_ai_credit',
+        'Auto: Claude Haiku 4.5',
+        '96.9990345',
+        'ai-credits',
+        '0.01',
+        '0.969990345',
+        '0',
+        '0.969990345',
+        '3900',
+        'example-org',
+        '',
+        '96.9990345',
+        '0.969990345',
+      ],
+    ], NATIVE_AI_CREDITS_HEADER)
+    const aggregator = new CaptureAggregator()
+
+    await expect(runPipeline(file, [aggregator])).rejects.toThrow(
+      'currently supports PRU vs usage-based billing reports generated for the April and May billing periods',
+    )
+    expect(aggregator.result()).toEqual([])
+  })
+
   it('filters and normalizes known normalization window rows before AIC allocation', async () => {
     const file = createCsv([
       ['2026-04-25', 'mona', 'copilot', 'copilot_premium_request', 'GPT-5', '0', 'requests', '0.04', '0', '0', '0', 'False', '300', '', '', '0', '0'],
