@@ -117,12 +117,12 @@ export function UploadPage({
                   <UploadIcon size={40} className="fill-fg-muted" aria-hidden />
                 </div>
                 <h3 className="m-0 font-semibold text-fg-default text-[18px] sm:text-[20px]">Drop your CSV here or click to browse</h3>
-                <p className="m-0 text-fg-muted text-[14px]">premiumRequestUsageReport_*.csv</p>
+                <p className="m-0 text-fg-muted text-[14px]">April or May PRU vs usage-based billing CSV</p>
               </>
             )}
           </div>
         </section>
-        <p className="mt-4 mb-0 text-fg-muted text-[13px]">Accepted: .csv files from the Premium Request Usage report</p>
+        <p className="mt-4 mb-0 text-fg-muted text-[13px]">Accepted: April and May PRU vs usage-based billing reports</p>
         <section className="mt-6 px-6 py-5 text-left border border-border-default rounded-lg bg-bg-muted" aria-label="Privacy notice">
           <h4 className="m-0 mb-3 flex items-center gap-2 text-[16px] text-fg-default">
             <LockIcon size={16} className="text-app-savings-fg" aria-hidden />
