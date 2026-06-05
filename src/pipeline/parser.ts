@@ -117,6 +117,8 @@ const BASE_BILLING_COLUMNS = [
 const REQUIRED_AIC_COLUMNS = ['aic_quantity', 'aic_gross_amount'] as const
 const APRIL_BACKFILL_START_DATE = '2026-04-24'
 const APRIL_BACKFILL_END_DATE = '2026-04-30'
+const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
+const SLASH_DATE_PATTERN = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/
 
 export class InvalidReportError extends Error {
   constructor() {
@@ -281,6 +283,62 @@ export function parseTokenUsageRecord(line: string, header: TokenUsageHeader): T
 
   record.aic_net_amount = getAicUsageMetrics(record).aicGrossAmount
   return record
+}
+
+function isValidDateParts(year: number, month: number, day: number): boolean {
+  const date = new Date(Date.UTC(year, month - 1, day))
+  return (
+    date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day
+  )
+}
+
+function formatIsoDate(year: number, month: number, day: number): string {
+  return [
+    String(year).padStart(4, '0'),
+    String(month).padStart(2, '0'),
+    String(day).padStart(2, '0'),
+  ].join('-')
+}
+
+export function normalizeNativeAiCreditsReportDate(rawDate: string): string {
+  const date = rawDate.trim()
+  const isoMatch = ISO_DATE_PATTERN.exec(date)
+  if (isoMatch) {
+    const year = Number(isoMatch[1])
+    const month = Number(isoMatch[2])
+    const day = Number(isoMatch[3])
+    return isValidDateParts(year, month, day) ? date : rawDate.trim()
+  }
+
+  const slashMatch = SLASH_DATE_PATTERN.exec(date)
+  if (!slashMatch) return date
+
+  const month = Number(slashMatch[1])
+  const day = Number(slashMatch[2])
+  const yearRaw = slashMatch[3]
+  const year = yearRaw.length === 2 ? 2000 + Number(yearRaw) : Number(yearRaw)
+
+  if (!isValidDateParts(year, month, day)) return date
+  return formatIsoDate(year, month, day)
+}
+
+export function parseNativeAiCreditsUsageRecord(line: string, header: TokenUsageHeader): TokenUsageRecord {
+  const record = parseTokenUsageRecord(line, header)
+  const aicQuantity = record.has_aic_quantity ? record.aic_quantity : record.quantity
+  const aicGrossAmount = record.has_aic_gross_amount ? record.aic_gross_amount : record.gross_amount
+  const nativeRecord: TokenUsageRecord = {
+    ...record,
+    date: normalizeNativeAiCreditsReportDate(record.date),
+    aic_quantity: aicQuantity,
+    aic_gross_amount: aicGrossAmount,
+    has_aic_quantity: true,
+    has_aic_gross_amount: true,
+  }
+
+  nativeRecord.aic_net_amount = getAicUsageMetrics(nativeRecord).aicGrossAmount
+  return nativeRecord
 }
 
 function isAprilBackfillDate(date: string): boolean {

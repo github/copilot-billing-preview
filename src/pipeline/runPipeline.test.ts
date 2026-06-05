@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import type { Aggregator } from './aggregators/base'
-import { InvalidReportError, UnsupportedReportVersionError, type TokenUsageHeader, type TokenUsageRecord } from './parser'
+import {
+  InvalidReportError,
+  UnsupportedNativeAiCreditsReportError,
+  UnsupportedReportVersionError,
+  type TokenUsageHeader,
+  type TokenUsageRecord,
+} from './parser'
 import { runPipeline } from './runPipeline'
 
 const HEADER = [
@@ -56,9 +62,10 @@ function createCsv(rows: string[][], header = HEADER): File {
 
 class CaptureAggregator implements Aggregator<TokenUsageRecord, TokenUsageRecord[], TokenUsageHeader> {
   private readonly records: TokenUsageRecord[] = []
+  private headerCallCount = 0
 
   onHeader(): void {
-    // no-op
+    this.headerCallCount += 1
   }
 
   accumulate(record: TokenUsageRecord): void {
@@ -67,6 +74,10 @@ class CaptureAggregator implements Aggregator<TokenUsageRecord, TokenUsageRecord
 
   result(): TokenUsageRecord[] {
     return this.records
+  }
+
+  headerCalls(): number {
+    return this.headerCallCount
   }
 }
 
@@ -144,9 +155,8 @@ describe('runPipeline', () => {
     ], NATIVE_AI_CREDITS_HEADER)
     const aggregator = new CaptureAggregator()
 
-    await expect(runPipeline(file, [aggregator])).rejects.toThrow(
-      'currently supports PRU vs usage-based billing reports generated for the April and May billing periods',
-    )
+    await expect(runPipeline(file, [aggregator])).rejects.toThrow(UnsupportedNativeAiCreditsReportError)
+    expect(aggregator.headerCalls()).toBe(0)
     expect(aggregator.result()).toEqual([])
   })
 

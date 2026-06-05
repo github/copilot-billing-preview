@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   getUsageMetrics,
   InvalidReportError,
+  normalizeNativeAiCreditsReportDate,
   normalizeTokenUsageRecord,
   parseCsvRow,
+  parseNativeAiCreditsUsageRecord,
   parseNormalizedTokenUsageRecord,
   parseTokenUsageHeader,
   parseTokenUsageRecord,
@@ -673,6 +675,95 @@ describe('parser and metric normalization', () => {
     )
 
     expect(normalizeTokenUsageRecord(record)).toBe(record)
+  })
+})
+
+describe('native AI Credits parsing helpers', () => {
+  it('normalizes native short dates to ISO dates', () => {
+    expect(normalizeNativeAiCreditsReportDate('5/29/26')).toBe('2026-05-29')
+    expect(normalizeNativeAiCreditsReportDate('05/09/2026')).toBe('2026-05-09')
+    expect(normalizeNativeAiCreditsReportDate('2026-05-29')).toBe('2026-05-29')
+  })
+
+  it('parses native AI Credits usage and cost fields without enabling pipeline support', () => {
+    const header = parseTokenUsageHeader(HEADER_WITHOUT_EXCEEDS_QUOTA)
+    const record = parseNativeAiCreditsUsageRecord(
+      buildRow([
+        '5/29/26',
+        'mona',
+        'copilot',
+        'copilot_ai_credit',
+        'Auto: Claude Haiku 4.5',
+        '96.9990345',
+        'ai-credits',
+        '0.01',
+        '0.969990345',
+        '0.15',
+        '0.819990345',
+        '3900',
+        'example-org',
+        'Cost Center A',
+        '96.9990345',
+        '0.969990345',
+      ]),
+      header,
+    )
+
+    expect(record).toMatchObject({
+      date: '2026-05-29',
+      username: 'mona',
+      product: 'copilot',
+      sku: 'copilot_ai_credit',
+      quantity: 96.9990345,
+      unit_type: 'ai-credits',
+      gross_amount: 0.969990345,
+      discount_amount: 0.15,
+      net_amount: 0.819990345,
+      total_monthly_quota: 3900,
+      organization: 'example-org',
+      cost_center_name: 'Cost Center A',
+      aic_quantity: 96.9990345,
+      aic_gross_amount: 0.969990345,
+      has_aic_quantity: true,
+      has_aic_gross_amount: true,
+    })
+  })
+
+  it('uses native quantity and gross amount as AIC alias fallbacks when alias columns are blank', () => {
+    const header = parseTokenUsageHeader(HEADER_WITHOUT_EXCEEDS_QUOTA)
+    const record = parseNativeAiCreditsUsageRecord(
+      buildRow([
+        '5/29/26',
+        'hubot',
+        'spark',
+        'spark_ai_credit',
+        'GPT-5.2',
+        '12.5',
+        'ai-credits',
+        '0.01',
+        '0.125',
+        '0.025',
+        '0.1',
+        '7000',
+        'octodemo',
+        '',
+        '',
+        '',
+      ]),
+      header,
+    )
+
+    expect(record).toMatchObject({
+      date: '2026-05-29',
+      quantity: 12.5,
+      gross_amount: 0.125,
+      discount_amount: 0.025,
+      net_amount: 0.1,
+      aic_quantity: 12.5,
+      aic_gross_amount: 0.125,
+      has_aic_quantity: true,
+      has_aic_gross_amount: true,
+    })
   })
 })
 
