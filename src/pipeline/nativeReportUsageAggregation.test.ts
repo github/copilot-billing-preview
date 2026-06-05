@@ -23,6 +23,7 @@ const NATIVE_AI_CREDITS_HEADER = [
   'aic_quantity',
   'aic_gross_amount',
 ].join(',')
+const NATIVE_AI_CREDITS_PARSED_HEADER = parseTokenUsageHeader(NATIVE_AI_CREDITS_HEADER)
 
 type ProductRollup = {
   totals: CanonicalAiCreditsMetrics
@@ -98,7 +99,7 @@ function buildRow(values: string[]): string {
 }
 
 function nativeRecord(values: string[]): TokenUsageRecord {
-  return parseNativeAiCreditsUsageRecord(buildRow(values), parseTokenUsageHeader(NATIVE_AI_CREDITS_HEADER))
+  return parseNativeAiCreditsUsageRecord(buildRow(values), NATIVE_AI_CREDITS_PARSED_HEADER)
 }
 
 function nativeRecords(): TokenUsageRecord[] {
