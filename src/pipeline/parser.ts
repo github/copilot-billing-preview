@@ -151,12 +151,15 @@ export class UnsupportedNativeAiCreditsReportError extends Error {
   }
 }
 
-export function validateHeader(header: TokenUsageHeader): void {
+export function validateBaseHeader(header: TokenUsageHeader): void {
   const missingBase = BASE_BILLING_COLUMNS.filter((col) => !(col in header.index))
   if (missingBase.length > 0) {
     throw new InvalidReportError()
   }
+}
 
+export function validateHeader(header: TokenUsageHeader): void {
+  validateBaseHeader(header)
   const missingAic = REQUIRED_AIC_COLUMNS.filter((col) => !(col in header.index))
   if (missingAic.length > 0) {
     throw new UnsupportedReportVersionError()

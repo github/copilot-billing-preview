@@ -53,6 +53,23 @@ const HEADER_WITHOUT_EXCEEDS_QUOTA = [
   'aic_gross_amount',
 ].join(',')
 
+const NATIVE_AI_CREDITS_HEADER_WITHOUT_ALIASES = [
+  'date',
+  'username',
+  'product',
+  'sku',
+  'model',
+  'quantity',
+  'unit_type',
+  'applied_cost_per_quantity',
+  'gross_amount',
+  'discount_amount',
+  'net_amount',
+  'total_monthly_quota',
+  'organization',
+  'cost_center_name',
+].join(',')
+
 function buildRow(values: string[]): string {
   return values.join(',')
 }
@@ -211,6 +228,7 @@ describe('usage report adapters', () => {
       format: 'native-ai-credits',
       supported: false,
     })
+
     expect(() => adapter.validateFirstRecord(header, record)).toThrow(UnsupportedNativeAiCreditsReportError)
     expect(() => validateUsageReportFirstRecord(header, record)).toThrow(UnsupportedNativeAiCreditsReportError)
     expect(adapter.parseRecord(row, header)).toMatchObject({
@@ -222,6 +240,43 @@ describe('usage report adapters', () => {
       aic_net_amount: 0.969990345,
       has_aic_quantity: true,
       has_aic_gross_amount: true,
+    })
+  })
+
+  it('detects native AI Credits reports when alias columns are absent', () => {
+    const header = parseTokenUsageHeader(NATIVE_AI_CREDITS_HEADER_WITHOUT_ALIASES)
+    const row = buildRow([
+      '2026-06-01',
+      'mona',
+      'copilot',
+      'copilot_ai_credit',
+      'Auto: Claude Haiku 4.5',
+      '42.726213',
+      'ai-credits',
+      '0.01',
+      '0.4272621300000001',
+      '0.4272621300000001',
+      '0',
+      '3900',
+      'example-org',
+      '',
+    ])
+    const record = parseTokenUsageRecord(row, header)
+    const adapter = selectUsageReportAdapter(header, record)
+
+    expect(() => validateUsageReportHeader(header)).not.toThrow()
+    expect(detectReportFormat(header, record)).toBe('native-ai-credits')
+    expect(adapter.metadata.format).toBe('native-ai-credits')
+    expect(() => validateUsageReportFirstRecord(header, record, { allowUnsupportedNativeAiCredits: true })).not.toThrow()
+    expect(adapter.parseRecord(row, header)).toMatchObject({
+      date: '2026-06-01',
+      quantity: 42.726213,
+      gross_amount: 0.4272621300000001,
+      discount_amount: 0.4272621300000001,
+      net_amount: 0,
+      aic_quantity: 42.726213,
+      aic_gross_amount: 0.4272621300000001,
+      aic_net_amount: 0,
     })
   })
 

@@ -51,6 +51,23 @@ const NATIVE_AI_CREDITS_HEADER = [
   'aic_gross_amount',
 ].join(',')
 
+const NATIVE_AI_CREDITS_HEADER_WITHOUT_ALIASES = [
+  'date',
+  'username',
+  'product',
+  'sku',
+  'model',
+  'quantity',
+  'unit_type',
+  'applied_cost_per_quantity',
+  'gross_amount',
+  'discount_amount',
+  'net_amount',
+  'total_monthly_quota',
+  'organization',
+  'cost_center_name',
+].join(',')
+
 const TRANSITION_PERIOD_REPORT_METADATA = {
   format: 'transition-period-billing-preview',
   label: 'Transition Period Billing Preview report',
@@ -271,7 +288,7 @@ describe('runPipeline', () => {
         netAmount: 0,
         aicQuantity: 35,
         aicGrossAmount: 350,
-        aicNetAmount: 280,
+        aicNetAmount: 0,
       }),
     ])
     expect(users.result().users).toEqual([
@@ -284,7 +301,7 @@ describe('runPipeline', () => {
           netAmount: 0,
           aicQuantity: 25,
           aicGrossAmount: 250,
-          aicNetAmount: 200,
+          aicNetAmount: 0,
         }),
       }),
       expect.objectContaining({
@@ -296,8 +313,189 @@ describe('runPipeline', () => {
           netAmount: 0,
           aicQuantity: 10,
           aicGrossAmount: 100,
-          aicNetAmount: 80,
+          aicNetAmount: 0,
         }),
+      }),
+    ])
+  })
+
+  it('aggregates native quantity and gross amount columns when alias columns disagree', async () => {
+    const file = createCsv([
+      [
+        '2026-06-01',
+        'mona',
+        'copilot',
+        'copilot_ai_credit',
+        'Auto: Claude Haiku 4.5',
+        '42.726213',
+        'ai-credits',
+        '0.01',
+        '0.4272621300000001',
+        '0.4272621300000001',
+        '0',
+        '3900',
+        'example-org',
+        '',
+        '999',
+        '999',
+      ],
+      [
+        '2026-09-01',
+        'hubot',
+        'copilot',
+        'copilot_ai_credit',
+        'Auto: GPT-5.3-Codex',
+        '5.447169000000001',
+        'ai-credits',
+        '0.01',
+        '0.054471689999999996',
+        '0',
+        '0.054471689999999996',
+        '1900',
+        'example-org',
+        '',
+        '888',
+        '888',
+      ],
+    ], NATIVE_AI_CREDITS_HEADER)
+    let daily!: DailyUsageAggregator
+
+    await runPipeline(file, (reportMetadata) => {
+      daily = new DailyUsageAggregator(reportMetadata)
+      return [daily]
+    }, {
+      enableNativeAiCreditsProcessing: true,
+    })
+
+    expect(daily.result().dailyData).toEqual([
+      expect.objectContaining({
+        date: '2026-06-01',
+        requests: 0,
+        grossAmount: 0,
+        discountAmount: 0,
+        netAmount: 0,
+        aicQuantity: 42.726213,
+        aicGrossAmount: 0.4272621300000001,
+        aicNetAmount: 0,
+      }),
+      expect.objectContaining({
+        date: '2026-09-01',
+        requests: 0,
+        grossAmount: 0,
+        discountAmount: 0,
+        netAmount: 0,
+        aicQuantity: 5.447169000000001,
+        aicGrossAmount: 0.054471689999999996,
+        aicNetAmount: 0,
+      }),
+    ])
+  })
+
+  it('processes native rows when alias columns are absent', async () => {
+    const file = createCsv([
+      [
+        '2026-06-01',
+        'mona',
+        'copilot',
+        'copilot_ai_credit',
+        'Auto: Claude Haiku 4.5',
+        '42.726213',
+        'ai-credits',
+        '0.01',
+        '0.4272621300000001',
+        '0.4272621300000001',
+        '0',
+        '3900',
+        'example-org',
+        '',
+      ],
+      [
+        '2026-09-01',
+        'hubot',
+        'copilot',
+        'copilot_ai_credit',
+        'Auto: GPT-5.3-Codex',
+        '5.447169000000001',
+        'ai-credits',
+        '0.01',
+        '0.054471689999999996',
+        '0',
+        '0.054471689999999996',
+        '1900',
+        'example-org',
+        '',
+      ],
+    ], NATIVE_AI_CREDITS_HEADER_WITHOUT_ALIASES)
+    let daily!: DailyUsageAggregator
+
+    const result = await runPipeline(file, (reportMetadata) => {
+      daily = new DailyUsageAggregator(reportMetadata)
+      return [daily]
+    }, {
+      enableNativeAiCreditsProcessing: true,
+    })
+
+    expect(result.reportMetadata).toEqual(NATIVE_AI_CREDITS_REPORT_METADATA)
+    expect(daily.result().dailyData).toEqual([
+      expect.objectContaining({
+        date: '2026-06-01',
+        aicQuantity: 42.726213,
+        aicGrossAmount: 0.4272621300000001,
+        aicNetAmount: 0,
+      }),
+      expect.objectContaining({
+        date: '2026-09-01',
+        aicQuantity: 5.447169000000001,
+        aicGrossAmount: 0.054471689999999996,
+        aicNetAmount: 0,
+      }),
+    ])
+  })
+
+  it('constructs aggregators after native report metadata is detected', async () => {
+    const file = createCsv([
+      [
+        '5/29/26',
+        'mona',
+        'copilot',
+        'copilot_ai_credit',
+        'GPT-5.2',
+        '10',
+        'ai-credits',
+        '0.01',
+        '100',
+        '20',
+        '80',
+        '3900',
+        'example-org',
+        'Cost Center A',
+        '999',
+        '999',
+      ],
+    ], NATIVE_AI_CREDITS_HEADER)
+    let daily!: DailyUsageAggregator
+    let factoryMetadata: unknown = null
+
+    const result = await runPipeline(file, (reportMetadata) => {
+      factoryMetadata = reportMetadata
+      daily = new DailyUsageAggregator(reportMetadata)
+      return [daily]
+    }, {
+      enableNativeAiCreditsProcessing: true,
+    })
+
+    expect(factoryMetadata).toEqual(NATIVE_AI_CREDITS_REPORT_METADATA)
+    expect(result.reportMetadata).toEqual(NATIVE_AI_CREDITS_REPORT_METADATA)
+    expect(daily.result().dailyData).toEqual([
+      expect.objectContaining({
+        date: '2026-05-29',
+        requests: 0,
+        grossAmount: 0,
+        discountAmount: 0,
+        netAmount: 0,
+        aicQuantity: 10,
+        aicGrossAmount: 100,
+        aicNetAmount: 0,
       }),
     ])
   })

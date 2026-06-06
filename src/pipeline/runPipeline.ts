@@ -63,6 +63,10 @@ export interface PipelineResult {
   processedRowCount: number
 }
 
+export type PipelineAggregators =
+  | Aggregator<TokenUsageRecord, unknown, TokenUsageHeader>[]
+  | ((reportMetadata: ReportFormatMetadata) => Aggregator<TokenUsageRecord, unknown, TokenUsageHeader>[])
+
 const ANALYSIS_PROGRESS_WEIGHT = 0.4
 const MIN_PROGRESS_INCREMENT_PERCENT = 1
 const MIN_PROGRESS_EMIT_INTERVAL_MS = 80
@@ -88,7 +92,7 @@ function getNow(): number {
 
 export async function runPipeline(
   file: File,
-  aggregators: Aggregator<TokenUsageRecord, unknown, TokenUsageHeader>[],
+  aggregatorsOrFactory: PipelineAggregators,
   options?: PipelineOptions,
 ): Promise<PipelineResult> {
   const {
@@ -101,6 +105,9 @@ export async function runPipeline(
     allowUnsupportedNativeAiCredits: enableNativeAiCreditsProcessing,
   })
   const reportMetadata = reportAdapter.metadata
+  const aggregators = typeof aggregatorsOrFactory === 'function'
+    ? aggregatorsOrFactory(reportMetadata)
+    : aggregatorsOrFactory
   let lastProgressStage: PipelineProgress['stage'] | null = null
   let lastProgressPercent = -1
   let lastProgressTimestamp = 0

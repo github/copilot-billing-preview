@@ -65,7 +65,7 @@ function nativeRecords(): TokenUsageRecord[] {
       '250',
       '50',
       '200',
-      '7000',
+      '3900',
       'octodemo',
       'Cost Center B',
       '',
@@ -83,7 +83,7 @@ function nativeRecords(): TokenUsageRecord[] {
       '400',
       '75',
       '325',
-      '7000',
+      '3900',
       'example-org',
       'Cost Center A',
       '4000',
@@ -240,5 +240,57 @@ describe('native AI Credits direct aggregator usage', () => {
       aicGrossAmount: 400,
       aicNetAmount: 325,
     })
+  })
+
+  it('preserves native Business and Enterprise quota identities for license classification', () => {
+    const result = aggregate([
+      nativeRecord([
+        '2026-06-01',
+        'test-business-user',
+        'copilot',
+        'copilot_ai_credit',
+        'Auto: GPT-5.3-Codex',
+        '5.447169000000001',
+        'ai-credits',
+        '0.01',
+        '0.054471689999999996',
+        '0.054471689999999996',
+        '0',
+        '1900',
+        'example-org',
+        '',
+        '5.447169000000001',
+        '0.05447169',
+      ]),
+      nativeRecord([
+        '2026-06-01',
+        'test-enterprise-user',
+        'copilot',
+        'copilot_ai_credit',
+        'Auto: Claude Haiku 4.5',
+        '42.726213',
+        'ai-credits',
+        '0.01',
+        '0.4272621300000001',
+        '0.4272621300000001',
+        '0',
+        '3900',
+        'example-org',
+        '',
+        '42.726213',
+        '0.4272621300000002',
+      ]),
+    ])
+
+    expect(result.users.users).toEqual([
+      expect.objectContaining({
+        username: 'test-business-user',
+        totalMonthlyQuota: 1900,
+      }),
+      expect.objectContaining({
+        username: 'test-enterprise-user',
+        totalMonthlyQuota: 3900,
+      }),
+    ])
   })
 })

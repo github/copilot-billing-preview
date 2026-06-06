@@ -436,6 +436,23 @@ describe('AIC included credit tiering and pool sizing', () => {
     })
   })
 
+  it('uses native policy quotas and included credits for organization license summaries', () => {
+    const summary = calculateLicenseSummary([
+      { totalMonthlyQuota: 1900, organizations: ['example-org'], costCenters: [] },
+      { totalMonthlyQuota: 3900, organizations: ['example-org'], costCenters: ['Cost Center A'] },
+      { totalMonthlyQuota: 1000, organizations: ['example-org'], costCenters: ['Cost Center A'] },
+    ], NATIVE_AI_CREDITS_STANDARD_INCLUDED_CREDITS_POLICY)
+
+    expect(summary).toEqual({
+      rows: [
+        { label: 'Copilot Business', users: 1, includedAic: 1900 },
+        { label: 'Copilot Enterprise', users: 1, includedAic: 3900 },
+      ],
+      totalUsers: 2,
+      totalIncludedAic: 5800,
+    })
+  })
+
   it('summarizes a single-user report as an individual plan', () => {
     const summary = calculateLicenseSummary([{ totalMonthlyQuota: 1500 }])
 

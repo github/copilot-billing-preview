@@ -212,7 +212,7 @@ describe('getReportUsageMetrics', () => {
     })
   })
 
-  it('matches native parsing helper alias fallback behavior when alias columns are blank', () => {
+  it('uses native-normalized AIC fields so included-credit allocation changes are reflected', () => {
     const header = parseTokenUsageHeader(NATIVE_AI_CREDITS_HEADER)
     const row = buildRow([
       '5/29/26',
@@ -232,11 +232,16 @@ describe('getReportUsageMetrics', () => {
       '',
       '',
     ])
-    const rawRecord = parseTokenUsageRecord(row, header)
     const nativeRecord = parseNativeAiCreditsUsageRecord(row, header)
+    nativeRecord.aic_net_amount = 0.02
 
-    expect(getReportUsageMetrics(rawRecord, 'native-ai-credits')).toMatchObject({
-      aiCredits: getReportUsageMetrics(nativeRecord, 'native-ai-credits').aiCredits,
+    expect(getReportUsageMetrics(nativeRecord, 'native-ai-credits')).toMatchObject({
+      aiCredits: {
+        quantity: 12.5,
+        grossAmount: 0.125,
+        discountAmount: 0.105,
+        netAmount: 0.02,
+      },
       transitionPeriodComparison: null,
     })
   })

@@ -73,9 +73,9 @@ describe('getAggregatorUsageMetrics', () => {
       gross_amount: 0.125,
       discount_amount: 0.025,
       net_amount: 0.1,
-      aic_quantity: 999,
-      aic_gross_amount: 999,
-      aic_net_amount: 999,
+      aic_quantity: 12.5,
+      aic_gross_amount: 0.125,
+      aic_net_amount: 0.1,
     })
 
     expect(getAggregatorUsageMetrics(record, 'native-ai-credits')).toEqual({

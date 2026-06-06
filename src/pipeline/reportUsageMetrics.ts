@@ -46,12 +46,16 @@ function getTransitionPeriodReportUsageMetrics(record: TokenUsageRecord): Report
 }
 
 function getNativeAiCreditsReportUsageMetrics(record: TokenUsageRecord): ReportUsageMetrics {
+  const quantity = record.aic_quantity
+  const grossAmount = record.aic_gross_amount
+  const netAmount = record.aic_net_amount
+
   return {
     aiCredits: {
-      quantity: record.quantity,
-      grossAmount: record.gross_amount,
-      discountAmount: record.discount_amount,
-      netAmount: record.net_amount,
+      quantity,
+      grossAmount,
+      discountAmount: grossAmount - netAmount,
+      netAmount,
     },
     transitionPeriodComparison: null,
   }

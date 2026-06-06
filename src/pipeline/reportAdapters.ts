@@ -3,6 +3,7 @@ import {
   hasNativeAiCreditsReportSignature,
   parseNativeAiCreditsUsageRecord,
   parseNormalizedTokenUsageRecord,
+  validateBaseHeader,
   validateHeader as validateTokenUsageHeader,
   validateSupportedReportRecord,
   type TokenUsageHeader,
@@ -52,7 +53,7 @@ const NATIVE_AI_CREDITS_REPORT_ADAPTER: UsageReportAdapter = {
     supported: false,
   },
   validateHeader(header) {
-    validateTokenUsageHeader(header)
+    validateBaseHeader(header)
   },
   validateFirstRecord() {
     throw new UnsupportedNativeAiCreditsReportError()
@@ -67,11 +68,22 @@ const REPORT_ADAPTERS: Record<ReportFormat, UsageReportAdapter> = {
   'native-ai-credits': NATIVE_AI_CREDITS_REPORT_ADAPTER,
 }
 
+function hasTransitionPeriodAicColumns(header: TokenUsageHeader): boolean {
+  return 'aic_quantity' in header.index && 'aic_gross_amount' in header.index
+}
+
 export function getDefaultSupportedUsageReportAdapter(): UsageReportAdapter {
   return TRANSITION_PERIOD_BILLING_PREVIEW_REPORT_ADAPTER
 }
 
 export function validateUsageReportHeader(header: TokenUsageHeader): UsageReportAdapter {
+  validateBaseHeader(header)
+
+  if (!('exceeds_quota' in header.index) && !hasTransitionPeriodAicColumns(header)) {
+    NATIVE_AI_CREDITS_REPORT_ADAPTER.validateHeader(header)
+    return NATIVE_AI_CREDITS_REPORT_ADAPTER
+  }
+
   const adapter = getDefaultSupportedUsageReportAdapter()
   adapter.validateHeader(header)
   return adapter
