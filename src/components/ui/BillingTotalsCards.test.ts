@@ -48,4 +48,16 @@ describe('BillingTotalsCards', () => {
     expect(html).toContain(EXISTING_DISCOUNT_DISCLAIMER)
     expect(html).not.toContain('Promotional amounts are used in this simulation.')
   })
+
+  it('formats included discount rows with a single explicit minus sign', () => {
+    const html = renderToStaticMarkup(createElement(BillingTotalsCards, {
+      ...BASE_PROPS,
+      pruDiscountAmount: -1,
+      aicDiscountAmount: -2.34,
+    }))
+
+    expect(html).toContain('−$1.00')
+    expect(html).toContain('−$2.34')
+    expect(html).not.toContain('−$-')
+  })
 })

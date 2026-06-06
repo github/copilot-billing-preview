@@ -304,7 +304,7 @@ export function UserDetailsView({
                   {!isNativeAiCredits && <th className={thNum}>PRUs</th>}
                   <th className={thNum}>AICs</th>
                   {isNativeAiCredits && <th className={thNum}>AIC Gross Cost</th>}
-                  {isNativeAiCredits && <th className={thNum}>Included AICs</th>}
+                  {isNativeAiCredits && <th className={thNum}>Included Discount</th>}
                   {!isNativeAiCredits && <th className={thNum}>PRU Net Cost</th>}
                   <th className={thNum}>AIC Net Cost</th>
                   {!isNativeAiCredits && <th className={thNum}>Difference</th>}
@@ -326,7 +326,7 @@ export function UserDetailsView({
                         {!isNativeAiCredits && <td className={tdNum}>{formatInt(row.requests)}</td>}
                         <td className={tdNum}>{formatAic(row.aicQuantity)}</td>
                         {isNativeAiCredits && <td className={tdNum}>{formatCost(row.aicGrossAmount)}</td>}
-                        {isNativeAiCredits && <td className={tdNum}>−{formatCost(row.aicDiscountAmount)}</td>}
+                        {isNativeAiCredits && <td className={tdNum}>−{formatCost(Math.abs(row.aicDiscountAmount))}</td>}
                         {!isNativeAiCredits && <td className={tdNum}>{formatCost(row.netAmount)}</td>}
                         <td className={tdNum}>{formatCost(row.aicNetAmount)}</td>
                         {!isNativeAiCredits && (

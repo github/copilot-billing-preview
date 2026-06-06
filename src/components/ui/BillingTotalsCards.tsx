@@ -85,7 +85,7 @@ export function BillingTotalsCards({
               </div>
               <div className="flex justify-between items-center text-[13px] text-fg-muted tabular-nums">
                 <span>Included PRUs</span>
-                <span>−{formatUsd(pruDiscountAmount)}</span>
+                <span>−{formatUsd(Math.abs(pruDiscountAmount))}</span>
               </div>
               <div className="pt-[6px] border-t border-dotted border-border-muted flex flex-col gap-[6px]">
                 <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums">
@@ -125,7 +125,7 @@ export function BillingTotalsCards({
             </div>
             <div className="flex justify-between items-center text-[13px] text-fg-muted tabular-nums">
               <span>Included AICs</span>
-              <span>−{formatUsd(aicDiscountAmount)}</span>
+              <span>−{formatUsd(Math.abs(aicDiscountAmount))}</span>
             </div>
             <div className="pt-[6px] border-t border-dotted border-border-muted flex flex-col gap-[6px]">
               <div className="flex justify-between items-center text-[13px] text-fg-default tabular-nums">

@@ -279,7 +279,7 @@ export function ModelsView({
             </>
           )}
           <DualAxisLineChart
-            title={`Daily AI Credits gross cost (${selectedModel})`}
+            title={`Daily AI Credits gross and net cost (${selectedModel})`}
             labels={filledPerModelDailyData.map((day) => day.date)}
             series={[
               {
