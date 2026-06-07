@@ -48,14 +48,14 @@ export function UploadPage({
         <MarkGithubIcon size={48} className="block mx-auto mb-4 text-fg-default" aria-hidden />
         <h1 className="m-0 mb-3 text-[26px] sm:text-[32px] leading-[1.2] text-fg-default font-bold">Copilot Billing Preview</h1>
         <p className="mx-auto mb-8 max-w-[640px] text-fg-muted text-[15px] leading-[1.7]">
-          GitHub is moving to <strong>usage-based billing</strong> for Copilot. Starting June 1, 2026, your usage
-          will be measured and billed in AI Credits instead of Premium Requests. This tool helps you
-          understand how the change will impact your bill.
+          GitHub Copilot <strong>usage-based billing</strong> uses AI Credits to measure usage and calculate costs.
+          This tool helps you analyze your Copilot billing reports and understand usage, included credits,
+          and potential charges.
         </p>
         <p className="mx-auto mb-8 max-w-[640px] text-fg-muted text-[15px] leading-[1.7]">
-          Upload your usage report to preview what your billing would look like under the new
-          pricing model. Enterprise Admins or Billing Managers can download the CSV from{' '}
-          <strong>Billing and licensing → Preview your billing impact → Download CSV</strong>.
+          Upload a Copilot usage-based billing CSV to analyze your report. Enterprise Admins or Billing Managers
+          can download usage-based billing reports from{' '}
+          <strong>Billing and licensing → Usage → AI usage</strong>.
         </p>
         <p className="mx-auto mb-8 max-w-[640px] text-fg-muted text-[15px] leading-[1.7]">
           <a href={appLinks.usageBasedBillingBlog} target="_blank" rel="noopener noreferrer">
@@ -117,12 +117,12 @@ export function UploadPage({
                   <UploadIcon size={40} className="fill-fg-muted" aria-hidden />
                 </div>
                 <h3 className="m-0 font-semibold text-fg-default text-[18px] sm:text-[20px]">Drop your CSV here or click to browse</h3>
-                <p className="m-0 text-fg-muted text-[14px]">April or May PRU vs usage-based billing CSV</p>
+                <p className="m-0 text-fg-muted text-[14px]">Copilot usage-based billing CSV</p>
               </>
             )}
           </div>
         </section>
-        <p className="mt-4 mb-0 text-fg-muted text-[13px]">Accepted: April and May PRU vs usage-based billing reports</p>
+        <p className="mt-4 mb-0 text-fg-muted text-[13px]">Accepted: transition-period billing preview reports and usage-based billing reports</p>
         <section className="mt-6 px-6 py-5 text-left border border-border-default rounded-lg bg-bg-muted" aria-label="Privacy notice">
           <h4 className="m-0 mb-3 flex items-center gap-2 text-[16px] text-fg-default">
             <LockIcon size={16} className="text-app-savings-fg" aria-hidden />
@@ -137,7 +137,7 @@ export function UploadPage({
         </section>
       </div>
       <footer className="text-center text-fg-muted text-[12px] leading-[1.6] pt-6 px-4 pb-10 max-w-[960px] mx-auto w-full">
-        This is a preview based on your uploaded usage data. Actual bills may differ.
+        This analysis is based on your uploaded usage data. GitHub billing remains the source of record.
         <br />
         Your data never leaves your browser. Something is not right?{' '}
         <a className="no-underline hover:underline" href={appLinks.issues} target="_blank" rel="noopener noreferrer">
