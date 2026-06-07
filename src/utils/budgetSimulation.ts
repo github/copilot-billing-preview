@@ -1,5 +1,6 @@
 import { calculateAicIncludedCreditsContext, getUsageMonthKey, type AicIncludedCreditsContext, type AicIncludedCreditsOverrides } from '../pipeline/aicIncludedCredits'
-import { getAicUsageMetrics, getUsageMetrics, parseNormalizedTokenUsageRecord, parseTokenUsageHeader, type TokenUsageHeader, type TokenUsageRecord } from '../pipeline/parser'
+import { getAicUsageMetrics, getUsageMetrics, parseNativeAiCreditsUsageRecord, parseNormalizedTokenUsageRecord, parseTokenUsageHeader, type TokenUsageHeader, type TokenUsageRecord } from '../pipeline/parser'
+import type { ReportFormatMetadata } from '../pipeline/reportAdapters'
 import { getProductBudgetName, isNonCopilotCodeReviewUsage, NON_COPILOT_CODE_REVIEW_USER_LABEL, type ProductBudgetName } from '../pipeline/productClassification'
 import { streamLines } from '../pipeline/streamer'
 import type { UserSpendSegmentId } from './userSpendSegments'
@@ -24,6 +25,10 @@ export type BudgetSimulationOptions = {
   userBudgetUsdBySpendSegment?: Partial<Record<UserSpendSegmentId, number>>
   userSpendSegmentsByUsername?: Record<string, UserSpendSegmentId>
   productBudgetsUsd?: Partial<Record<ProductBudgetName, number>>
+}
+
+export type BudgetSimulationRunOptions = {
+  reportMetadata?: ReportFormatMetadata
 }
 
 type BudgetSimulationContext = Pick<AicIncludedCreditsContext, 'reportPlanScope' | 'organizationIncludedCreditsPool' | 'individualMonthlyIncludedCredits'>
@@ -378,8 +383,11 @@ export async function runBudgetSimulation(
   file: File,
   options: BudgetSimulationOptions,
   includedCreditsOverrides: AicIncludedCreditsOverrides = {},
+  runOptions: BudgetSimulationRunOptions = {},
 ): Promise<BudgetSimulationResult> {
-  const context = await calculateAicIncludedCreditsContext(file, includedCreditsOverrides)
+  const context = await calculateAicIncludedCreditsContext(file, includedCreditsOverrides, {
+    reportMetadata: runOptions.reportMetadata,
+  })
   const state = createBudgetSimulationState(options, context)
   let header: TokenUsageHeader | null = null
 
@@ -392,7 +400,9 @@ export async function runBudgetSimulation(
       continue
     }
 
-    const record = parseNormalizedTokenUsageRecord(trimmed, header)
+    const record = runOptions.reportMetadata?.format === 'native-ai-credits'
+      ? parseNativeAiCreditsUsageRecord(trimmed, header)
+      : parseNormalizedTokenUsageRecord(trimmed, header)
     if (!record) continue
 
     simulateBudgetRecord(state, record, context)

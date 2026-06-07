@@ -358,11 +358,6 @@ function App() {
   const handleApplyBudgetSimulation = useCallback(async () => {
     const file = currentFileRef.current
     if (!file) return
-    if (isNativeAiCreditsReport) {
-      setBudgetSimulation(null)
-      setBudgetSimulationError('Budget simulation is not available for native AI Credits reports yet.')
-      return
-    }
 
     const budgetReportUsers = userUsage?.users ?? []
     const hasBudgetOrganizationContext = budgetReportUsers.some((user) => user.organizations.length > 0 || user.costCenters.length > 0)
@@ -427,6 +422,7 @@ function App() {
           },
         },
         resolveIncludedCreditOverrides(seatOverrides),
+        { reportMetadata: reportMetadata ?? undefined },
       )
 
       if (simulationId !== latestSimulationIdRef.current) return
@@ -448,7 +444,7 @@ function App() {
     budgetValues.productCopilot,
     budgetValues.productSpark,
     budgetValues.user,
-    isNativeAiCreditsReport,
+    reportMetadata,
     resolveIncludedCreditOverrides,
     seatOverrides,
     userUsage,
