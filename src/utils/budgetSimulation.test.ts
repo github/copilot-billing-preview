@@ -23,9 +23,33 @@ const HEADER = [
   'aic_gross_amount',
 ].join(',')
 
+const NATIVE_AI_CREDITS_HEADER = [
+  'date',
+  'username',
+  'product',
+  'sku',
+  'model',
+  'quantity',
+  'unit_type',
+  'applied_cost_per_quantity',
+  'gross_amount',
+  'discount_amount',
+  'net_amount',
+  'total_monthly_quota',
+  'organization',
+  'cost_center_name',
+  'aic_quantity',
+  'aic_gross_amount',
+].join(',')
+
 function createCsv(rows: string[][]): File {
   const body = [HEADER, ...rows.map((row) => row.join(','))].join('\n')
   return new File([body], 'usage.csv', { type: 'text/csv' })
+}
+
+function createNativeAiCreditsCsv(rows: string[][]): File {
+  const body = [NATIVE_AI_CREDITS_HEADER, ...rows.map((row) => row.join(','))].join('\n')
+  return new File([body], 'native-usage.csv', { type: 'text/csv' })
 }
 
 function createRecord(overrides: Partial<TokenUsageRecord>): TokenUsageRecord {
@@ -469,6 +493,36 @@ describe('runBudgetSimulation', () => {
       productBlockedDates: {},
       adjustedDailyNetCostByDate: [{ date: '2026-04-25', amount: 0.5 }],
       adjustedDailyGrossCostByDate: [{ date: '2026-04-25', amount: 0.5 }],
+    })
+  })
+
+  it('uses native AI Credits report parsing and policy context when report metadata is provided', async () => {
+    const file = createNativeAiCreditsCsv([
+      ['6/1/26', 'mona', 'copilot', 'copilot_ai_credit', 'GPT-5', '100', 'ai-credits', '0.01', '1.00', '0', '1.00', '0', 'example-org', 'Cost Center A', '', ''],
+    ])
+
+    await expect(runBudgetSimulation(
+      file,
+      { accountBudgetUsd: 0.5 },
+      {},
+      {
+        reportMetadata: {
+          format: 'native-ai-credits',
+          label: 'Native AI Credits report',
+        },
+      },
+    )).resolves.toEqual({
+      totalBill: 0.5,
+      blockedUsers: 1,
+      blockedRequests: 0,
+      blockedIncludedCreditsAic: 0,
+      allowedAicQuantity: 50,
+      budgetExhausted: true,
+      firstUserBlockedDate: null,
+      accountBlockedDate: '2026-06-01',
+      productBlockedDates: {},
+      adjustedDailyNetCostByDate: [{ date: '2026-06-01', amount: 0.5 }],
+      adjustedDailyGrossCostByDate: [{ date: '2026-06-01', amount: 0.5 }],
     })
   })
 })
