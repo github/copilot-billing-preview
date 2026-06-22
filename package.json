@@ -14,7 +14,7 @@
     "@primer/octicons-react": "^19.28.1",
     "@primer/primitives": "^11.9.0",
     "chart.js": "^4.5.1",
-    "react": "19.2.6",
+    "react": "19.2.7",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "19.2.7"
   },
