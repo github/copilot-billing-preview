@@ -7,8 +7,8 @@ export const appLinks = {
   promotionalAmountsDocs: 'https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises#promotional-amounts-for-existing-customers',
   usageBasedBillingForIndividualsDocs: 'https://docs.github.com/en/copilot/concepts/billing/usage-based-billing-for-individuals',
   flexAllotmentDocs: 'https://docs.github.com/en/copilot/concepts/billing/usage-based-billing-for-individuals#how-do-ai-credits-work',
-  usageBasedBillingForOrganizationsDocs: 'https://docs.github.com/en/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises',
   aiCreditsForOrganizationsDocs: 'https://docs.github.com/en/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises#how-do-ai-credits-work',
   copilotMaxPlanBlog: 'https://github.blog/news-insights/company-news/github-copilot-individual-plans-introducing-flex-allotments-in-pro-and-pro-and-a-new-max-plan/',
+  copilotBillingPreviewRepository: 'https://github.com/github/copilot-billing-preview',
   issues: 'https://github.com/github/copilot-billing-preview/issues',
 } as const

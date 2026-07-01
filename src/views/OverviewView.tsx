@@ -1,4 +1,4 @@
-import { DualAxisLineChart } from '../components'
+import { DeprecationBanner, DualAxisLineChart } from '../components'
 import { BillingProjectionDisclaimer, BillingTotalsCards } from '../components/ui'
 import { appLinks } from '../config/links'
 import type { ReportPlanScope } from '../pipeline/aicIncludedCredits'
@@ -11,7 +11,6 @@ import { isNativeAiCreditsMode, type ReportMode } from '../utils/reportMode'
 
 type OverviewViewProps = {
   error: string | null
-  fileName: string | null
   dailyUsageData: DailyUsageData[]
   rangeStart: string | null
   rangeEnd: string | null
@@ -47,7 +46,6 @@ function createEmptyDailyUsage(date: string): DailyUsageData {
 
 export function OverviewView({
   error,
-  fileName,
   dailyUsageData,
   rangeStart,
   rangeEnd,
@@ -83,9 +81,6 @@ export function OverviewView({
     ? new Date(rangeStart + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric' })
     : null
   const savings = overviewTotals.netAmount - aicNetAmount
-  const usageBasedBillingDocsUrl = reportPlanScope === 'individual'
-    ? appLinks.usageBasedBillingForIndividualsDocs
-    : appLinks.usageBasedBillingForOrganizationsDocs
   const includedCreditsValue = includedAicCredits * AIC_UNIT_PRICE_USD
   const includedCreditsLabel = 'Included value'
   const includedCreditsLegendLabel = reportPlanScope === 'individual' ? 'Included AI Credits' : 'Included AI Credits pool'
@@ -120,27 +115,7 @@ export function OverviewView({
 
       {dailyUsageData.length > 0 && (
         <section>
-          {!isNativeAiCredits && (
-            <div className="bg-bg-accent-muted border border-border-accent/25 rounded-md py-5 px-6 mb-5 flex flex-col gap-2">
-              <h2 className="m-0 text-base font-semibold text-fg-default">GitHub Copilot is moving to usage-based billing</h2>
-              <p className="m-0 text-sm text-fg-default leading-normal">
-                Starting June 1, 2026, Copilot usage will be measured in AI Credits (AICs) instead of Premium Requests (PRUs). <strong className="text-[15px] font-bold bg-bg-default py-[2px] px-2 rounded-[4px] whitespace-nowrap">1 AIC = $0.01.</strong> This is a preview estimate based on your uploaded report. Actual bills under usage-based billing may differ based on model mix and final pricing.
-              </p>
-              {fileName && (
-                <p className="m-0 text-[13px] text-fg-muted leading-normal">
-                  Note: This is a preview estimate based on your uploaded report ({fileName}). Actual bills under usage-based billing may differ based on model mix and final pricing.
-                </p>
-              )}
-              <a
-                href={usageBasedBillingDocsUrl}
-                className="text-sm font-medium text-fg-accent no-underline self-start hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Learn more about usage-based billing &rarr;
-              </a>
-            </div>
-          )}
+          <DeprecationBanner className="mb-5" />
 
           {!isNativeAiCredits && periodLabel && (
             <p className="text-base font-normal text-center mb-1 text-fg-default">

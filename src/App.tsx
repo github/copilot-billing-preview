@@ -757,7 +757,6 @@ function App() {
             {visibleActiveView === 'overview' ? (
               <OverviewView
                 error={error}
-                fileName={fileName}
                 dailyUsageData={dailyUsageData}
                 rangeStart={rangeStart}
                 rangeEnd={rangeEnd}
