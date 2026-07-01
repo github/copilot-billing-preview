@@ -16,6 +16,7 @@
   --color-fg-default: var(--fgColor-default);
   --color-fg-muted: var(--fgColor-muted);
   --color-fg-accent: var(--fgColor-accent);
+  --color-fg-attention: var(--fgColor-attention);
   --color-fg-danger: var(--fgColor-danger);
   --color-fg-on-emphasis: var(--fgColor-onEmphasis);
 
