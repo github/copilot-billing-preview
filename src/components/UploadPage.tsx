@@ -1,6 +1,7 @@
 import type { DragEvent, KeyboardEvent, MouseEvent } from 'react'
 import { MarkGithubIcon, UploadIcon, LockIcon } from '@primer/octicons-react'
 import { appLinks } from '../config/links'
+import { DeprecationBanner } from './DeprecationBanner'
 
 export interface UploadPageProps {
   dragActive: boolean
@@ -62,6 +63,7 @@ export function UploadPage({
             Learn more about usage-based billing &rarr;
           </a>
         </p>
+        <DeprecationBanner className="mb-6" />
         {error && (
           <div
             className="mb-4 px-4 py-3 bg-bg-attention-muted border border-border-attention rounded-md text-[color:var(--fgColor-attention)] text-[14px] text-center"
