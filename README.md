@@ -1,10 +1,13 @@
 # GitHub Copilot Billing Preview
 
+> [!IMPORTANT]
+> **This app has been retired.** The hosted instance no longer accepts report uploads. Review and manage your Copilot spend in your [billing settings](https://github.com/settings/billing). To learn more, see [GitHub Copilot billing](https://docs.github.com/copilot/concepts/billing).
+
 A web application for previewing and comparing your future GitHub Copilot bills as you transition to the new usage-based billing model. Upload your CSV billing reports to explore requests, costs, AI Credits, and trends across users, organizations, models, and cost centers.
 
 Production instance: <https://copilot-billing-preview.github.com/>
 
-This project is in active development. It is intended to help GitHub Copilot customers understand usage-based billing preview data during the transition period.
+This project is no longer under active development. The source code remains available for reference and for anyone who wants to fork it.
 
 ## Features
 
